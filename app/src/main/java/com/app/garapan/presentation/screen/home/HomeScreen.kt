@@ -127,7 +127,10 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(uiState.services) { service ->
-                    ServiceCard(service = service)
+                    ServiceCard(
+                        service = service,
+                        onClick = { navController.navigate(Routes.jasaDetailRoute(service.id)) }
+                    )
                 }
             }
 
@@ -422,9 +425,10 @@ private fun ProjectCard(project: ProjectItem, onClick: () -> Unit = {}) {
 }
 
 @Composable
-private fun ServiceCard(service: ServiceItem) {
+private fun ServiceCard(service: ServiceItem, onClick: () -> Unit = {}) {
     Card(
         modifier = Modifier.width(180.dp),
+        onClick = onClick,
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
