@@ -20,3 +20,7 @@ keystore.jks
 *.keystore
 *.jks
 release.properties
+
+# Auto-generated / cache
+**/__pycache__/
+.docs/images/

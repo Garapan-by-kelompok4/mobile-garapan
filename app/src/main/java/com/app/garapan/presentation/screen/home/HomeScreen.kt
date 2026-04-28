@@ -23,11 +23,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Paid
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
@@ -331,59 +334,84 @@ private fun SectionHeader(title: String, onSeeAll: () -> Unit) {
 @Composable
 private fun ProjectCard(project: ProjectItem) {
     Card(
-        modifier = Modifier.width(220.dp),
+        modifier = Modifier.width(280.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(BrandNavy.copy(alpha = 0.1f))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = project.category,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            color = BrandNavy,
-                            fontWeight = FontWeight.Medium
-                        )
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = project.title,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    color = PrimaryText
-                ),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp)
+                    .background(LightGray)
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = project.budget,
-                style = MaterialTheme.typography.titleSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = AccentBlue
-                )
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.padding(12.dp)) {
                 Text(
-                    text = project.clientName,
-                    style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText),
-                    modifier = Modifier.weight(1f),
-                    maxLines = 1,
+                    text = project.title,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = PrimaryText
+                    ),
+                    minLines = 2,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                Text(
-                    text = project.deadline,
-                    style = MaterialTheme.typography.bodySmall.copy(color = MutedText)
-                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Schedule,
+                        contentDescription = null,
+                        tint = MutedText,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = project.duration,
+                        style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Outlined.Paid,
+                        contentDescription = null,
+                        tint = MutedText,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = project.budget,
+                        style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Group,
+                        contentDescription = null,
+                        tint = MutedText,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = project.teamSize,
+                        style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText),
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = project.clientName,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = PrimaryText
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
     }
