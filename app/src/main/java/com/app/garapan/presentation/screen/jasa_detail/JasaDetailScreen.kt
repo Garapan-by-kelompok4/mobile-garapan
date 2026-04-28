@@ -5,6 +5,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,22 +15,28 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.app.garapan.ui.theme.AccentBlue
@@ -72,7 +81,7 @@ fun JasaDetailScreen(
                     .padding(horizontal = 20.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Column {
                     Text(
                         text = "Mulai Dari",
                         style = MaterialTheme.typography.labelSmall.copy(color = SecondaryText)
@@ -88,7 +97,7 @@ fun JasaDetailScreen(
                 Spacer(modifier = Modifier.width(12.dp))
                 Button(
                     onClick = {},
-                    modifier = Modifier.height(48.dp),
+                    modifier = Modifier.weight(1f).height(48.dp),
                     shape = RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = BrandNavy,
@@ -254,10 +263,7 @@ fun JasaDetailScreen(
                                 style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
                             )
                         }
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.End
-                        ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.Star,
                                 contentDescription = null,
@@ -279,7 +285,7 @@ fun JasaDetailScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Description section
+            // Description + tech stack section
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -303,9 +309,377 @@ fun JasaDetailScreen(
                         lineHeight = MaterialTheme.typography.bodyMedium.lineHeight
                     )
                 )
+                if (uiState.techStack.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    TechStackChips(techStack = uiState.techStack)
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
+
+            // Fitur Utama section
+            if (uiState.features.isNotEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(White)
+                        .padding(horizontal = 20.dp, vertical = 20.dp)
+                ) {
+                    SectionHeader(title = "Fitur Utama")
+                    Spacer(modifier = Modifier.height(12.dp))
+                    uiState.features.forEach { feature ->
+                        FeatureCard(feature = feature)
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            // Portfolio Terkait section
+            if (uiState.portfolios.isNotEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(White)
+                        .padding(vertical = 20.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Portfolio Terkait",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = PrimaryText
+                            )
+                        )
+                        Text(
+                            text = "Lihat Semua",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = AccentBlue,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp)
+                    ) {
+                        items(uiState.portfolios) { portfolio ->
+                            PortfolioCard(portfolio = portfolio)
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            // Ulasan Pelanggan section
+            if (uiState.reviews.isNotEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(White)
+                        .padding(horizontal = 20.dp, vertical = 20.dp)
+                ) {
+                    Text(
+                        text = "Ulasan Pelanggan",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = PrimaryText
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    RatingSummary(
+                        rating = uiState.rating,
+                        reviewCount = uiState.reviewCount,
+                        breakdown = uiState.ratingBreakdown
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    uiState.reviews.forEach { review ->
+                        ReviewCard(review = review)
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedButton(
+                        onClick = {},
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        shape = RoundedCornerShape(50.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, BorderColor)
+                    ) {
+                        Text(
+                            text = "Lihat Semua Ulasan",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                color = PrimaryText
+                            )
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun TechStackChips(techStack: List<String>) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        techStack.forEach { tech ->
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50.dp))
+                    .border(1.dp, AccentBlue, RoundedCornerShape(50.dp))
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = tech,
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        color = AccentBlue,
+                        fontWeight = FontWeight.Medium
+                    )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionHeader(title: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                color = PrimaryText
+            )
+        )
+        Text(
+            text = "Lihat Semua",
+            style = MaterialTheme.typography.bodySmall.copy(
+                color = AccentBlue,
+                fontWeight = FontWeight.SemiBold
+            )
+        )
+    }
+}
+
+@Composable
+private fun FeatureCard(feature: JasaFeatureItem) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(AccentBlue.copy(alpha = 0.10f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.FlashOn,
+                    contentDescription = null,
+                    tint = AccentBlue,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(
+                    text = feature.title,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = PrimaryText
+                    )
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = feature.description,
+                    style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PortfolioCard(portfolio: JasaPortfolioItem) {
+    Column(modifier = Modifier.width(160.dp)) {
+        Box(
+            modifier = Modifier
+                .width(160.dp)
+                .height(110.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(LightGray)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = portfolio.title,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontWeight = FontWeight.SemiBold,
+                color = PrimaryText
+            )
+        )
+        Text(
+            text = "${portfolio.category} - ${portfolio.year}",
+            style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+        )
+    }
+}
+
+@Composable
+private fun RatingSummary(rating: Float, reviewCount: Int, breakdown: Map<Int, Int>) {
+    val totalVotes = breakdown.values.sum().takeIf { it > 0 } ?: 1
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .border(1.dp, BorderColor, RoundedCornerShape(12.dp))
+            .padding(16.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.width(80.dp)
+            ) {
+                Text(
+                    text = rating.toString(),
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = PrimaryText
+                )
+                Row {
+                    repeat(5) { i ->
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            tint = if (i < rating.toInt()) StarYellow else LightGray,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "$reviewCount Ulasan",
+                    style = MaterialTheme.typography.labelSmall.copy(color = SecondaryText)
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                listOf(5, 4, 3).forEach { star ->
+                    val count = breakdown[star] ?: 0
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(vertical = 3.dp)
+                    ) {
+                        Text(
+                            text = "$star",
+                            style = MaterialTheme.typography.labelSmall.copy(color = SecondaryText),
+                            modifier = Modifier.width(12.dp)
+                        )
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            tint = StarYellow,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        LinearProgressIndicator(
+                            progress = { count.toFloat() / totalVotes },
+                            modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)),
+                            color = StarYellow,
+                            trackColor = LightGray
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReviewCard(review: JasaReviewItem) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(AccentBlue.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = review.reviewerName.first().uppercase(),
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = AccentBlue
+                        )
+                    )
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = review.reviewerName,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = PrimaryText
+                        )
+                    )
+                    Text(
+                        text = review.date,
+                        style = MaterialTheme.typography.labelSmall.copy(color = MutedText)
+                    )
+                }
+                Row {
+                    repeat(review.rating) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            tint = StarYellow,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = review.comment,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = SecondaryText,
+                    lineHeight = MaterialTheme.typography.bodySmall.lineHeight
+                )
+            )
         }
     }
 }
@@ -334,13 +708,6 @@ private fun JasaDetailTopBar(onBack: () -> Unit) {
             ),
             modifier = Modifier.weight(1f)
         )
-        IconButton(onClick = {}) {
-            Icon(
-                imageVector = Icons.Default.Bookmark,
-                contentDescription = "Bookmark",
-                tint = PrimaryText
-            )
-        }
         IconButton(onClick = {}) {
             Icon(
                 imageVector = Icons.Default.Share,
