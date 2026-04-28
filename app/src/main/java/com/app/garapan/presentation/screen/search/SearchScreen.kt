@@ -2,6 +2,7 @@ package com.app.garapan.presentation.screen.search
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +38,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -60,12 +63,28 @@ import com.app.garapan.ui.theme.SecondaryText
 import com.app.garapan.ui.theme.Surface
 import com.app.garapan.ui.theme.White
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
     navController: NavController,
     viewModel: SearchViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    if (uiState.showFilterSheet) {
+        FilterSortBottomSheet(
+            state = uiState.filter,
+            sheetState = sheetState,
+            onDismiss = viewModel::onDismissFilter,
+            onTypeSelected = viewModel::onFilterTypeSelected,
+            onCategorySelected = viewModel::onCategorySelected,
+            onMinPriceChanged = viewModel::onMinPriceChanged,
+            onMaxPriceChanged = viewModel::onMaxPriceChanged,
+            onSortSelected = viewModel::onSortSelected,
+            onApply = viewModel::onApplyFilter
+        )
+    }
 
     Scaffold(
         bottomBar = {
@@ -85,6 +104,7 @@ fun SearchScreen(
             SearchBar(
                 query = uiState.query,
                 onQueryChanged = viewModel::onQueryChanged,
+                onFilterClick = viewModel::onShowFilter,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
 
@@ -139,6 +159,7 @@ private fun SearchTopBar(onBack: () -> Unit) {
 private fun SearchBar(
     query: String,
     onQueryChanged: (String) -> Unit,
+    onFilterClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -179,7 +200,8 @@ private fun SearchBar(
                 .size(32.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(White)
-                .border(1.dp, BorderColor, RoundedCornerShape(8.dp)),
+                .border(1.dp, BorderColor, RoundedCornerShape(8.dp))
+                .clickable { onFilterClick() },
             contentAlignment = Alignment.Center
         ) {
             Icon(
