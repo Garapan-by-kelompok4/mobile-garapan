@@ -353,6 +353,7 @@ private fun ProjectCard(project: ProjectItem) {
                         fontWeight = FontWeight.Bold,
                         color = PrimaryText
                     ),
+                    minLines = 2,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
