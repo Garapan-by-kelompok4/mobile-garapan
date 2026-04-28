@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.sp
 import com.app.garapan.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
@@ -81,10 +82,7 @@ fun HomeScreen(
 
     Scaffold(
         bottomBar = {
-            HomeBottomNav(
-                selectedIndex = uiState.selectedNavIndex,
-                onItemSelected = viewModel::onNavItemSelected
-            )
+            HomeBottomNav(navController = navController)
         },
         containerColor = Surface
     ) { innerPadding ->
@@ -625,14 +623,15 @@ private fun BlogCard(blog: BlogItem) {
 private data class NavItem(val label: String, val selectedIcon: ImageVector, val unselectedIcon: ImageVector)
 
 @Composable
-private fun HomeBottomNav(selectedIndex: Int, onItemSelected: (Int) -> Unit) {
+private fun HomeBottomNav(navController: NavController) {
     val navItems = listOf(
         NavItem("Home", Icons.Filled.Home, Icons.Outlined.Home),
-        NavItem("Cari", Icons.Filled.Search, Icons.Outlined.Search),
-        NavItem("Posting", Icons.Default.Add, Icons.Default.Add),
+        NavItem("Search", Icons.Filled.Search, Icons.Outlined.Search),
+        NavItem("New", Icons.Default.Add, Icons.Default.Add),
         NavItem("Pesan", Icons.Outlined.ChatBubbleOutline, Icons.Outlined.ChatBubbleOutline),
-        NavItem("Profil", Icons.Filled.Person, Icons.Outlined.Person),
+        NavItem("Profile", Icons.Filled.Person, Icons.Outlined.Person),
     )
+    val selectedIndex = 0
 
     NavigationBar(
         containerColor = White,
@@ -641,7 +640,6 @@ private fun HomeBottomNav(selectedIndex: Int, onItemSelected: (Int) -> Unit) {
     ) {
         navItems.forEachIndexed { index, item ->
             if (index == 2) {
-                // Center posting button — elevated circle style
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -666,7 +664,12 @@ private fun HomeBottomNav(selectedIndex: Int, onItemSelected: (Int) -> Unit) {
             } else {
                 NavigationBarItem(
                     selected = selectedIndex == index,
-                    onClick = { onItemSelected(index) },
+                    onClick = {
+                        when (index) {
+                            1 -> navController.navigate(Routes.SEARCH)
+                            else -> {}
+                        }
+                    },
                     icon = {
                         Icon(
                             imageVector = if (selectedIndex == index) item.selectedIcon else item.unselectedIcon,

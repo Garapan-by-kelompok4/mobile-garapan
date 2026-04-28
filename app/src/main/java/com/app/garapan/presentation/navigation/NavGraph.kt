@@ -11,6 +11,7 @@ import com.app.garapan.presentation.screen.auth.RegisterScreen
 import com.app.garapan.presentation.screen.auth.SetupAccountScreen
 import com.app.garapan.presentation.screen.auth.SplashScreen
 import com.app.garapan.presentation.screen.home.HomeScreen
+import com.app.garapan.presentation.screen.search.SearchScreen
 
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -39,6 +40,9 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(Routes.HOME) {
             HomeScreen(navController = navController)
+        }
+        composable(Routes.SEARCH) {
+            SearchScreen(navController = navController)
         }
     }
 }
