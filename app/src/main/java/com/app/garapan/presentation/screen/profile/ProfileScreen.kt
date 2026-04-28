@@ -84,6 +84,11 @@ fun ProfileScreen(
         },
         containerColor = White
     ) { innerPadding ->
+        val initials = uiState.name
+            .split(" ")
+            .take(2)
+            .joinToString("") { it.first().uppercase() }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -97,6 +102,7 @@ fun ProfileScreen(
             ProfileHeaderCard(
                 name = uiState.name,
                 email = uiState.email,
+                initials = initials,
                 onClick = { navController.navigate(Routes.EDIT_PROFILE) }
             )
 
@@ -169,6 +175,7 @@ private fun ProfileTopBar(onBack: () -> Unit) {
 private fun ProfileHeaderCard(
     name: String,
     email: String,
+    initials: String,
     onClick: () -> Unit
 ) {
     Row(
@@ -180,7 +187,7 @@ private fun ProfileHeaderCard(
             .padding(horizontal = 22.dp, vertical = 24.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        ProfileAvatar()
+        ProfileAvatar(initials = initials)
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -212,7 +219,7 @@ private fun ProfileHeaderCard(
 }
 
 @Composable
-private fun ProfileAvatar() {
+private fun ProfileAvatar(initials: String) {
     Box(
         modifier = Modifier
             .size(56.dp)
@@ -222,7 +229,7 @@ private fun ProfileAvatar() {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "ML",
+            text = initials,
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.ExtraBold,
                 color = BrandNavy
@@ -257,7 +264,7 @@ private fun ProfileMenuGroup(
         items.forEachIndexed { index, item ->
             ProfileMenuRow(
                 item = item,
-                muted = muted && index != 0
+                muted = muted
             )
             if (index != items.lastIndex) {
                 HorizontalDivider(
