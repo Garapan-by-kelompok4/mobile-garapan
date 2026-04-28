@@ -130,8 +130,7 @@ fun ProfileScreen(
                     ProfileMenuItem("Pusat Bantuan", Icons.AutoMirrored.Filled.Help),
                     ProfileMenuItem("Syarat & Ketentuan", Icons.AutoMirrored.Filled.Article),
                     ProfileMenuItem("Kebijakan Privasi", Icons.Filled.PrivacyTip)
-                ),
-                muted = true
+                )
             )
 
             Spacer(modifier = Modifier.height(14.dp))
