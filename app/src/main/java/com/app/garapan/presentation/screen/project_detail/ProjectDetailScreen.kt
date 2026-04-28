@@ -118,7 +118,7 @@ fun ProjectDetailScreen(
                     )
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                MetaRow(icon = Icons.Default.Schedule, text = uiState.duration)
+                MetaRow(icon = Icons.Default.Schedule, text = uiState.deadline)
                 Spacer(modifier = Modifier.height(8.dp))
                 MetaRow(icon = Icons.Outlined.Paid, text = uiState.budget)
                 Spacer(modifier = Modifier.height(8.dp))
