@@ -12,4 +12,8 @@
 - [x] RegisterScreen — role-aware registration form with password confirm
 - [x] SetupAccountScreen — separate Student and Client setup forms with chips and dropdowns
 - [x] HomeScreen — hero banner, stats, project cards, service cards, top workers, blog, bottom nav
-- [x] SearchScreen — search bar with filter button, empty state
+- [x] SearchScreen — search bar with filter button, empty state, results list with filter & sort bottom sheet
+- [x] ProfileScreen — user card, Preferensi and Lainnya menu groups, logout card, bottom nav
+- [x] EditProfileScreen — edit profile identity form
+- [x] SecurityScreen — account security settings
+- [x] OrderHistoryScreen — order history list
