@@ -667,6 +667,7 @@ private fun HomeBottomNav(navController: NavController) {
                     onClick = {
                         when (index) {
                             1 -> navController.navigate(Routes.SEARCH)
+                            4 -> navController.navigate(Routes.PROFILE)
                             else -> {}
                         }
                     },

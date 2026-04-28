@@ -10,8 +10,12 @@ import com.app.garapan.presentation.screen.auth.LoginScreen
 import com.app.garapan.presentation.screen.auth.RegisterScreen
 import com.app.garapan.presentation.screen.auth.SetupAccountScreen
 import com.app.garapan.presentation.screen.auth.SplashScreen
+import com.app.garapan.presentation.screen.edit_profile.EditProfileScreen
 import com.app.garapan.presentation.screen.home.HomeScreen
+import com.app.garapan.presentation.screen.order_history.OrderHistoryScreen
+import com.app.garapan.presentation.screen.profile.ProfileScreen
 import com.app.garapan.presentation.screen.search.SearchScreen
+import com.app.garapan.presentation.screen.security.SecurityScreen
 
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -43,6 +47,18 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(Routes.SEARCH) {
             SearchScreen(navController = navController)
+        }
+        composable(Routes.PROFILE) {
+            ProfileScreen(navController = navController)
+        }
+        composable(Routes.EDIT_PROFILE) {
+            EditProfileScreen(navController = navController)
+        }
+        composable(Routes.ORDER_HISTORY) {
+            OrderHistoryScreen(navController = navController)
+        }
+        composable(Routes.SECURITY) {
+            SecurityScreen(navController = navController)
         }
     }
 }
