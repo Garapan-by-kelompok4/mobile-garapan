@@ -450,6 +450,7 @@ private fun SearchBottomNav(navController: NavController) {
                         modifier = Modifier
                             .size(52.dp)
                             .clip(CircleShape)
+                            .clickable { navController.navigate(Routes.POST_PROJECT) }
                             .background(BrandNavy),
                         contentAlignment = Alignment.Center
                     ) {

@@ -3,6 +3,7 @@ package com.app.garapan.presentation.screen.home
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -682,6 +683,7 @@ private fun HomeBottomNav(navController: NavController) {
                         modifier = Modifier
                             .size(52.dp)
                             .clip(CircleShape)
+                            .clickable { navController.navigate(Routes.POST_PROJECT) }
                             .background(BrandNavy),
                         contentAlignment = Alignment.Center
                     ) {

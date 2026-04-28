@@ -14,6 +14,7 @@ import com.app.garapan.presentation.screen.edit_profile.EditProfileScreen
 import com.app.garapan.presentation.screen.home.HomeScreen
 import com.app.garapan.presentation.screen.order_history.OrderHistoryScreen
 import com.app.garapan.presentation.screen.pesan.PesanScreen
+import com.app.garapan.presentation.screen.post_project.PostProjectScreen
 import com.app.garapan.presentation.screen.profile.ProfileScreen
 import com.app.garapan.presentation.screen.search.SearchScreen
 import com.app.garapan.presentation.screen.project_detail.ProjectDetailScreen
@@ -52,6 +53,9 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(Routes.PESAN) {
             PesanScreen(navController = navController)
+        }
+        composable(Routes.POST_PROJECT) {
+            PostProjectScreen(navController = navController)
         }
         composable(Routes.PROFILE) {
             ProfileScreen(navController = navController)
