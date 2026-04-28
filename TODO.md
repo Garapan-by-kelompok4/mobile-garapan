@@ -17,3 +17,5 @@
 - [x] EditProfileScreen — edit profile identity form
 - [x] SecurityScreen — account security settings
 - [x] OrderHistoryScreen — order history list
+- [x] PesanScreen — chat list with admin section, conversation list, unread badges, search field
+- [x] ProjectDetailScreen — project detail with category chip, meta rows, client card, description, CTA button
