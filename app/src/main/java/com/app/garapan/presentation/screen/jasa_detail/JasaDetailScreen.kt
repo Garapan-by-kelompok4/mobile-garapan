@@ -87,7 +87,7 @@ fun JasaDetailScreen(
                         style = MaterialTheme.typography.labelSmall.copy(color = SecondaryText)
                     )
                     Text(
-                        text = uiState.priceShort,
+                        text = uiState.price,
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = PrimaryText
