@@ -371,7 +371,7 @@ private fun ProjectCard(project: ProjectItem, onClick: () -> Unit = {}) {
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = project.duration,
+                        text = project.deadline,
                         style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
                     )
                 }
