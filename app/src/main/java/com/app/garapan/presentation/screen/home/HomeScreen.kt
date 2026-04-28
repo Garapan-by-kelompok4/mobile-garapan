@@ -92,7 +92,7 @@ fun HomeScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            HomeTopBar()
+            HomeTopBar(onSearchClick = { navController.navigate(Routes.SEARCH) })
             Spacer(modifier = Modifier.height(16.dp))
 
             HeroBanner()
@@ -170,7 +170,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun HomeTopBar() {
+private fun HomeTopBar(onSearchClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -193,7 +193,7 @@ private fun HomeTopBar() {
             ),
             modifier = Modifier.weight(1f)
         )
-        IconButton(onClick = {}) {
+        IconButton(onClick = onSearchClick) {
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Search",
