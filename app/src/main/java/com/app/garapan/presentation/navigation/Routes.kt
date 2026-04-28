@@ -8,6 +8,7 @@ object Routes {
     const val HOME = "home"
     const val SEARCH = "search"
     const val PESAN = "pesan"
+    const val POST_PROJECT = "post_project"
     const val PROFILE = "profile"
     const val EDIT_PROFILE = "edit_profile"
     const val ORDER_HISTORY = "order_history"
