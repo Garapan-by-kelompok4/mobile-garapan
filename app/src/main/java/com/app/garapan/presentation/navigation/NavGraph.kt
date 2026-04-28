@@ -16,6 +16,7 @@ import com.app.garapan.presentation.screen.order_history.OrderHistoryScreen
 import com.app.garapan.presentation.screen.pesan.PesanScreen
 import com.app.garapan.presentation.screen.profile.ProfileScreen
 import com.app.garapan.presentation.screen.search.SearchScreen
+import com.app.garapan.presentation.screen.project_detail.ProjectDetailScreen
 import com.app.garapan.presentation.screen.security.SecurityScreen
 
 @Composable
@@ -63,6 +64,12 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(Routes.SECURITY) {
             SecurityScreen(navController = navController)
+        }
+        composable(
+            route = Routes.PROJECT_DETAIL,
+            arguments = listOf(navArgument("projectId") { type = NavType.StringType })
+        ) {
+            ProjectDetailScreen(navController = navController)
         }
     }
 }

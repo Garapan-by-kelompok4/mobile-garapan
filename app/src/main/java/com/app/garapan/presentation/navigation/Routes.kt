@@ -12,6 +12,8 @@ object Routes {
     const val EDIT_PROFILE = "edit_profile"
     const val ORDER_HISTORY = "order_history"
     const val SECURITY = "security"
+    const val PROJECT_DETAIL = "project_detail/{projectId}"
 
     fun setupRoute(role: String) = "$SETUP?role=$role"
+    fun projectDetailRoute(projectId: String) = "project_detail/$projectId"
 }
