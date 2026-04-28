@@ -387,6 +387,7 @@ private fun ProfileBottomNav(navController: NavController) {
                                 popUpTo(Routes.HOME) { inclusive = true }
                             }
                             1 -> navController.navigate(Routes.SEARCH)
+                            3 -> navController.navigate(Routes.PESAN)
                             else -> {}
                         }
                     },

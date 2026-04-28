@@ -469,6 +469,7 @@ private fun SearchBottomNav(navController: NavController) {
                             0 -> navController.navigate(Routes.HOME) {
                                 popUpTo(Routes.HOME) { inclusive = true }
                             }
+                            3 -> navController.navigate(Routes.PESAN)
                             4 -> navController.navigate(Routes.PROFILE)
                             else -> {}
                         }
