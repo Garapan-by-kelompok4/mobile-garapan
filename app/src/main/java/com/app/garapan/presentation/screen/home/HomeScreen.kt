@@ -111,7 +111,10 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(uiState.projects) { project ->
-                    ProjectCard(project = project)
+                    ProjectCard(
+                        project = project,
+                        onClick = { navController.navigate(Routes.projectDetailRoute(project.id)) }
+                    )
                 }
             }
 
@@ -332,9 +335,10 @@ private fun SectionHeader(title: String, onSeeAll: () -> Unit) {
 }
 
 @Composable
-private fun ProjectCard(project: ProjectItem) {
+private fun ProjectCard(project: ProjectItem, onClick: () -> Unit = {}) {
     Card(
         modifier = Modifier.width(280.dp),
+        onClick = onClick,
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
