@@ -19,7 +19,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Group
@@ -257,13 +256,6 @@ private fun ProjectDetailTopBar(onBack: () -> Unit) {
             ),
             modifier = Modifier.weight(1f)
         )
-        IconButton(onClick = {}) {
-            Icon(
-                imageVector = Icons.Default.BookmarkBorder,
-                contentDescription = "Bookmark",
-                tint = PrimaryText
-            )
-        }
         IconButton(onClick = {}) {
             Icon(
                 imageVector = Icons.Default.Share,
