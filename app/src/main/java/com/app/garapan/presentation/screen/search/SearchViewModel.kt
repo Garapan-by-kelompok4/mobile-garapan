@@ -24,8 +24,8 @@ val categoryOptions = listOf(
 data class FilterSortState(
     val selectedType: FilterType = FilterType.PROYEK,
     val selectedCategory: String = "Semua Kategori",
-    val minPrice: String = "100.000",
-    val maxPrice: String = "5.000.000",
+    val minPrice: String = "100000",
+    val maxPrice: String = "5000000",
     val sortBy: SortOption = SortOption.PALING_POPULER
 )
 
@@ -76,10 +76,10 @@ class SearchViewModel @Inject constructor() : ViewModel() {
         _uiState.update { it.copy(filter = it.filter.copy(selectedCategory = category)) }
 
     fun onMinPriceChanged(value: String) =
-        _uiState.update { it.copy(filter = it.filter.copy(minPrice = value)) }
+        _uiState.update { it.copy(filter = it.filter.copy(minPrice = value.filter { c -> c.isDigit() }.take(9))) }
 
     fun onMaxPriceChanged(value: String) =
-        _uiState.update { it.copy(filter = it.filter.copy(maxPrice = value)) }
+        _uiState.update { it.copy(filter = it.filter.copy(maxPrice = value.filter { c -> c.isDigit() }.take(9))) }
 
     fun onSortSelected(option: SortOption) =
         _uiState.update { it.copy(filter = it.filter.copy(sortBy = option)) }

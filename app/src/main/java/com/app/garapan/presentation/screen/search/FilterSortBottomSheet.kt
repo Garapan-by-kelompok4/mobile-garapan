@@ -39,8 +39,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.garapan.ui.theme.BorderColor
@@ -298,14 +302,38 @@ private fun PriceField(
         )
         BasicTextField(
             value = value,
-            onValueChange = onValueChange,
+            onValueChange = { raw ->
+                // only digits, max 9 chars (999.999.999)
+                onValueChange(raw.filter { it.isDigit() }.take(9))
+            },
             textStyle = MaterialTheme.typography.bodySmall.copy(
                 color = PrimaryText,
                 fontWeight = FontWeight.SemiBold
             ),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            visualTransformation = ThousandSeparatorTransformation,
             cursorBrush = SolidColor(BrandNavy)
         )
+    }
+}
+
+private object ThousandSeparatorTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val digits = text.text
+        val formatted = digits.reversed().chunked(3).joinToString(".").reversed()
+
+        val offsetMapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int {
+                // each group of 3 digits adds 1 dot before it
+                val dotsAdded = ((offset - 1) / 3).coerceAtLeast(0)
+                return (offset + dotsAdded).coerceAtMost(formatted.length)
+            }
+            override fun transformedToOriginal(offset: Int): Int =
+                formatted.substring(0, offset.coerceAtMost(formatted.length))
+                    .count { it.isDigit() }
+                    .coerceAtMost(digits.length)
+        }
+        return TransformedText(AnnotatedString(formatted), offsetMapping)
     }
 }
