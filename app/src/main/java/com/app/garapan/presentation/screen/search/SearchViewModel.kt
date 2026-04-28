@@ -29,19 +29,42 @@ data class FilterSortState(
     val sortBy: SortOption = SortOption.PALING_POPULER
 )
 
+data class SearchResultItem(
+    val id: String,
+    val title: String,
+    val workerName: String,
+    val rating: Float,
+    val reviewCount: Int,
+    val price: String,
+    val duration: String
+)
+
 data class SearchUiState(
     val query: String = "",
     val showFilterSheet: Boolean = false,
-    val filter: FilterSortState = FilterSortState()
+    val showResults: Boolean = false,
+    val filter: FilterSortState = FilterSortState(),
+    val results: List<SearchResultItem> = emptyList()
+)
+
+private val dummyResults = listOf(
+    SearchResultItem("1", "Pembuatan Website Company Profile Modern", "Andi Pratama", 4.9f, 47, "Rp 2.500.000", "5 hari"),
+    SearchResultItem("2", "Desain UI/UX Mobile App dari Scratch", "Sari Dewi", 4.8f, 63, "Rp 1.800.000", "7 hari"),
+    SearchResultItem("3", "Setup CI/CD Pipeline & Deploy ke VPS", "Rizky Fajar", 5.0f, 29, "Rp 1.200.000", "3 hari"),
+    SearchResultItem("4", "Machine Learning Model untuk Klasifikasi Data", "Budi Santoso", 4.7f, 38, "Rp 3.500.000", "10 hari"),
+    SearchResultItem("5", "REST API Backend dengan Node.js & PostgreSQL", "Andi Pratama", 4.9f, 21, "Rp 2.000.000", "4 hari"),
+    SearchResultItem("6", "Aplikasi Android E-Commerce dengan Jetpack Compose", "Sari Dewi", 4.8f, 15, "Rp 4.500.000", "14 hari"),
 )
 
 @HiltViewModel
 class SearchViewModel @Inject constructor() : ViewModel() {
 
-    private val _uiState = MutableStateFlow(SearchUiState())
+    private val _uiState = MutableStateFlow(SearchUiState(results = dummyResults))
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
-    fun onQueryChanged(query: String) = _uiState.update { it.copy(query = query) }
+    fun onQueryChanged(query: String) = _uiState.update {
+        it.copy(query = query, showResults = query.isNotEmpty())
+    }
 
     fun onShowFilter() = _uiState.update { it.copy(showFilterSheet = true) }
     fun onDismissFilter() = _uiState.update { it.copy(showFilterSheet = false) }
@@ -61,5 +84,7 @@ class SearchViewModel @Inject constructor() : ViewModel() {
     fun onSortSelected(option: SortOption) =
         _uiState.update { it.copy(filter = it.filter.copy(sortBy = option)) }
 
-    fun onApplyFilter() = _uiState.update { it.copy(showFilterSheet = false) }
+    fun onApplyFilter() = _uiState.update {
+        it.copy(showFilterSheet = false, showResults = true)
+    }
 }
