@@ -12,7 +12,8 @@ data class ProjectItem(
     val title: String,
     val budget: String,
     val category: String,
-    val deadline: String,
+    val duration: String,
+    val teamSize: String,
     val clientName: String
 )
 
@@ -62,10 +63,10 @@ class HomeViewModel @Inject constructor() : ViewModel() {
     private val _uiState = MutableStateFlow(
         HomeUiState(
             projects = listOf(
-                ProjectItem("1", "Buat Website E-Commerce", "Rp 3.000.000", "Web Dev", "2 minggu", "PT Maju Jaya"),
-                ProjectItem("2", "Desain UI Mobile App", "Rp 2.500.000", "UI/UX", "1 minggu", "Startup Kopi"),
-                ProjectItem("3", "Integrasi API Payment", "Rp 1.800.000", "Backend", "3 hari", "TokoOnline.id"),
-                ProjectItem("4", "Analisis Data Penjualan", "Rp 2.000.000", "Data Science", "1 minggu", "CV Berkah"),
+                ProjectItem("1", "Platform e-Learning Interaktif untuk Bimbingan Belajar", "Rp 5.000.000 - Rp 8.000.000", "Ed-Tech", "3 Bulan Estimasi", "Tim (2-3 Orang)", "PT Nusantara Global"),
+                ProjectItem("2", "Aplikasi Manajemen Inventaris Gudang", "Rp 3.000.000 - Rp 5.000.000", "Mobile Dev", "2 Bulan Estimasi", "Tim (1-2 Orang)", "CV Berkah Mandiri"),
+                ProjectItem("3", "Sistem Monitoring Jaringan Real-Time", "Rp 4.000.000 - Rp 6.000.000", "DevOps", "6 Minggu Estimasi", "Individu", "PT Teknologi Maju"),
+                ProjectItem("4", "Dashboard Analitik Data Penjualan", "Rp 2.500.000 - Rp 4.000.000", "Data Science", "1 Bulan Estimasi", "Tim (1-2 Orang)", "Startup Kopi"),
             ),
             services = listOf(
                 ServiceItem("1", "Desain Logo Profesional", "Rp 500.000", "UI/UX", "Andi Pratama", 4.9f),
