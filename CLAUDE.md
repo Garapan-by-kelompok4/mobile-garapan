@@ -126,7 +126,9 @@ Scope: the screen or layer being changed (e.g. `auth`, `home`, `domain`, `data`)
 
 - Always read both `.docs` files before starting any task
 - Never modify files outside the scope of your assigned task
-- Never push directly to `main` — always create a branch
+- **Before writing any code**, create a feature branch: `git checkout -b feat/<screen-name>`
+- **Never commit or push directly to `main`** — every change goes through a branch and a PR
+- After pushing the branch, always create a PR using `gh pr create` — do not merge it yourself, wait for review
 - Always run `./gradlew assembleDebug` before committing to verify the build
 - Follow the commit message format above exactly
 - If a task requires changes in multiple layers (data + domain + presentation), do them all in one branch but commit layer by layer
