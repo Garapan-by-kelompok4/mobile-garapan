@@ -17,6 +17,7 @@ import com.app.garapan.presentation.screen.pesan.PesanScreen
 import com.app.garapan.presentation.screen.post_project.PostProjectScreen
 import com.app.garapan.presentation.screen.profile.ProfileScreen
 import com.app.garapan.presentation.screen.search.SearchScreen
+import com.app.garapan.presentation.screen.chat.ChatScreen
 import com.app.garapan.presentation.screen.jasa_detail.JasaDetailScreen
 import com.app.garapan.presentation.screen.project_detail.ProjectDetailScreen
 import com.app.garapan.presentation.screen.security.SecurityScreen
@@ -81,6 +82,12 @@ fun NavGraph(navController: NavHostController) {
             arguments = listOf(navArgument("jasaId") { type = NavType.StringType })
         ) {
             JasaDetailScreen(navController = navController)
+        }
+        composable(
+            route = Routes.CHAT,
+            arguments = listOf(navArgument("workerId") { type = NavType.StringType })
+        ) {
+            ChatScreen(navController = navController)
         }
     }
 }
