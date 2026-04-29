@@ -170,7 +170,10 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 uiState.blogs.forEach { blog ->
-                    BlogCard(blog = blog)
+                    BlogCard(
+                        blog = blog,
+                        onClick = { navController.navigate(Routes.blogDetailRoute(blog.id)) }
+                    )
                 }
             }
 
@@ -605,9 +608,10 @@ private fun TopWorkerCard(worker: TopWorkerItem) {
 }
 
 @Composable
-private fun BlogCard(blog: BlogItem) {
+private fun BlogCard(blog: BlogItem, onClick: () -> Unit = {}) {
     Card(
         modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)

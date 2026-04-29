@@ -17,9 +17,11 @@ object Routes {
     const val JASA_DETAIL = "jasa_detail/{jasaId}"
     const val CHAT = "chat/{workerId}"
     const val CHECKOUT = "checkout"
+    const val BLOG_DETAIL = "blog_detail/{blogId}"
 
     fun setupRoute(role: String) = "$SETUP?role=$role"
     fun projectDetailRoute(projectId: String) = "project_detail/$projectId"
     fun jasaDetailRoute(jasaId: String) = "jasa_detail/$jasaId"
     fun chatRoute(workerId: String) = "chat/$workerId"
+    fun blogDetailRoute(blogId: String) = "blog_detail/$blogId"
 }

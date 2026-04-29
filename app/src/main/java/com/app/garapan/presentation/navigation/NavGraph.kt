@@ -10,17 +10,18 @@ import com.app.garapan.presentation.screen.auth.LoginScreen
 import com.app.garapan.presentation.screen.auth.RegisterScreen
 import com.app.garapan.presentation.screen.auth.SetupAccountScreen
 import com.app.garapan.presentation.screen.auth.SplashScreen
+import com.app.garapan.presentation.screen.blog_detail.BlogDetailScreen
+import com.app.garapan.presentation.screen.chat.ChatScreen
+import com.app.garapan.presentation.screen.checkout.CheckoutScreen
 import com.app.garapan.presentation.screen.edit_profile.EditProfileScreen
 import com.app.garapan.presentation.screen.home.HomeScreen
+import com.app.garapan.presentation.screen.jasa_detail.JasaDetailScreen
 import com.app.garapan.presentation.screen.order_history.OrderHistoryScreen
 import com.app.garapan.presentation.screen.pesan.PesanScreen
 import com.app.garapan.presentation.screen.post_project.PostProjectScreen
 import com.app.garapan.presentation.screen.profile.ProfileScreen
-import com.app.garapan.presentation.screen.search.SearchScreen
-import com.app.garapan.presentation.screen.chat.ChatScreen
-import com.app.garapan.presentation.screen.checkout.CheckoutScreen
-import com.app.garapan.presentation.screen.jasa_detail.JasaDetailScreen
 import com.app.garapan.presentation.screen.project_detail.ProjectDetailScreen
+import com.app.garapan.presentation.screen.search.SearchScreen
 import com.app.garapan.presentation.screen.security.SecurityScreen
 
 @Composable
@@ -92,6 +93,12 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(Routes.CHECKOUT) {
             CheckoutScreen(navController = navController)
+        }
+        composable(
+            route = Routes.BLOG_DETAIL,
+            arguments = listOf(navArgument("blogId") { type = NavType.StringType })
+        ) {
+            BlogDetailScreen(navController = navController)
         }
     }
 }
