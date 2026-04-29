@@ -105,7 +105,8 @@ fun PesanScreen(
             items(uiState.adminChats) { chat ->
                 ChatPreviewCard(
                     chat = chat,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    onClick = { navController.navigate(Routes.chatRoute(chat.id)) }
                 )
             }
 
@@ -216,10 +217,13 @@ private fun SectionLabel(
 @Composable
 private fun ChatPreviewCard(
     chat: ChatPreviewItem,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
