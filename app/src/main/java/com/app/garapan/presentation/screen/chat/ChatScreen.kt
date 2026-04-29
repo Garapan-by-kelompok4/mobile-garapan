@@ -30,8 +30,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material.icons.outlined.RemoveRedEye
 import androidx.compose.material3.HorizontalDivider
@@ -46,6 +46,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -78,6 +79,8 @@ fun ChatScreen(
                 name = uiState.workerName,
                 initials = uiState.workerInitials,
                 isOnline = uiState.isOnline,
+                isAdminSupport = uiState.isAdminSupport,
+                supportLabel = uiState.supportLabel,
                 onBack = { navController.navigateUp() }
             )
         },
@@ -99,13 +102,16 @@ fun ChatScreen(
             contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 16.dp)
         ) {
             item {
-                DateSeparator(label = "Hari ini")
+                DateSeparator(label = uiState.dateSeparator)
             }
             items(uiState.messages) { message ->
                 when (message) {
                     is ChatMessage.JasaCard -> JasaContextCard(message = message)
                     is ChatMessage.Sent -> SentBubble(message = message)
-                    is ChatMessage.Received -> ReceivedBubble(message = message)
+                    is ChatMessage.Received -> ReceivedBubble(
+                        message = message,
+                        isAdminSupport = uiState.isAdminSupport
+                    )
                     is ChatMessage.FileAndOrderConfirmation -> FileAndOrderConfirmationBubble(message = message, onCheckout = onCheckout)
                 }
             }
@@ -118,8 +124,14 @@ private fun ChatTopBar(
     name: String,
     initials: String,
     isOnline: Boolean,
+    isAdminSupport: Boolean,
+    supportLabel: String?,
     onBack: () -> Unit
 ) {
+    val statusColor = if (isOnline) Color(0xFF16A34A) else Color(0xFFDC2626)
+    val connectionText = if (isOnline) "Tersambung" else "Terputus"
+    val subtitle = supportLabel?.let { "$it - $connectionText" } ?: connectionText
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -138,18 +150,27 @@ private fun ChatTopBar(
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .clip(CircleShape)
-                .background(LightGray)
-                .border(1.dp, BorderColor, CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = initials,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = BrandNavy
+            .clip(CircleShape)
+            .background(if (isAdminSupport) AccentBlue.copy(alpha = 0.12f) else LightGray)
+            .border(1.dp, BorderColor, CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+            if (isAdminSupport) {
+                Icon(
+                    imageVector = Icons.Filled.SupportAgent,
+                    contentDescription = null,
+                    tint = AccentBlue,
+                    modifier = Modifier.size(22.dp)
                 )
-            )
+            } else {
+                Text(
+                    text = initials,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = BrandNavy
+                    )
+                )
+            }
         }
         Spacer(modifier = Modifier.width(10.dp))
         Column(modifier = Modifier.weight(1f)) {
@@ -165,21 +186,17 @@ private fun ChatTopBar(
                     modifier = Modifier
                         .size(8.dp)
                         .clip(CircleShape)
-                        .background(if (isOnline) androidx.compose.ui.graphics.Color(0xFF22C55E) else MutedText)
+                        .background(statusColor)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = if (isOnline) "Online" else "Offline",
-                    style = MaterialTheme.typography.labelSmall.copy(color = SecondaryText)
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = statusColor,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 )
             }
-        }
-        IconButton(onClick = {}) {
-            Icon(
-                imageVector = Icons.Default.MoreVert,
-                contentDescription = "More",
-                tint = PrimaryText
-            )
         }
     }
 }
@@ -342,7 +359,10 @@ private fun SentBubble(message: ChatMessage.Sent) {
 }
 
 @Composable
-private fun ReceivedBubble(message: ChatMessage.Received) {
+private fun ReceivedBubble(
+    message: ChatMessage.Received,
+    isAdminSupport: Boolean
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Start,
@@ -352,18 +372,27 @@ private fun ReceivedBubble(message: ChatMessage.Received) {
             modifier = Modifier
                 .size(32.dp)
                 .clip(CircleShape)
-                .background(LightGray)
+                .background(if (isAdminSupport) AccentBlue.copy(alpha = 0.12f) else LightGray)
                 .border(1.dp, BorderColor, CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = message.senderInitials,
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = BrandNavy,
-                    fontSize = 9.sp
+            if (isAdminSupport) {
+                Icon(
+                    imageVector = Icons.Filled.SupportAgent,
+                    contentDescription = null,
+                    tint = AccentBlue,
+                    modifier = Modifier.size(18.dp)
                 )
-            )
+            } else {
+                Text(
+                    text = message.senderInitials,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = BrandNavy,
+                        fontSize = 9.sp
+                    )
+                )
+            }
         }
         Spacer(modifier = Modifier.width(8.dp))
         Box(
