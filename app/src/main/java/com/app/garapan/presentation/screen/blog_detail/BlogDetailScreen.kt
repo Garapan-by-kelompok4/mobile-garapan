@@ -31,6 +31,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,7 +41,6 @@ import androidx.navigation.NavController
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
-import com.app.garapan.ui.theme.LightGray
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
 import com.app.garapan.ui.theme.Surface
@@ -52,91 +53,97 @@ fun BlogDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Surface)
-    ) {
-        BlogDetailTopBar(
-            onBack = { navController.navigateUp() }
-        )
-
-        BlogHeroSection(uiState = uiState)
+    Column(modifier = Modifier.fillMaxSize().background(White)) {
+        BlogDetailTopBar(onBack = { navController.navigateUp() })
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 20.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(50.dp))
-                        .background(BrandNavy)
-                        .padding(horizontal = 12.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = uiState.category,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            color = White
+            BlogHeroSection(uiState = uiState)
+
+            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(AccentBlue.copy(alpha = 0.1f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = uiState.category,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.ExtraBold,
+                                color = AccentBlue
+                            )
                         )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "·",
+                        style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = uiState.date,
+                        style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
                     )
                 }
-                Spacer(modifier = Modifier.weight(1f))
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 Text(
-                    text = uiState.date,
-                    style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+                    text = uiState.title,
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = PrimaryText
+                    )
                 )
-            }
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = uiState.title,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    color = PrimaryText
+                Text(
+                    text = uiState.heroSubtitle,
+                    style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
                 )
-            )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-            AuthorCard(uiState = uiState)
+                AuthorRow(uiState = uiState)
 
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = BorderColor)
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
+                HorizontalDivider(color = BorderColor)
+                Spacer(modifier = Modifier.height(20.dp))
 
-            uiState.body.forEach { block ->
-                BlogBlock(block = block)
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "Rekomendasi Artikel",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    color = PrimaryText
-                )
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            uiState.recommendations.forEachIndexed { index, item ->
-                RecommendationCard(item = item)
-                if (index < uiState.recommendations.lastIndex) {
-                    Spacer(modifier = Modifier.height(12.dp))
+                uiState.body.forEach { block ->
+                    BlogBlock(block = block)
                 }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            Spacer(modifier = Modifier.navigationBarsPadding())
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Text(
+                    text = "Rekomendasi Artikel",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = PrimaryText
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                uiState.recommendations.forEachIndexed { index, item ->
+                    RecommendationCard(item = item)
+                    if (index < uiState.recommendations.lastIndex) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.navigationBarsPadding())
+            }
         }
     }
 }
@@ -181,60 +188,89 @@ private fun BlogHeroSection(uiState: BlogDetailUiState) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
-            .background(BrandNavy)
-            .padding(20.dp)
+            .height(220.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "garapan",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = White.copy(alpha = 0.6f),
-                        fontWeight = FontWeight.Medium
+        // Background gradient — BrandNavy to a deep indigo feel
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(BrandNavy, Color(0xFF1565C0))
                     )
                 )
-                Spacer(modifier = Modifier.height(6.dp))
+        )
+
+        // Bottom gradient fade for text legibility
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(140.dp)
+                .align(Alignment.BottomCenter)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color.Transparent, BrandNavy.copy(alpha = 0.85f))
+                    )
+                )
+        )
+
+        // Text overlaid at bottom-left
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(horizontal = 20.dp, vertical = 20.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(White.copy(alpha = 0.15f))
+                    .padding(horizontal = 8.dp, vertical = 3.dp)
+            ) {
                 Text(
-                    text = uiState.title,
-                    style = MaterialTheme.typography.titleLarge.copy(
+                    text = uiState.category,
+                    style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.ExtraBold,
                         color = White
-                    ),
-                    maxLines = 2
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = uiState.heroSubtitle,
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = White.copy(alpha = 0.7f)
                     )
                 )
             }
-            Spacer(modifier = Modifier.width(16.dp))
-            Box(
-                modifier = Modifier
-                    .size(width = 100.dp, height = 120.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(LightGray)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = uiState.title,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.ExtraBold,
+                    color = White
+                ),
+                maxLines = 2
+            )
+        }
+
+        // Read time badge — top right
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+                .clip(RoundedCornerShape(50.dp))
+                .background(White.copy(alpha = 0.15f))
+                .padding(horizontal = 10.dp, vertical = 5.dp)
+        ) {
+            Text(
+                text = uiState.readTime,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = White,
+                    fontWeight = FontWeight.Medium
+                )
             )
         }
     }
 }
 
 @Composable
-private fun AuthorCard(uiState: BlogDetailUiState) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(White)
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+private fun AuthorRow(uiState: BlogDetailUiState) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
             modifier = Modifier
-                .size(40.dp)
+                .size(36.dp)
                 .clip(CircleShape)
                 .background(AccentBlue),
             contentAlignment = Alignment.Center
@@ -247,25 +283,20 @@ private fun AuthorCard(uiState: BlogDetailUiState) {
                 )
             )
         }
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(10.dp))
         Column {
             Text(
                 text = uiState.authorName,
-                style = MaterialTheme.typography.bodyMedium.copy(
+                style = MaterialTheme.typography.bodySmall.copy(
                     fontWeight = FontWeight.SemiBold,
                     color = PrimaryText
                 )
             )
             Text(
                 text = uiState.authorRole,
-                style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+                style = MaterialTheme.typography.labelSmall.copy(color = SecondaryText)
             )
         }
-        Spacer(modifier = Modifier.weight(1f))
-        Text(
-            text = uiState.readTime,
-            style = MaterialTheme.typography.labelSmall.copy(color = SecondaryText)
-        )
     }
 }
 
@@ -277,7 +308,7 @@ private fun BlogBlock(block: BlogBodyBlock) {
                 text = block.text,
                 style = MaterialTheme.typography.bodyMedium.copy(color = PrimaryText)
             )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
         }
         is BlogBodyBlock.Heading -> {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -285,7 +316,7 @@ private fun BlogBlock(block: BlogBodyBlock) {
                     modifier = Modifier
                         .size(24.dp)
                         .clip(CircleShape)
-                        .background(AccentBlue),
+                        .background(BrandNavy),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -296,7 +327,7 @@ private fun BlogBlock(block: BlogBodyBlock) {
                         )
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(10.dp))
                 Text(
                     text = block.text,
                     style = MaterialTheme.typography.titleSmall.copy(
@@ -316,11 +347,10 @@ private fun BlogBlock(block: BlogBodyBlock) {
             ) {
                 Box(
                     modifier = Modifier
-                        .width(4.dp)
-                        .height(56.dp)
+                        .width(3.dp)
+                        .height(60.dp)
                         .background(AccentBlue)
                 )
-                Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = block.text,
                     style = MaterialTheme.typography.bodyMedium.copy(
@@ -329,10 +359,10 @@ private fun BlogBlock(block: BlogBodyBlock) {
                     ),
                     modifier = Modifier
                         .weight(1f)
-                        .padding(top = 12.dp, bottom = 12.dp, end = 12.dp)
+                        .padding(start = 14.dp, top = 12.dp, bottom = 12.dp, end = 12.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
         }
     }
 }
@@ -343,14 +373,18 @@ private fun RecommendationCard(item: RecommendationItem) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(Surface)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(160.dp)
+                .height(140.dp)
                 .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                .background(LightGray)
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(BrandNavy.copy(alpha = 0.15f), AccentBlue.copy(alpha = 0.08f))
+                    )
+                )
         )
         Column(modifier = Modifier.padding(12.dp)) {
             Text(
