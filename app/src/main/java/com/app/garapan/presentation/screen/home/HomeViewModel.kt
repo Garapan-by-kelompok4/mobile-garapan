@@ -44,7 +44,8 @@ data class BlogItem(
     val id: String,
     val title: String,
     val category: String,
-    val readTime: String
+    val readTime: String,
+    val date: String = "14 April 2026"
 )
 
 data class HomeUiState(
