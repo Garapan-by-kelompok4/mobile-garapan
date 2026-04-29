@@ -21,3 +21,4 @@
 - [x] ProjectDetailScreen — project detail with category chip, meta rows, client card, description, CTA button
 - [x] JasaDetailScreen — service detail with rating, price, worker card, tech stack chips, features, portfolio, reviews, CTA button
 - [x] PostProjectScreen — post new project form with category chips, team size dropdown, budget range, deadline picker, publish CTA
+- [x] ChatScreen — chat room with jasa context card, sent/received bubbles, file attachment, order confirmation card, input bar

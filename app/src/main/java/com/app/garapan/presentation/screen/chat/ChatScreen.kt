@@ -1,6 +1,7 @@
 package com.app.garapan.presentation.screen.chat
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -64,7 +65,8 @@ import com.app.garapan.ui.theme.White
 @Composable
 fun ChatScreen(
     navController: NavController,
-    viewModel: ChatViewModel = hiltViewModel()
+    viewModel: ChatViewModel = hiltViewModel(),
+    onCheckout: () -> Unit = { navController.navigate(com.app.garapan.presentation.navigation.Routes.CHECKOUT) }
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
@@ -104,7 +106,7 @@ fun ChatScreen(
                     is ChatMessage.JasaCard -> JasaContextCard(message = message)
                     is ChatMessage.Sent -> SentBubble(message = message)
                     is ChatMessage.Received -> ReceivedBubble(message = message)
-                    is ChatMessage.FileAndOrderConfirmation -> FileAndOrderConfirmationBubble(message = message)
+                    is ChatMessage.FileAndOrderConfirmation -> FileAndOrderConfirmationBubble(message = message, onCheckout = onCheckout)
                 }
             }
         }
@@ -393,7 +395,7 @@ private fun ReceivedBubble(message: ChatMessage.Received) {
 }
 
 @Composable
-private fun FileAndOrderConfirmationBubble(message: ChatMessage.FileAndOrderConfirmation) {
+private fun FileAndOrderConfirmationBubble(message: ChatMessage.FileAndOrderConfirmation, onCheckout: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Start,
@@ -556,6 +558,7 @@ private fun FileAndOrderConfirmationBubble(message: ChatMessage.FileAndOrderConf
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(50.dp))
                                 .background(BrandNavy)
+                                .clickable(onClick = onCheckout)
                                 .padding(vertical = 12.dp),
                             contentAlignment = Alignment.Center
                         ) {
