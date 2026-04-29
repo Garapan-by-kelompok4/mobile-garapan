@@ -26,6 +26,17 @@ sealed class ChatMessage {
         val time: String,
         val senderInitials: String
     ) : ChatMessage()
+
+    data class FileAndOrderConfirmation(
+        val fileName: String,
+        val fileSize: String,
+        val serviceName: String,
+        val servicePrice: String,
+        val extras: String,
+        val total: String,
+        val time: String,
+        val senderInitials: String
+    ) : ChatMessage()
 }
 
 data class ChatUiState(
@@ -70,6 +81,16 @@ class ChatViewModel @Inject constructor(
                 ChatMessage.Received(
                     text = "Untuk timeline 3 hari dengan kualitas premium bisa saya usahakan, Kak. Tapi perlu saya lihat dulu scope detailnya. Bisa kirim brief proyeknya?",
                     time = "10:30 AM",
+                    senderInitials = "AS"
+                ),
+                ChatMessage.FileAndOrderConfirmation(
+                    fileName = "Proposal_Desain_Minimalis.pdf",
+                    fileSize = "3.0 MB",
+                    serviceName = "Jasa Landing Page",
+                    servicePrice = "Rp 5.000.000",
+                    extras = "Revisi Tambahan (3x)",
+                    total = "Rp 5.000.000",
+                    time = "10:50 AM",
                     senderInitials = "AS"
                 )
             )

@@ -25,9 +25,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material.icons.outlined.RemoveRedEye
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -100,6 +104,7 @@ fun ChatScreen(
                     is ChatMessage.JasaCard -> JasaContextCard(message = message)
                     is ChatMessage.Sent -> SentBubble(message = message)
                     is ChatMessage.Received -> ReceivedBubble(message = message)
+                    is ChatMessage.FileAndOrderConfirmation -> FileAndOrderConfirmationBubble(message = message)
                 }
             }
         }
@@ -383,6 +388,202 @@ private fun ReceivedBubble(message: ChatMessage.Received) {
                     modifier = Modifier.align(Alignment.End)
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun FileAndOrderConfirmationBubble(message: ChatMessage.FileAndOrderConfirmation) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.Bottom
+    ) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(LightGray)
+                .border(1.dp, BorderColor, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = message.senderInitials,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = BrandNavy,
+                    fontSize = 9.sp
+                )
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Column(horizontalAlignment = Alignment.End) {
+            Column(
+                modifier = Modifier.widthIn(max = 280.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // File attachment
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(White)
+                        .padding(12.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(AccentBlue.copy(alpha = 0.12f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Description,
+                                contentDescription = null,
+                                tint = AccentBlue,
+                                modifier = Modifier.size(26.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = message.fileName,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = PrimaryText
+                                ),
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = message.fileSize,
+                                style = MaterialTheme.typography.labelSmall.copy(color = MutedText)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            imageVector = Icons.Outlined.FileDownload,
+                            contentDescription = "Download",
+                            tint = AccentBlue,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
+
+                // Order confirmation card
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(AccentBlue.copy(alpha = 0.15f))
+                        .padding(16.dp)
+                ) {
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Receipt,
+                                contentDescription = null,
+                                tint = BrandNavy,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Konfirmasi Pesanan",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = BrandNavy
+                                )
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = message.serviceName,
+                                style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+                            )
+                            Text(
+                                text = message.servicePrice,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = PrimaryText
+                                )
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = message.extras,
+                                style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+                            )
+                            Text(
+                                text = "Termasuk",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = PrimaryText
+                                )
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        HorizontalDivider(color = BorderColor)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Total",
+                                style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
+                            )
+                            Text(
+                                text = message.total,
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = AccentBlue
+                                )
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(50.dp))
+                                .background(BrandNavy)
+                                .padding(vertical = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Konfirmasi Pesanan",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = White
+                                    )
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                    contentDescription = null,
+                                    tint = White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = message.time,
+                style = MaterialTheme.typography.labelSmall.copy(color = MutedText)
+            )
         }
     }
 }
