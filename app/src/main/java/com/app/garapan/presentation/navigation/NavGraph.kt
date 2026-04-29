@@ -21,6 +21,7 @@ import com.app.garapan.presentation.screen.order_history.OrderHistoryScreen
 import com.app.garapan.presentation.screen.pesan.PesanScreen
 import com.app.garapan.presentation.screen.post_project.PostProjectScreen
 import com.app.garapan.presentation.screen.profile.ProfileScreen
+import com.app.garapan.presentation.screen.portfolio.PortfolioScreen
 import com.app.garapan.presentation.screen.profile_services.ProfileServicesScreen
 import com.app.garapan.presentation.screen.project_detail.ProjectDetailScreen
 import com.app.garapan.presentation.screen.search.SearchScreen
@@ -65,6 +66,9 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(Routes.PROFILE) {
             ProfileScreen(navController = navController)
+        }
+        composable(Routes.PROFILE_PORTFOLIO) {
+            PortfolioScreen(navController = navController)
         }
         composable(Routes.PROFILE_SERVICES) {
             ProfileServicesScreen(navController = navController)
