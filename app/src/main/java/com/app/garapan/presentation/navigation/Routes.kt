@@ -16,6 +16,7 @@ object Routes {
     const val PROJECT_DETAIL = "project_detail/{projectId}"
     const val JASA_DETAIL = "jasa_detail/{jasaId}"
     const val CHAT = "chat/{workerId}"
+    const val CHECKOUT = "checkout"
 
     fun setupRoute(role: String) = "$SETUP?role=$role"
     fun projectDetailRoute(projectId: String) = "project_detail/$projectId"
