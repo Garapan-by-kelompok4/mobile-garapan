@@ -115,7 +115,9 @@ fun ProfileScreen(
                         navController.navigate(Routes.SECURITY)
                     },
                     ProfileMenuItem("Portofolio", Icons.Filled.Work),
-                    ProfileMenuItem("Keahlian & Layanan", Icons.Filled.Computer)
+                    ProfileMenuItem("Keahlian & Layanan", Icons.Filled.Computer) {
+                        navController.navigate(Routes.PROFILE_SERVICES)
+                    }
                 )
             )
 

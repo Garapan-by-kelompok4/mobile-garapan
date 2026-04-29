@@ -10,7 +10,9 @@ object Routes {
     const val PESAN = "pesan"
     const val POST_PROJECT = "post_project"
     const val PROFILE = "profile"
+    const val PROFILE_SERVICES = "profile_services"
     const val EDIT_PROFILE = "edit_profile"
+    const val EDIT_SERVICE = "edit_service/{serviceId}"
     const val ORDER_HISTORY = "order_history"
     const val SECURITY = "security"
     const val PROJECT_DETAIL = "project_detail/{projectId}"
@@ -24,4 +26,5 @@ object Routes {
     fun jasaDetailRoute(jasaId: String) = "jasa_detail/$jasaId"
     fun chatRoute(workerId: String) = "chat/$workerId"
     fun blogDetailRoute(blogId: String) = "blog_detail/$blogId"
+    fun editServiceRoute(serviceId: String) = "edit_service/$serviceId"
 }

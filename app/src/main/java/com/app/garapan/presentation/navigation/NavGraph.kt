@@ -14,12 +14,14 @@ import com.app.garapan.presentation.screen.blog_detail.BlogDetailScreen
 import com.app.garapan.presentation.screen.chat.ChatScreen
 import com.app.garapan.presentation.screen.checkout.CheckoutScreen
 import com.app.garapan.presentation.screen.edit_profile.EditProfileScreen
+import com.app.garapan.presentation.screen.edit_service.EditServiceScreen
 import com.app.garapan.presentation.screen.home.HomeScreen
 import com.app.garapan.presentation.screen.jasa_detail.JasaDetailScreen
 import com.app.garapan.presentation.screen.order_history.OrderHistoryScreen
 import com.app.garapan.presentation.screen.pesan.PesanScreen
 import com.app.garapan.presentation.screen.post_project.PostProjectScreen
 import com.app.garapan.presentation.screen.profile.ProfileScreen
+import com.app.garapan.presentation.screen.profile_services.ProfileServicesScreen
 import com.app.garapan.presentation.screen.project_detail.ProjectDetailScreen
 import com.app.garapan.presentation.screen.search.SearchScreen
 import com.app.garapan.presentation.screen.security.SecurityScreen
@@ -64,8 +66,17 @@ fun NavGraph(navController: NavHostController) {
         composable(Routes.PROFILE) {
             ProfileScreen(navController = navController)
         }
+        composable(Routes.PROFILE_SERVICES) {
+            ProfileServicesScreen(navController = navController)
+        }
         composable(Routes.EDIT_PROFILE) {
             EditProfileScreen(navController = navController)
+        }
+        composable(
+            route = Routes.EDIT_SERVICE,
+            arguments = listOf(navArgument("serviceId") { type = NavType.StringType })
+        ) {
+            EditServiceScreen(navController = navController)
         }
         composable(Routes.ORDER_HISTORY) {
             OrderHistoryScreen(navController = navController)
