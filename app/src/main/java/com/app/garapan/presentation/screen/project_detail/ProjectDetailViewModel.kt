@@ -12,6 +12,7 @@ data class ProjectDetailUiState(
     val id: String = "",
     val category: String = "",
     val title: String = "",
+    val viewerRole: String = "client",
     val deadline: String = "",
     val budget: String = "",
     val teamSize: String = "",
