@@ -25,7 +25,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -117,10 +116,7 @@ fun PostProjectScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            PostProjectTopBar(
-                onBack = { navController.navigateUp() },
-                onClose = { navController.navigateUp() }
-            )
+            PostProjectTopBar(onBack = { navController.navigateUp() })
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = 20.dp, top = 22.dp, end = 20.dp, bottom = 18.dp),
@@ -221,10 +217,7 @@ fun PostProjectScreen(
 }
 
 @Composable
-private fun PostProjectTopBar(
-    onBack: () -> Unit,
-    onClose: () -> Unit
-) {
+private fun PostProjectTopBar(onBack: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -247,13 +240,6 @@ private fun PostProjectTopBar(
             ),
             modifier = Modifier.weight(1f)
         )
-        IconButton(onClick = onClose) {
-            Icon(
-                imageVector = Icons.Filled.Close,
-                contentDescription = "Close",
-                tint = PrimaryText
-            )
-        }
     }
 }
 
