@@ -2,24 +2,49 @@
 
 Android app for the GARAPAN IT Freelancer Marketplace — connecting Indonesian university students (Mahasiswa) as freelancers with clients (Klien).
 
+> **Status: Frontend-only (UI prototype).** All screens display dummy data. API integration, authentication, real-time chat, and payment are not yet wired up.
+
 ---
 
 ## Tech Stack
 
-| Layer | Tech |
+| Layer | Tech | Status |
+|---|---|---|
+| Language | Kotlin | ✅ Active |
+| UI | Jetpack Compose | ✅ Active |
+| Architecture | MVVM + Clean Architecture | ✅ Active |
+| DI | Hilt | ✅ Active |
+| Navigation | Jetpack Navigation Compose | ✅ Active |
+| HTTP | Retrofit + OkHttp + Coroutines | 🔜 Planned |
+| Local DB | Room | 🔜 Planned |
+| Image | Coil 3.x | 🔜 Planned |
+| Token Storage | DataStore | 🔜 Planned |
+| Chat | Socket.io | 🔜 Planned |
+| Push Notifications | Firebase FCM | 🔜 Planned |
+| Payments | Midtrans SDK | 🔜 Planned |
+
+---
+
+## Screens Implemented
+
+| Screen | Description |
 |---|---|
-| Language | Kotlin |
-| UI | Jetpack Compose |
-| Architecture | MVVM + Clean Architecture |
-| DI | Hilt |
-| HTTP | Retrofit + OkHttp + Coroutines |
-| Local DB | Room |
-| Image | Coil 3.x |
-| Navigation | Jetpack Navigation Compose |
-| Token Storage | DataStore |
-| Chat | Socket.io |
-| Push Notifications | Firebase FCM |
-| Payments | Midtrans SDK |
+| Splash | Entry point |
+| Login / Register | Auth forms (UI only) |
+| Setup Account | Role selection (Mahasiswa / Klien) |
+| Home | Project list, services, top workers, blog |
+| Search | Search bar and filters |
+| Project Detail | Project info, apply button |
+| Jasa Detail | Service info, chat & order button |
+| Chat | Chat room with file attachment and order confirmation card |
+| Checkout | Order summary and payment method selection |
+| Blog Detail | Full article with body blocks and recommendations |
+| Pesan | Conversation list including admin support |
+| Post Project | Project posting form |
+| Profile | User profile with services management |
+| Edit Profile | Profile editing form |
+| Order History | Past orders list |
+| Security | Password and security settings |
 
 ---
 
@@ -39,21 +64,28 @@ cd mobile-garapan
 
 Open the project root in Android Studio and let Gradle sync finish.
 
-### Firebase Setup (Required for push notifications)
+### Run
 
-`google-services.json` is not committed to this repo. To get it:
+Build and install directly from Android Studio, or via terminal:
+
+```bash
+./gradlew assembleDebug
+```
+
+> No backend connection is required to run the app — all data is hardcoded dummy data.
+
+### Firebase Setup (not required yet)
+
+`google-services.json` is not committed to this repo. Firebase is currently disabled. When integration begins:
 
 1. Ask the team lead to add you to the Firebase project
 2. Go to [Firebase Console](https://console.firebase.google.com) → Project Settings → Your apps → Android app
-3. Download `google-services.json`
-4. Place it in the `app/` folder
-5. Uncomment the Firebase lines in `app/build.gradle.kts` and root `build.gradle.kts`
-
-> The app builds and runs without this file — Firebase is disabled until the file is added.
+3. Download `google-services.json` and place it in the `app/` folder
+4. Uncomment the Firebase lines in `app/build.gradle.kts` and root `build.gradle.kts`
 
 ### Backend URL
 
-The app points to `http://10.0.2.2:3000/` (emulator localhost) by default via `BuildConfig.BASE_URL`. For a physical device, update the URL in `app/build.gradle.kts` to your machine's local IP.
+`BuildConfig.BASE_URL` is set to `http://10.0.2.2:3000/` (emulator localhost). Not active until API integration begins. For a physical device, update the URL in `app/build.gradle.kts` to your machine's local IP.
 
 ---
 
