@@ -19,7 +19,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -79,15 +78,7 @@ fun EditProfileScreen(
                     label = "Nomor Telepon",
                     value = uiState.phoneNumber,
                     placeholder = "+6212345678",
-                    onValueChange = viewModel::onPhoneNumberChanged,
-                    trailingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.KeyboardArrowDown,
-                            contentDescription = null,
-                            tint = Color(0xFF777777),
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
+                    onValueChange = viewModel::onPhoneNumberChanged
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 EditProfileField(
