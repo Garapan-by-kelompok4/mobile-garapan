@@ -33,6 +33,7 @@ data class JasaDetailUiState(
     val reviewCount: Int = 0,
     val isVerified: Boolean = true,
     val price: String = "",
+    val workerId: String = "1",
     val workerName: String = "",
     val workerRole: String = "",
     val workerRating: Float = 0f,

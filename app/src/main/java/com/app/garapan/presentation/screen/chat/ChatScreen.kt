@@ -1,0 +1,460 @@
+package com.app.garapan.presentation.screen.chat
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.RemoveRedEye
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import com.app.garapan.ui.theme.AccentBlue
+import com.app.garapan.ui.theme.BorderColor
+import com.app.garapan.ui.theme.BrandNavy
+import com.app.garapan.ui.theme.LightGray
+import com.app.garapan.ui.theme.MutedText
+import com.app.garapan.ui.theme.PrimaryText
+import com.app.garapan.ui.theme.SecondaryText
+import com.app.garapan.ui.theme.Surface
+import com.app.garapan.ui.theme.White
+
+@Composable
+fun ChatScreen(
+    navController: NavController,
+    viewModel: ChatViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val listState = rememberLazyListState()
+
+    Scaffold(
+        containerColor = Surface,
+        topBar = {
+            ChatTopBar(
+                name = uiState.workerName,
+                initials = uiState.workerInitials,
+                isOnline = uiState.isOnline,
+                onBack = { navController.navigateUp() }
+            )
+        },
+        bottomBar = {
+            ChatInputBar(
+                value = uiState.inputText,
+                onValueChange = viewModel::onInputChanged,
+                onSend = viewModel::onSend
+            )
+        }
+    ) { innerPadding ->
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 16.dp)
+        ) {
+            item {
+                DateSeparator(label = "Hari ini")
+            }
+            items(uiState.messages) { message ->
+                when (message) {
+                    is ChatMessage.JasaCard -> JasaContextCard(message = message)
+                    is ChatMessage.Sent -> SentBubble(message = message)
+                    is ChatMessage.Received -> ReceivedBubble(message = message)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChatTopBar(
+    name: String,
+    initials: String,
+    isOnline: Boolean,
+    onBack: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(White)
+            .statusBarsPadding()
+            .padding(horizontal = 4.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onBack) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back",
+                tint = PrimaryText
+            )
+        }
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(LightGray)
+                .border(1.dp, BorderColor, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = initials,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = BrandNavy
+                )
+            )
+        }
+        Spacer(modifier = Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = name,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = PrimaryText
+                )
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(if (isOnline) androidx.compose.ui.graphics.Color(0xFF22C55E) else MutedText)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = if (isOnline) "Online" else "Offline",
+                    style = MaterialTheme.typography.labelSmall.copy(color = SecondaryText)
+                )
+            }
+        }
+        IconButton(onClick = {}) {
+            Icon(
+                imageVector = Icons.Default.MoreVert,
+                contentDescription = "More",
+                tint = PrimaryText
+            )
+        }
+    }
+}
+
+@Composable
+private fun DateSeparator(label: String) {
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(50.dp))
+                .background(MutedText.copy(alpha = 0.15f))
+                .padding(horizontal = 16.dp, vertical = 6.dp)
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium.copy(color = SecondaryText)
+            )
+        }
+    }
+}
+
+@Composable
+private fun JasaContextCard(message: ChatMessage.JasaCard) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .widthIn(max = 300.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .border(1.dp, BorderColor, RoundedCornerShape(16.dp))
+                .background(White)
+        ) {
+            Column {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(LightGray),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "//",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                color = MutedText,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = message.title,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                color = PrimaryText
+                            ),
+                            maxLines = 2
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = message.price,
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = AccentBlue
+                            )
+                        )
+                    }
+                }
+                HorizontalDivider(color = BorderColor)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.RemoveRedEye,
+                        contentDescription = null,
+                        tint = AccentBlue,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Lihat Detail Jasa",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = AccentBlue,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = message.time,
+            style = MaterialTheme.typography.labelSmall.copy(color = MutedText),
+            modifier = Modifier.align(Alignment.End)
+        )
+    }
+}
+
+@Composable
+private fun SentBubble(message: ChatMessage.Sent) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.Bottom
+    ) {
+        Column(horizontalAlignment = Alignment.End) {
+            Box(
+                modifier = Modifier
+                    .widthIn(max = 260.dp)
+                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 16.dp, bottomEnd = 4.dp))
+                    .background(BrandNavy)
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
+            ) {
+                Column {
+                    Text(
+                        text = message.text,
+                        style = MaterialTheme.typography.bodyMedium.copy(color = White),
+                        lineHeight = 20.sp
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = message.time,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = White.copy(alpha = 0.7f),
+                            fontSize = 10.sp
+                        ),
+                        modifier = Modifier.align(Alignment.End)
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(AccentBlue.copy(alpha = 0.15f))
+                .border(1.dp, BorderColor, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "PT",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = AccentBlue,
+                    fontSize = 9.sp
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun ReceivedBubble(message: ChatMessage.Received) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.Bottom
+    ) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(LightGray)
+                .border(1.dp, BorderColor, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = message.senderInitials,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = BrandNavy,
+                    fontSize = 9.sp
+                )
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Box(
+            modifier = Modifier
+                .widthIn(max = 260.dp)
+                .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 16.dp, bottomStart = 16.dp, bottomEnd = 16.dp))
+                .background(White)
+                .border(1.dp, BorderColor, RoundedCornerShape(topStart = 4.dp, topEnd = 16.dp, bottomStart = 16.dp, bottomEnd = 16.dp))
+                .padding(horizontal = 14.dp, vertical = 10.dp)
+        ) {
+            Column {
+                Text(
+                    text = message.text,
+                    style = MaterialTheme.typography.bodyMedium.copy(color = PrimaryText),
+                    lineHeight = 20.sp
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = message.time,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = MutedText,
+                        fontSize = 10.sp
+                    ),
+                    modifier = Modifier.align(Alignment.End)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChatInputBar(
+    value: String,
+    onValueChange: (String) -> Unit,
+    onSend: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(White)
+            .navigationBarsPadding()
+            .imePadding()
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(MutedText.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = "Attach",
+                tint = PrimaryText,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(10.dp))
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .clip(RoundedCornerShape(24.dp))
+                .background(Surface)
+                .border(1.dp, BorderColor, RoundedCornerShape(24.dp))
+                .padding(horizontal = 16.dp, vertical = 10.dp)
+        ) {
+            if (value.isEmpty()) {
+                Text(
+                    text = "Ketik pesan Anda...",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = MutedText)
+                )
+            }
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = MaterialTheme.typography.bodyMedium.copy(color = PrimaryText),
+                cursorBrush = SolidColor(BrandNavy)
+            )
+        }
+        Spacer(modifier = Modifier.width(10.dp))
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .clip(CircleShape)
+                .background(BrandNavy),
+            contentAlignment = Alignment.Center
+        ) {
+            IconButton(onClick = onSend) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Send,
+                    contentDescription = "Send",
+                    tint = White,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+    }
+}
