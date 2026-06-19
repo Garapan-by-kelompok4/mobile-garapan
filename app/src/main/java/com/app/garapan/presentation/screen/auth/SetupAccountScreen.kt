@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -37,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -69,10 +71,15 @@ fun SetupAccountScreen(
 ) {
     val studentState by viewModel.student.collectAsState()
     val clientState by viewModel.client.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
 
-    val onComplete = {
-        navController.navigate(Routes.HOME) {
-            popUpTo(Routes.SPLASH) { inclusive = true }
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is SetupAccountEvent.Navigate -> navController.navigate(event.route) {
+                    popUpTo(Routes.SPLASH) { inclusive = true }
+                }
+            }
         }
     }
 
@@ -95,7 +102,9 @@ fun SetupAccountScreen(
                 onYearsSelected = viewModel::onYearsSelected,
                 onYearsDropdownToggle = viewModel::onYearsDropdownToggle,
                 onToggleExpertise = viewModel::onToggleStudentExpertise,
-                onComplete = onComplete
+                isLoading = uiState.isLoading,
+                errorMessage = uiState.errorMessage,
+                onComplete = { viewModel.onComplete(role) }
             )
         } else {
             ClientSetupForm(
@@ -107,7 +116,9 @@ fun SetupAccountScreen(
                 onIndustryDropdownToggle = viewModel::onIndustryDropdownToggle,
                 onCompanyNameChanged = viewModel::onCompanyProjectNameChanged,
                 onToggleService = viewModel::onToggleClientService,
-                onComplete = onComplete
+                isLoading = uiState.isLoading,
+                errorMessage = uiState.errorMessage,
+                onComplete = { viewModel.onComplete(role) }
             )
         }
     }
@@ -155,6 +166,8 @@ private fun StudentSetupForm(
     onYearsSelected: (String) -> Unit,
     onYearsDropdownToggle: () -> Unit,
     onToggleExpertise: (String) -> Unit,
+    isLoading: Boolean,
+    errorMessage: String?,
     onComplete: () -> Unit
 ) {
     Column(modifier = Modifier.padding(horizontal = 20.dp)) {
@@ -225,18 +238,38 @@ private fun StudentSetupForm(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = com.app.garapan.ui.theme.ErrorRed,
+                    fontWeight = FontWeight.Medium
+                )
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
         Button(
             onClick = onComplete,
+            enabled = !isLoading,
             modifier = Modifier.fillMaxWidth().height(52.dp),
             shape = RoundedCornerShape(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = BrandNavy, contentColor = OnPrimary)
         ) {
-            Text(
-                text = "Complete Profile",
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Icon(imageVector = Icons.Default.ArrowForward, contentDescription = null)
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.width(20.dp),
+                    strokeWidth = 2.dp,
+                    color = OnPrimary
+                )
+            } else {
+                Text(
+                    text = "Complete Profile",
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(imageVector = Icons.Default.ArrowForward, contentDescription = null)
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -264,6 +297,8 @@ private fun ClientSetupForm(
     onIndustryDropdownToggle: () -> Unit,
     onCompanyNameChanged: (String) -> Unit,
     onToggleService: (String) -> Unit,
+    isLoading: Boolean,
+    errorMessage: String?,
     onComplete: () -> Unit
 ) {
     Column(modifier = Modifier.padding(horizontal = 20.dp)) {
@@ -334,16 +369,36 @@ private fun ClientSetupForm(
 
         Spacer(modifier = Modifier.height(32.dp))
 
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = com.app.garapan.ui.theme.ErrorRed,
+                    fontWeight = FontWeight.Medium
+                )
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
         Button(
             onClick = onComplete,
+            enabled = !isLoading,
             modifier = Modifier.fillMaxWidth().height(52.dp),
             shape = RoundedCornerShape(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = BrandNavy, contentColor = OnPrimary)
         ) {
-            Text(
-                text = "Complete Profile",
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
-            )
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.width(20.dp),
+                    strokeWidth = 2.dp,
+                    color = OnPrimary
+                )
+            } else {
+                Text(
+                    text = "Complete Profile",
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(32.dp))

@@ -21,6 +21,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -64,6 +66,17 @@ fun LoginScreen(
     viewModel: LoginViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is LoginEvent.Navigate -> navController.navigate(event.route) {
+                    popUpTo(Routes.SPLASH) { inclusive = true }
+                }
+                is LoginEvent.Toast -> Unit
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -123,10 +136,47 @@ fun LoginScreen(
                     onToggleVisibility = viewModel::onTogglePasswordVisibility
                 )
 
+                if (uiState.errorMessage != null) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = uiState.errorMessage.orEmpty(),
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = com.app.garapan.ui.theme.ErrorRed,
+                            fontWeight = FontWeight.Medium
+                        )
+                    )
+                }
+
+                if (uiState.infoMessage != null) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = uiState.infoMessage.orEmpty(),
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = AccentBlue,
+                            fontWeight = FontWeight.Medium
+                        )
+                    )
+                }
+
+                if (uiState.canResendVerification) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Resend verification email",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = AccentBlue,
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        modifier = Modifier.clickable(enabled = !uiState.isLoading) {
+                            viewModel.onResendVerification()
+                        }
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Button(
-                    onClick = {},
+                    onClick = viewModel::onSignIn,
+                    enabled = !uiState.isLoading,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
@@ -136,12 +186,20 @@ fun LoginScreen(
                         contentColor = OnPrimary
                     )
                 ) {
-                    Text(
-                        text = "Sign In",
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.SemiBold
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = OnPrimary
                         )
-                    )
+                    } else {
+                        Text(
+                            text = "Sign In",
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
