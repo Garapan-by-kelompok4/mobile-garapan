@@ -22,7 +22,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Emulator fallback: "http://10.0.2.2:3000/"
-        buildConfigField("String", "BASE_URL", "\"https://api-garapan.up.railway.app/api/\"")
+        buildConfigField("String", "BASE_URL", "\"https://api-garapan.up.railway.app/\"")
     }
 
     buildTypes {
@@ -33,7 +33,7 @@ android {
                 "proguard-rules.pro"
             )
             // Emulator fallback: "http://10.0.2.2:3000/"
-            buildConfigField("String", "BASE_URL", "\"https://api-garapan.up.railway.app/api/\"")
+            buildConfigField("String", "BASE_URL", "\"https://api-garapan.up.railway.app/\"")
         }
     }
 
