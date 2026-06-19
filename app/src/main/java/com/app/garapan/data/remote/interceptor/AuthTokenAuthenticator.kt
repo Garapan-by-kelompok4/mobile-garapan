@@ -6,6 +6,8 @@ import com.app.garapan.data.remote.dto.AuthTokensDto
 import com.app.garapan.domain.model.AuthTokens
 import com.google.gson.Gson
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import okhttp3.Authenticator
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -25,16 +27,51 @@ class AuthTokenAuthenticator @Inject constructor(
             return null
         }
 
-        val refreshToken = runBlocking { tokenStore.getRefreshToken() } ?: return null
-        val refreshed = refreshTokens(refreshToken) ?: run {
-            runBlocking { tokenStore.clearTokens() }
+        return runBlocking {
+            refreshMutex.withLock {
+                authenticateWithLockedRefresh(response)
+            }
+        }
+    }
+
+    private suspend fun authenticateWithLockedRefresh(response: okhttp3.Response): Request? {
+        val failedAccessToken = response.request.header("Authorization")
+            ?.removePrefix("Bearer ")
+            ?.takeIf { it.isNotBlank() }
+        val currentAccessToken = if (tokenStore.isCacheLoaded()) {
+            tokenStore.getCachedAccessToken()
+        } else {
+            tokenStore.getAccessToken()
+        }
+
+        if (!failedAccessToken.isNullOrBlank() &&
+            !currentAccessToken.isNullOrBlank() &&
+            failedAccessToken != currentAccessToken
+        ) {
+            return response.request.withBearerToken(currentAccessToken)
+        }
+
+        val refreshToken = if (tokenStore.isCacheLoaded()) {
+            tokenStore.getCachedRefreshToken()
+        } else {
+            tokenStore.getRefreshToken()
+        } ?: return null
+        val refreshed = refreshTokens(refreshToken)
+
+        if (refreshed == null) {
+            val currentRefreshToken = if (tokenStore.isCacheLoaded()) {
+                tokenStore.getCachedRefreshToken()
+            } else {
+                tokenStore.getRefreshToken()
+            }
+            if (currentRefreshToken == refreshToken) {
+                tokenStore.clearTokens()
+            }
             return null
         }
 
-        runBlocking { tokenStore.saveTokens(refreshed) }
-        return response.request.newBuilder()
-            .header("Authorization", "Bearer ${refreshed.accessToken}")
-            .build()
+        tokenStore.saveTokens(refreshed)
+        return response.request.withBearerToken(refreshed.accessToken)
     }
 
     private fun refreshTokens(refreshToken: String): AuthTokens? =
@@ -61,5 +98,14 @@ class AuthTokenAuthenticator @Inject constructor(
             prior = prior.priorResponse
         }
         return result
+    }
+
+    private fun Request.withBearerToken(accessToken: String): Request =
+        newBuilder()
+            .header("Authorization", "Bearer $accessToken")
+            .build()
+
+    companion object {
+        private val refreshMutex = Mutex()
     }
 }

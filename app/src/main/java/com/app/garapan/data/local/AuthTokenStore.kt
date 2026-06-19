@@ -9,21 +9,42 @@ import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
 
+data class TokenSnapshot(
+    val accessToken: String?,
+    val refreshToken: String?
+)
+
 @Singleton
 class AuthTokenStore @Inject constructor(
     private val dataStore: DataStore<Preferences>
 ) {
+    @Volatile
+    private var cachedTokens: TokenSnapshot? = null
+
+    @Volatile
+    private var cacheLoaded: Boolean = false
+
+    fun getCachedAccessToken(): String? =
+        cachedTokens?.accessToken
+
+    fun getCachedRefreshToken(): String? =
+        cachedTokens?.refreshToken
+
+    fun isCacheLoaded(): Boolean = cacheLoaded
+
     suspend fun getAccessToken(): String? =
-        dataStore.data.first()[ACCESS_TOKEN_KEY]
+        getTokenSnapshot().accessToken
 
     suspend fun getRefreshToken(): String? =
-        dataStore.data.first()[REFRESH_TOKEN_KEY]
+        getTokenSnapshot().refreshToken
 
     suspend fun saveTokens(tokens: AuthTokens) {
         dataStore.edit {
             it[ACCESS_TOKEN_KEY] = tokens.accessToken
             it[REFRESH_TOKEN_KEY] = tokens.refreshToken
         }
+        cachedTokens = TokenSnapshot(tokens.accessToken, tokens.refreshToken)
+        cacheLoaded = true
     }
 
     suspend fun clearTokens() {
@@ -31,6 +52,24 @@ class AuthTokenStore @Inject constructor(
             it.remove(ACCESS_TOKEN_KEY)
             it.remove(REFRESH_TOKEN_KEY)
             it.remove(LEGACY_AUTH_TOKEN_KEY)
+        }
+        cachedTokens = TokenSnapshot(accessToken = null, refreshToken = null)
+        cacheLoaded = true
+    }
+
+    private suspend fun getTokenSnapshot(): TokenSnapshot {
+        if (cacheLoaded) {
+            return cachedTokens ?: TokenSnapshot(accessToken = null, refreshToken = null)
+        }
+
+        return dataStore.data.first().let {
+            TokenSnapshot(
+                accessToken = it[ACCESS_TOKEN_KEY],
+                refreshToken = it[REFRESH_TOKEN_KEY]
+            )
+        }.also {
+            cachedTokens = it
+            cacheLoaded = true
         }
     }
 

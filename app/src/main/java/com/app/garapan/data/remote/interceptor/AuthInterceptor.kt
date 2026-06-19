@@ -15,7 +15,11 @@ class AuthInterceptor @Inject constructor(
             return chain.proceed(request)
         }
 
-        val accessToken = runBlocking { tokenStore.getAccessToken() }
+        val accessToken = if (tokenStore.isCacheLoaded()) {
+            tokenStore.getCachedAccessToken()
+        } else {
+            runBlocking { tokenStore.getAccessToken() }
+        }
         val authedRequest = if (accessToken.isNullOrBlank()) {
             request
         } else {

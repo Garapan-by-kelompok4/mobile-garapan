@@ -19,6 +19,7 @@ import com.app.garapan.domain.model.Role
 import com.app.garapan.domain.model.UpdateProfileParams
 import com.app.garapan.domain.model.User
 import com.app.garapan.domain.repository.AuthRepository
+import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 
 class AuthRepositoryImpl @Inject constructor(
@@ -101,6 +102,7 @@ class AuthRepositoryImpl @Inject constructor(
         try {
             Resource.Success(block())
         } catch (throwable: Throwable) {
+            if (throwable is CancellationException) throw throwable
             Resource.Error(ApiErrorMapper.toMessage(throwable))
         }
 }
