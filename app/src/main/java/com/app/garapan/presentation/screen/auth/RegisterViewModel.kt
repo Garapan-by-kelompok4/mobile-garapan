@@ -7,6 +7,7 @@ import com.app.garapan.domain.model.Role
 import com.app.garapan.domain.usecase.RegisterUseCase
 import com.app.garapan.domain.usecase.ResendVerificationUseCase
 import com.app.garapan.domain.validation.PasswordValidator
+import com.app.garapan.presentation.navigation.Routes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,6 +34,7 @@ data class RegisterUiState(
 )
 
 sealed interface RegisterEvent {
+    data class Navigate(val route: String) : RegisterEvent
     data class Toast(val message: String) : RegisterEvent
 }
 
@@ -68,12 +70,9 @@ class RegisterViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, errorMessage = null, infoMessage = null) }
             val role = if (state.selectedTab == LoginTab.STUDENT) Role.MAHASISWA else Role.KLIEN
             when (val result = registerUseCase(state.email.trim(), state.password, role)) {
-                is Resource.Success -> _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        isAwaitingEmailVerification = true,
-                        infoMessage = "Account created. Check your email to verify your account before signing in."
-                    )
+                is Resource.Success -> {
+                    _uiState.update { it.copy(isLoading = false) }
+                    _events.emit(RegisterEvent.Navigate(Routes.verifyEmailRoute(state.email.trim())))
                 }
                 is Resource.Error -> _uiState.update {
                     it.copy(isLoading = false, errorMessage = result.message)
