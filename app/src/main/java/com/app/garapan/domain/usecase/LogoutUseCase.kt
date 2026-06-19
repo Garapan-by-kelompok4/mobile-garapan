@@ -3,9 +3,8 @@ package com.app.garapan.domain.usecase
 import com.app.garapan.domain.repository.AuthRepository
 import javax.inject.Inject
 
-class CheckAuthTokenUseCase @Inject constructor(
+class LogoutUseCase @Inject constructor(
     private val authRepository: AuthRepository
 ) {
-    suspend operator fun invoke(): Boolean =
-        authRepository.getAccessToken().isNullOrBlank().not()
+    suspend operator fun invoke() = authRepository.logout()
 }
