@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.LoginResult
+import com.app.garapan.domain.model.Role
+import com.app.garapan.domain.model.User
+import com.app.garapan.domain.usecase.GetMeUseCase
 import com.app.garapan.domain.usecase.LoginUseCase
 import com.app.garapan.domain.usecase.ResendVerificationUseCase
 import com.app.garapan.presentation.navigation.Routes
@@ -40,6 +43,7 @@ sealed interface LoginEvent {
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
+    private val getMeUseCase: GetMeUseCase,
     private val resendVerificationUseCase: ResendVerificationUseCase
 ) : ViewModel() {
 
@@ -50,8 +54,17 @@ class LoginViewModel @Inject constructor(
     val events: SharedFlow<LoginEvent> = _events.asSharedFlow()
 
     fun onTabSelected(tab: LoginTab) = _uiState.update { it.copy(selectedTab = tab, errorMessage = null) }
-    fun onEmailChanged(value: String) = _uiState.update { it.copy(email = value, errorMessage = null, canResendVerification = false) }
-    fun onPasswordChanged(value: String) = _uiState.update { it.copy(password = value, errorMessage = null) }
+    fun onEmailChanged(value: String) = _uiState.update {
+        it.copy(
+            email = value,
+            errorMessage = null,
+            canResendVerification = false,
+            requiresTwoFactor = false
+        )
+    }
+    fun onPasswordChanged(value: String) = _uiState.update {
+        it.copy(password = value, errorMessage = null, requiresTwoFactor = false)
+    }
     fun onTogglePasswordVisibility() = _uiState.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
 
     fun onSignIn() {
@@ -115,18 +128,48 @@ class LoginViewModel @Inject constructor(
     private suspend fun handleLoginSuccess(result: LoginResult) {
         when (result) {
             is LoginResult.Authenticated -> {
-                _uiState.update { it.copy(isLoading = false) }
-                _events.emit(LoginEvent.Navigate(Routes.HOME))
+                routeAfterAuthenticatedLogin()
             }
             is LoginResult.RequiresTwoFactor -> {
                 _uiState.update {
                     it.copy(
                         isLoading = false,
                         requiresTwoFactor = true,
-                        infoMessage = "Two-factor authentication is required. OTP entry is a follow-up for this MVP."
+                        infoMessage = null,
+                        errorMessage = "Two-factor login is not supported in the app yet. Disable 2FA on the web to sign in here."
                     )
                 }
             }
         }
     }
+
+    private suspend fun routeAfterAuthenticatedLogin() {
+        when (val result = getMeUseCase()) {
+            is Resource.Success -> {
+                _uiState.update { it.copy(isLoading = false) }
+                _events.emit(LoginEvent.Navigate(result.data.authDestination()))
+            }
+            is Resource.Error -> _uiState.update {
+                it.copy(isLoading = false, errorMessage = result.message)
+            }
+            Resource.Loading -> Unit
+        }
+    }
+
+    private fun User.authDestination(): String =
+        if (isProfileIncomplete()) Routes.setupRoute(role.setupRouteParam()) else Routes.HOME
+
+    private fun User.isProfileIncomplete(): Boolean =
+        when (role) {
+            Role.MAHASISWA -> mahasiswa == null || mahasiswa.university.isBlank() || mahasiswa.bio.isBlank()
+            Role.KLIEN -> klien == null || klien.bio.isBlank()
+            Role.ADMIN -> false
+        }
+
+    private fun Role.setupRouteParam(): String =
+        when (this) {
+            Role.MAHASISWA -> "student"
+            Role.KLIEN -> "client"
+            Role.ADMIN -> "admin"
+        }
 }

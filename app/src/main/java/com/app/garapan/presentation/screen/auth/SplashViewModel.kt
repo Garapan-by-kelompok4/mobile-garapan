@@ -3,6 +3,8 @@ package com.app.garapan.presentation.screen.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
+import com.app.garapan.domain.model.Role
+import com.app.garapan.domain.model.User
 import com.app.garapan.domain.usecase.CheckAuthTokenUseCase
 import com.app.garapan.domain.usecase.GetMeUseCase
 import com.app.garapan.presentation.navigation.Routes
@@ -55,7 +57,7 @@ class SplashViewModel @Inject constructor(
             when (val result = getMeUseCase()) {
                 is Resource.Success -> {
                     _uiState.value = SplashUiState(isLoading = false)
-                    _events.emit(SplashEvent.Navigate(Routes.HOME))
+                    _events.emit(SplashEvent.Navigate(result.data.authDestination()))
                 }
                 is Resource.Error -> {
                     _uiState.value = SplashUiState(isLoading = false, errorMessage = result.message)
@@ -65,4 +67,21 @@ class SplashViewModel @Inject constructor(
             }
         }
     }
+
+    private fun User.authDestination(): String =
+        if (isProfileIncomplete()) Routes.setupRoute(role.setupRouteParam()) else Routes.HOME
+
+    private fun User.isProfileIncomplete(): Boolean =
+        when (role) {
+            Role.MAHASISWA -> mahasiswa == null || mahasiswa.university.isBlank() || mahasiswa.bio.isBlank()
+            Role.KLIEN -> klien == null || klien.bio.isBlank()
+            Role.ADMIN -> false
+        }
+
+    private fun Role.setupRouteParam(): String =
+        when (this) {
+            Role.MAHASISWA -> "student"
+            Role.KLIEN -> "client"
+            Role.ADMIN -> "admin"
+        }
 }
