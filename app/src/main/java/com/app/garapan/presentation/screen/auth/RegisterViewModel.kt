@@ -4,10 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.Role
+import com.app.garapan.domain.usecase.GetMeUseCase
+import com.app.garapan.domain.usecase.GoogleSignInUseCase
 import com.app.garapan.domain.usecase.RegisterUseCase
 import com.app.garapan.domain.usecase.ResendVerificationUseCase
 import com.app.garapan.domain.validation.PasswordValidator
 import com.app.garapan.presentation.navigation.Routes
+import com.app.garapan.presentation.navigation.authDestination
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,6 +45,8 @@ sealed interface RegisterEvent {
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
     private val registerUseCase: RegisterUseCase,
+    private val googleSignInUseCase: GoogleSignInUseCase,
+    private val getMeUseCase: GetMeUseCase,
     private val resendVerificationUseCase: ResendVerificationUseCase
 ) : ViewModel() {
 
@@ -57,6 +62,23 @@ class RegisterViewModel @Inject constructor(
     fun onConfirmPasswordChanged(value: String) = _uiState.update { it.copy(confirmPassword = value, errorMessage = null) }
     fun onTogglePasswordVisibility() = _uiState.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
     fun onToggleConfirmPasswordVisibility() = _uiState.update { it.copy(isConfirmPasswordVisible = !it.isConfirmPasswordVisible) }
+
+    fun onGoogleSignIn(idToken: String, role: Role) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null, infoMessage = null) }
+            when (val result = googleSignInUseCase(idToken, role)) {
+                is Resource.Success -> routeAfterAuthenticatedGoogleSignIn()
+                is Resource.Error -> _uiState.update {
+                    it.copy(isLoading = false, errorMessage = result.message)
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    fun onGoogleSignInError(message: String) {
+        _uiState.update { it.copy(isLoading = false, errorMessage = message) }
+    }
 
     fun onSignUp() {
         val state = _uiState.value
@@ -111,4 +133,17 @@ class RegisterViewModel @Inject constructor(
                 "Password must be at least 8 characters and include lowercase, uppercase, number, and symbol."
             else -> null
         }
+
+    private suspend fun routeAfterAuthenticatedGoogleSignIn() {
+        when (val result = getMeUseCase()) {
+            is Resource.Success -> {
+                _uiState.update { it.copy(isLoading = false) }
+                _events.emit(RegisterEvent.Navigate(result.data.authDestination()))
+            }
+            is Resource.Error -> _uiState.update {
+                it.copy(isLoading = false, errorMessage = result.message)
+            }
+            Resource.Loading -> Unit
+        }
+    }
 }

@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.LoginResult
+import com.app.garapan.domain.model.Role
 import com.app.garapan.domain.usecase.GetMeUseCase
+import com.app.garapan.domain.usecase.GoogleSignInUseCase
 import com.app.garapan.domain.usecase.LoginUseCase
 import com.app.garapan.domain.usecase.ResendVerificationUseCase
 import com.app.garapan.presentation.navigation.Routes
@@ -39,6 +41,7 @@ sealed interface LoginEvent {
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
+    private val googleSignInUseCase: GoogleSignInUseCase,
     private val getMeUseCase: GetMeUseCase,
     private val resendVerificationUseCase: ResendVerificationUseCase
 ) : ViewModel() {
@@ -61,6 +64,38 @@ class LoginViewModel @Inject constructor(
         it.copy(password = value, errorMessage = null, requiresTwoFactor = false)
     }
     fun onTogglePasswordVisibility() = _uiState.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
+
+    fun onGoogleSignIn(idToken: String, role: Role? = null) {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    errorMessage = null,
+                    infoMessage = null,
+                    canResendVerification = false,
+                    requiresTwoFactor = false
+                )
+            }
+            when (val result = googleSignInUseCase(idToken, role)) {
+                is Resource.Success -> routeAfterAuthenticatedLogin()
+                is Resource.Error -> _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = if (result.message.contains("ROLE_REQUIRED", ignoreCase = true)) {
+                            "No Google account found. Please sign up first."
+                        } else {
+                            result.message
+                        }
+                    )
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    fun onGoogleSignInError(message: String) {
+        _uiState.update { it.copy(isLoading = false, errorMessage = message) }
+    }
 
     fun onSignIn() {
         val state = _uiState.value
