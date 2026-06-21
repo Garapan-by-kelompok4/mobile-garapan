@@ -29,6 +29,19 @@ class ApiErrorMapperTest {
     }
 
     @Test
+    fun `maps too many requests before backend error envelope`() {
+        val exception = httpException(
+            """{"statusCode":429,"message":"Too Many Requests","error":"Too Many Requests"}""",
+            statusCode = 429
+        )
+
+        assertEquals(
+            "Too many attempts. Please wait a minute and try again.",
+            ApiErrorMapper.toMessage(exception)
+        )
+    }
+
+    @Test
     fun `maps network failure to user facing message`() {
         assertEquals(
             "Unable to connect. Check your internet connection and try again.",
@@ -36,8 +49,8 @@ class ApiErrorMapperTest {
         )
     }
 
-    private fun httpException(json: String): HttpException {
+    private fun httpException(json: String, statusCode: Int = 400): HttpException {
         val body = json.toResponseBody("application/json".toMediaType())
-        return HttpException(Response.error<Any>(400, body))
+        return HttpException(Response.error<Any>(statusCode, body))
     }
 }

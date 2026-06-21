@@ -7,9 +7,15 @@ import java.io.IOException
 object ApiErrorMapper {
     fun toMessage(throwable: Throwable): String =
         when (throwable) {
-            is HttpException -> throwable.response()?.errorBody()?.string()
-                ?.let(::parseErrorBody)
-                ?: "Request failed. Please try again."
+            is HttpException -> {
+                if (throwable.code() == 429) {
+                    "Too many attempts. Please wait a minute and try again."
+                } else {
+                    throwable.response()?.errorBody()?.string()
+                        ?.let(::parseErrorBody)
+                        ?: "Request failed. Please try again."
+                }
+            }
             is IOException -> "Unable to connect. Check your internet connection and try again."
             else -> throwable.message?.takeIf { it.isNotBlank() }
                 ?: "Something went wrong. Please try again."

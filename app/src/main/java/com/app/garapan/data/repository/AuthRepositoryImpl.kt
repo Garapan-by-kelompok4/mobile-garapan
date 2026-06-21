@@ -9,7 +9,9 @@ import com.app.garapan.data.remote.dto.LoginRequestDto
 import com.app.garapan.data.remote.dto.LogoutRequestDto
 import com.app.garapan.data.remote.dto.RefreshRequestDto
 import com.app.garapan.data.remote.dto.RegisterRequestDto
+import com.app.garapan.data.remote.dto.ResendTwoFactorRequestDto
 import com.app.garapan.data.remote.dto.ResendVerificationRequestDto
+import com.app.garapan.data.remote.dto.TwoFactorVerifyRequestDto
 import com.app.garapan.data.remote.dto.VerifyEmailRequestDto
 import com.app.garapan.data.remote.error.ApiErrorMapper
 import com.app.garapan.domain.common.Resource
@@ -55,6 +57,22 @@ class AuthRepositoryImpl @Inject constructor(
                 tokenStore.saveTokens(result.tokens)
             }
             result
+        }
+
+    override suspend fun verifyTwoFactor(preAuthToken: String, otp: String): Resource<AuthTokens> =
+        safeApiCall {
+            val tokens = authApi.verifyTwoFactor(
+                TwoFactorVerifyRequestDto(preAuthToken = preAuthToken, otp = otp)
+            ).toDomain()
+            tokenStore.saveTokens(tokens)
+            tokens
+        }
+
+    override suspend fun resendOtp(preAuthToken: String): Resource<Boolean> =
+        safeApiCall {
+            authApi.resendTwoFactor(
+                ResendTwoFactorRequestDto(preAuthToken = preAuthToken)
+            ).otpSent
         }
 
     override suspend fun verifyEmail(token: String): Resource<Boolean> =
