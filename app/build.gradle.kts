@@ -25,8 +25,18 @@ android {
         buildConfigField("String", "BASE_URL", "\"https://api-garapan.up.railway.app/\"")
     }
 
+    signingConfigs {
+        getByName("debug") {
+            storeFile = rootProject.file("debug-shared.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         debug {
+            signingConfig = signingConfigs.getByName("debug")
             buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"16674215831-1ojhq6t9cvh3liv0qjqch9rptnqnk7dn.apps.googleusercontent.com\"")
         }
 
