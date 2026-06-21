@@ -228,7 +228,7 @@ fun LoginScreen(
                             } catch (_: GetCredentialCancellationException) {
                                 // User dismissed the Google sheet.
                             } catch (_: NoCredentialException) {
-                                // No account selected or available; keep the screen unchanged.
+                                viewModel.onGoogleSignInError("No Google account found on this device. Add a Google account in Settings and try again.")
                             } catch (_: Exception) {
                                 viewModel.onGoogleSignInError("Unable to continue with Google. Please try again.")
                             }
