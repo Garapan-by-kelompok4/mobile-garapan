@@ -59,6 +59,7 @@ import com.app.garapan.ui.theme.White
 fun ResetPasswordScreen(
     navController: NavController,
     email: String,
+    token: String = "",
     viewModel: ResetPasswordViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -66,6 +67,10 @@ fun ResetPasswordScreen(
 
     LaunchedEffect(email) {
         viewModel.setEmail(email)
+    }
+
+    LaunchedEffect(token) {
+        if (token.isNotBlank()) viewModel.onTokenChanged(token)
     }
 
     LaunchedEffect(Unit) {

@@ -54,6 +54,7 @@ import com.app.garapan.ui.theme.White
 fun VerifyEmailScreen(
     navController: NavController,
     email: String,
+    token: String = "",
     viewModel: VerifyEmailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -61,6 +62,10 @@ fun VerifyEmailScreen(
 
     LaunchedEffect(email) {
         viewModel.setEmail(email)
+    }
+
+    LaunchedEffect(token) {
+        if (token.isNotBlank()) viewModel.onTokenChanged(token)
     }
 
     LaunchedEffect(Unit) {
