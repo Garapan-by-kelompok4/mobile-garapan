@@ -15,6 +15,8 @@ interface AuthRepository {
 
     suspend fun register(email: String, password: String, role: Role): Resource<User>
     suspend fun login(email: String, password: String): Resource<LoginResult>
+    suspend fun verifyTwoFactor(preAuthToken: String, otp: String): Resource<AuthTokens>
+    suspend fun resendOtp(preAuthToken: String): Resource<Boolean>
     suspend fun verifyEmail(token: String): Resource<Boolean>
     suspend fun resendVerification(email: String): Resource<Boolean>
     suspend fun refresh(): Resource<AuthTokens>
