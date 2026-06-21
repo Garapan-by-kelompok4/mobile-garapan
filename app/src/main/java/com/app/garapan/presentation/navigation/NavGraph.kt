@@ -1,5 +1,6 @@
 package com.app.garapan.presentation.navigation
 
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -26,6 +27,8 @@ import com.app.garapan.presentation.screen.profile_services.ProfileServicesScree
 import com.app.garapan.presentation.screen.project_detail.ProjectDetailScreen
 import com.app.garapan.presentation.screen.search.SearchScreen
 import com.app.garapan.presentation.screen.security.SecurityScreen
+import com.app.garapan.presentation.screen.two_factor.TwoFactorScreen
+import com.app.garapan.presentation.screen.verify_email.VerifyEmailScreen
 
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -41,6 +44,28 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(Routes.REGISTER) {
             RegisterScreen(navController = navController)
+        }
+        composable(
+            route = Routes.VERIFY_EMAIL,
+            arguments = listOf(navArgument("email") {
+                type = NavType.StringType
+                defaultValue = ""
+                nullable = true
+            })
+        ) { backStackEntry ->
+            val email = Uri.decode(backStackEntry.arguments?.getString("email").orEmpty())
+            VerifyEmailScreen(navController = navController, email = email)
+        }
+        composable(
+            route = Routes.TWO_FACTOR,
+            arguments = listOf(navArgument("preAuthToken") {
+                type = NavType.StringType
+                defaultValue = ""
+                nullable = true
+            })
+        ) { backStackEntry ->
+            val preAuthToken = Uri.decode(backStackEntry.arguments?.getString("preAuthToken").orEmpty())
+            TwoFactorScreen(navController = navController, preAuthToken = preAuthToken)
         }
         composable(
             route = "${Routes.SETUP}?role={role}",

@@ -1,11 +1,20 @@
 package com.app.garapan.presentation.screen.auth
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.app.garapan.domain.common.Resource
+import com.app.garapan.domain.model.UpdateProfileParams
+import com.app.garapan.domain.usecase.UpdateProfileUseCase
+import com.app.garapan.presentation.navigation.Routes
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class StudentSetupState(
@@ -27,6 +36,15 @@ data class ClientSetupState(
     val selectedServices: Set<String> = emptySet()
 )
 
+data class SetupAccountUiState(
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null
+)
+
+sealed interface SetupAccountEvent {
+    data class Navigate(val route: String) : SetupAccountEvent
+}
+
 val studentExpertiseOptions = listOf(
     "UI/UX Design", "Web Development", "Mobile App", "Data Science",
     "Cyber Security", "Cloud Computing", "Backend Dev", "Frontend Dev",
@@ -44,13 +62,21 @@ val industryOptions = listOf("Technology", "Finance", "Education", "Healthcare",
 val yearsOfExperienceOptions = listOf("0-1 years", "1-3 years", "3-5 years", "5+ years")
 
 @HiltViewModel
-class SetupAccountViewModel @Inject constructor() : ViewModel() {
+class SetupAccountViewModel @Inject constructor(
+    private val updateProfileUseCase: UpdateProfileUseCase
+) : ViewModel() {
 
     private val _student = MutableStateFlow(StudentSetupState())
     val student: StateFlow<StudentSetupState> = _student.asStateFlow()
 
     private val _client = MutableStateFlow(ClientSetupState())
     val client: StateFlow<ClientSetupState> = _client.asStateFlow()
+
+    private val _uiState = MutableStateFlow(SetupAccountUiState())
+    val uiState: StateFlow<SetupAccountUiState> = _uiState.asStateFlow()
+
+    private val _events = MutableSharedFlow<SetupAccountEvent>()
+    val events: SharedFlow<SetupAccountEvent> = _events.asSharedFlow()
 
     // Student
     fun onStudentFullNameChanged(v: String) = _student.update { it.copy(fullName = v) }
@@ -74,4 +100,46 @@ class SetupAccountViewModel @Inject constructor() : ViewModel() {
         val updated = if (tag in it.selectedServices) it.selectedServices - tag else it.selectedServices + tag
         it.copy(selectedServices = updated)
     }
+
+    fun onComplete(role: String) {
+        viewModelScope.launch {
+            _uiState.value = SetupAccountUiState(isLoading = true)
+            val params = if (role == "student") {
+                val state = _student.value
+                UpdateProfileParams(
+                    university = state.university.takeIf { it.isNotBlank() },
+                    skills = state.selectedExpertise.toList(),
+                    bio = buildStudentBio(state).takeIf { it.isNotBlank() }
+                )
+            } else {
+                val state = _client.value
+                UpdateProfileParams(
+                    companyName = state.companyProjectName.takeIf { it.isNotBlank() },
+                    bio = buildClientBio(state).takeIf { it.isNotBlank() }
+                )
+            }
+
+            when (val result = updateProfileUseCase(params)) {
+                is Resource.Success -> {
+                    _uiState.value = SetupAccountUiState(isLoading = false)
+                    _events.emit(SetupAccountEvent.Navigate(Routes.HOME))
+                }
+                is Resource.Error -> _uiState.value = SetupAccountUiState(
+                    isLoading = false,
+                    errorMessage = result.message
+                )
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    private fun buildStudentBio(state: StudentSetupState): String =
+        listOf(state.fullName, state.major, state.yearsOfExperience)
+            .filter { it.isNotBlank() }
+            .joinToString(separator = " | ")
+
+    private fun buildClientBio(state: ClientSetupState): String =
+        listOf(state.fullName, state.status, state.industry)
+            .filter { it.isNotBlank() }
+            .joinToString(separator = " | ")
 }

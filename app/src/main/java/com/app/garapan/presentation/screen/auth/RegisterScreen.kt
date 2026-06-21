@@ -21,6 +21,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -47,7 +49,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.app.garapan.R
 import com.app.garapan.presentation.navigation.Routes
-import com.app.garapan.presentation.navigation.Routes.setupRoute
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BrandNavy
 import com.app.garapan.ui.theme.BorderColor
@@ -65,6 +66,15 @@ fun RegisterScreen(
     viewModel: RegisterViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is RegisterEvent.Navigate -> navController.navigate(event.route)
+                is RegisterEvent.Toast -> Unit
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -102,16 +112,6 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 LabeledTextField(
-                    label = "Full Name",
-                    value = uiState.fullName,
-                    onValueChange = viewModel::onFullNameChanged,
-                    placeholder = "Name",
-                    keyboardType = KeyboardType.Text
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                LabeledTextField(
                     label = "Email Address",
                     value = uiState.email,
                     onValueChange = viewModel::onEmailChanged,
@@ -140,13 +140,47 @@ fun RegisterScreen(
                     onToggleVisibility = viewModel::onToggleConfirmPasswordVisibility
                 )
 
+                if (uiState.errorMessage != null) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = uiState.errorMessage.orEmpty(),
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = com.app.garapan.ui.theme.ErrorRed,
+                            fontWeight = FontWeight.Medium
+                        )
+                    )
+                }
+
+                if (uiState.infoMessage != null) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = uiState.infoMessage.orEmpty(),
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = AccentBlue,
+                            fontWeight = FontWeight.Medium
+                        )
+                    )
+                }
+
+                if (uiState.isAwaitingEmailVerification) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Resend verification email",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = AccentBlue,
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        modifier = Modifier.clickable(enabled = !uiState.isLoading) {
+                            viewModel.onResendVerification()
+                        }
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Button(
-                    onClick = {
-                        val role = if (uiState.selectedTab == LoginTab.STUDENT) "student" else "client"
-                        navController.navigate(Routes.setupRoute(role))
-                    },
+                    onClick = viewModel::onSignUp,
+                    enabled = !uiState.isLoading && !uiState.isAwaitingEmailVerification,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
@@ -156,12 +190,20 @@ fun RegisterScreen(
                         contentColor = OnPrimary
                     )
                 ) {
-                    Text(
-                        text = "Sign Up",
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.SemiBold
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = OnPrimary
                         )
-                    )
+                    } else {
+                        Text(
+                            text = if (uiState.isAwaitingEmailVerification) "Check Your Email" else "Sign Up",
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))

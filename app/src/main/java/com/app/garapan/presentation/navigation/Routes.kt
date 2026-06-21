@@ -1,9 +1,13 @@
 package com.app.garapan.presentation.navigation
 
+import android.net.Uri
+
 object Routes {
     const val SPLASH = "splash"
     const val LOGIN = "login"
     const val REGISTER = "register"
+    const val VERIFY_EMAIL = "verify_email?email={email}"
+    const val TWO_FACTOR = "two_factor?preAuthToken={preAuthToken}"
     const val SETUP = "setup"
     const val HOME = "home"
     const val SEARCH = "search"
@@ -23,6 +27,8 @@ object Routes {
     const val BLOG_DETAIL = "blog_detail/{blogId}"
 
     fun setupRoute(role: String) = "$SETUP?role=$role"
+    fun verifyEmailRoute(email: String) = "verify_email?email=${Uri.encode(email)}"
+    fun twoFactorRoute(preAuthToken: String) = "two_factor?preAuthToken=${Uri.encode(preAuthToken)}"
     fun projectDetailRoute(projectId: String) = "project_detail/$projectId"
     fun jasaDetailRoute(jasaId: String) = "jasa_detail/$jasaId"
     fun chatRoute(workerId: String) = "chat/$workerId"

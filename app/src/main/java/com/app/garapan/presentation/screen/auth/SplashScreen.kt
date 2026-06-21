@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,10 +32,9 @@ fun SplashScreen(
     navController: NavController,
     viewModel: SplashViewModel = hiltViewModel()
 ) {
-    val destination by viewModel.destination.collectAsState()
-
-    LaunchedEffect(destination) {
-        destination?.let { route ->
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            val route = (event as SplashEvent.Navigate).route
             navController.navigate(route) {
                 popUpTo(Routes.SPLASH) { inclusive = true }
             }
