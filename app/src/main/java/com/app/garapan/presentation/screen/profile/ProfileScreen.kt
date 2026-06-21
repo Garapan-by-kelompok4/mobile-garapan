@@ -46,6 +46,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -64,6 +65,7 @@ import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
 import com.app.garapan.ui.theme.White
+import kotlinx.coroutines.flow.collectLatest
 
 private data class ProfileMenuItem(
     val label: String,
@@ -77,6 +79,17 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collectLatest { event ->
+            when (event) {
+                is ProfileEvent.Navigate -> navController.navigate(event.route) {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -138,7 +151,7 @@ fun ProfileScreen(
             )
 
             Spacer(modifier = Modifier.height(14.dp))
-            LogoutCard()
+            LogoutCard(onClick = { viewModel.onLogout() })
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
@@ -310,12 +323,13 @@ private fun ProfileMenuRow(
 }
 
 @Composable
-private fun LogoutCard() {
+private fun LogoutCard(onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
             .border(1.dp, Color(0xFFB7B7B7), RoundedCornerShape(10.dp))
+            .clickable { onClick() }
             .padding(horizontal = 18.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
