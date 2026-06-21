@@ -19,6 +19,7 @@ google-services.json
 keystore.jks
 *.keystore
 *.jks
+!debug-shared.keystore
 release.properties
 
 # Auto-generated / cache
