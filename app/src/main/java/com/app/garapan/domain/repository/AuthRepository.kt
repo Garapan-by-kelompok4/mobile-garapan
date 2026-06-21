@@ -19,6 +19,8 @@ interface AuthRepository {
     suspend fun resendOtp(preAuthToken: String): Resource<Boolean>
     suspend fun verifyEmail(token: String): Resource<Boolean>
     suspend fun resendVerification(email: String): Resource<Boolean>
+    suspend fun forgotPassword(email: String): Resource<Boolean>
+    suspend fun resetPassword(token: String, newPassword: String): Resource<Boolean>
     suspend fun refresh(): Resource<AuthTokens>
     suspend fun logout(): Resource<Boolean>
     suspend fun getMe(): Resource<User>

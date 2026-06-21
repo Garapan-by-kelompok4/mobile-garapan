@@ -24,6 +24,15 @@ data class VerifyEmailResponseDto(val emailVerified: Boolean)
 data class ResendVerificationRequestDto(val email: String)
 data class ResendVerificationResponseDto(val verificationSent: Boolean)
 
+data class ForgotPasswordRequestDto(val email: String)
+data class ForgotPasswordResponseDto(val sent: Boolean)
+
+data class ResetPasswordRequestDto(
+    val token: String,
+    val newPassword: String
+)
+data class ResetPasswordResponseDto(val reset: Boolean)
+
 data class RefreshRequestDto(val refreshToken: String)
 
 data class AuthTokensDto(

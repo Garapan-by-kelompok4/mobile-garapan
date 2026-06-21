@@ -5,12 +5,14 @@ import com.app.garapan.data.mapper.toDomain
 import com.app.garapan.data.mapper.toDto
 import com.app.garapan.data.remote.api.AuthApi
 import com.app.garapan.data.remote.api.UsersApi
+import com.app.garapan.data.remote.dto.ForgotPasswordRequestDto
 import com.app.garapan.data.remote.dto.LoginRequestDto
 import com.app.garapan.data.remote.dto.LogoutRequestDto
 import com.app.garapan.data.remote.dto.RefreshRequestDto
 import com.app.garapan.data.remote.dto.RegisterRequestDto
 import com.app.garapan.data.remote.dto.ResendTwoFactorRequestDto
 import com.app.garapan.data.remote.dto.ResendVerificationRequestDto
+import com.app.garapan.data.remote.dto.ResetPasswordRequestDto
 import com.app.garapan.data.remote.dto.TwoFactorVerifyRequestDto
 import com.app.garapan.data.remote.dto.VerifyEmailRequestDto
 import com.app.garapan.data.remote.error.ApiErrorMapper
@@ -80,6 +82,16 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun resendVerification(email: String): Resource<Boolean> =
         safeApiCall { authApi.resendVerification(ResendVerificationRequestDto(email)).verificationSent }
+
+    override suspend fun forgotPassword(email: String): Resource<Boolean> =
+        safeApiCall { authApi.forgotPassword(ForgotPasswordRequestDto(email)).sent }
+
+    override suspend fun resetPassword(token: String, newPassword: String): Resource<Boolean> =
+        safeApiCall {
+            authApi.resetPassword(
+                ResetPasswordRequestDto(token = token, newPassword = newPassword)
+            ).reset
+        }
 
     override suspend fun refresh(): Resource<AuthTokens> =
         safeApiCall {
