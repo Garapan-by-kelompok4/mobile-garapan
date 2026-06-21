@@ -11,6 +11,11 @@ data class LoginRequestDto(
     val password: String
 )
 
+data class GoogleSignInRequestDto(
+    val idToken: String,
+    val role: String? = null
+)
+
 data class LoginResponseDto(
     val accessToken: String?,
     val refreshToken: String?,

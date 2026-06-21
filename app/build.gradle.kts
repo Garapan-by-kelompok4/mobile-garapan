@@ -26,6 +26,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"16674215831-1ojhq6t9cvh3liv0qjqch9rptnqnk7dn.apps.googleusercontent.com\"")
+        }
+
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -34,6 +38,7 @@ android {
             )
             // Emulator fallback: "http://10.0.2.2:3000/"
             buildConfigField("String", "BASE_URL", "\"https://api-garapan.up.railway.app/\"")
+            buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"16674215831-1ojhq6t9cvh3liv0qjqch9rptnqnk7dn.apps.googleusercontent.com\"")
         }
     }
 
@@ -98,6 +103,11 @@ dependencies {
 
     // DataStore (JWT token storage)
     implementation(libs.datastore.preferences)
+
+    // Credential Manager / Google ID
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
 
     // Coil (image loading from Cloudinary URLs)
     implementation(libs.coil.compose)

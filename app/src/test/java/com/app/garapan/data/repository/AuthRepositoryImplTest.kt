@@ -7,6 +7,7 @@ import com.app.garapan.data.remote.api.UsersApi
 import com.app.garapan.data.remote.dto.AuthTokensDto
 import com.app.garapan.data.remote.dto.ForgotPasswordRequestDto
 import com.app.garapan.data.remote.dto.ForgotPasswordResponseDto
+import com.app.garapan.data.remote.dto.GoogleSignInRequestDto
 import com.app.garapan.data.remote.dto.LoginRequestDto
 import com.app.garapan.data.remote.dto.LoginResponseDto
 import com.app.garapan.data.remote.dto.LogoutRequestDto
@@ -26,13 +27,15 @@ import com.app.garapan.data.remote.dto.VerifyEmailRequestDto
 import com.app.garapan.data.remote.dto.VerifyEmailResponseDto
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.Role
-import org.junit.Assert.assertEquals
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.nio.file.Files
 
@@ -42,12 +45,12 @@ class AuthRepositoryImplTest {
     fun `forgot password returns sent flag and passes email`() = runBlocking {
         var capturedRequest: ForgotPasswordRequestDto? = null
         val repository = AuthRepositoryImpl(
-            authApi = authApi(
-                forgotPassword = {
-                    capturedRequest = it
-                    ForgotPasswordResponseDto(sent = true)
+            authApi = object : AuthApi by unusedAuthApi() {
+                override suspend fun forgotPassword(body: ForgotPasswordRequestDto): ForgotPasswordResponseDto {
+                    capturedRequest = body
+                    return ForgotPasswordResponseDto(sent = true)
                 }
-            ),
+            },
             usersApi = unusedUsersApi(),
             tokenStore = newTokenStore()
         )
@@ -62,12 +65,12 @@ class AuthRepositoryImplTest {
     fun `reset password returns reset flag and passes token and new password`() = runBlocking {
         var capturedRequest: ResetPasswordRequestDto? = null
         val repository = AuthRepositoryImpl(
-            authApi = authApi(
-                resetPassword = {
-                    capturedRequest = it
-                    ResetPasswordResponseDto(reset = true)
+            authApi = object : AuthApi by unusedAuthApi() {
+                override suspend fun resetPassword(body: ResetPasswordRequestDto): ResetPasswordResponseDto {
+                    capturedRequest = body
+                    return ResetPasswordResponseDto(reset = true)
                 }
-            ),
+            },
             usersApi = unusedUsersApi(),
             tokenStore = newTokenStore()
         )
@@ -85,9 +88,40 @@ class AuthRepositoryImplTest {
     }
 
     @Test
+    fun `google sign in posts id token and role then saves returned tokens`() = runBlocking {
+        var capturedBody: GoogleSignInRequestDto? = null
+        val tokenStore = newTokenStore()
+        val repository = AuthRepositoryImpl(
+            authApi = object : AuthApi by unusedAuthApi() {
+                override suspend fun googleSignIn(body: GoogleSignInRequestDto): AuthTokensDto {
+                    capturedBody = body
+                    return AuthTokensDto(accessToken = "access-token", refreshToken = "refresh-token")
+                }
+            },
+            usersApi = unusedUsersApi(),
+            tokenStore = tokenStore
+        )
+
+        val result = repository.googleSignIn("google-id-token", Role.KLIEN)
+
+        assertTrue(result is Resource.Success)
+        val success = result as Resource.Success
+        assertEquals(GoogleSignInRequestDto(idToken = "google-id-token", role = "KLIEN"), capturedBody)
+        assertEquals("access-token", success.data.accessToken)
+        assertEquals("refresh-token", success.data.refreshToken)
+        assertEquals("access-token", tokenStore.getAccessToken())
+        assertEquals("refresh-token", tokenStore.getRefreshToken())
+        assertNotNull(capturedBody)
+    }
+
+    @Test
     fun `safe api call rethrows cancellation exception`() {
         val repository = AuthRepositoryImpl(
-            authApi = cancellingAuthApi(),
+            authApi = object : AuthApi by unusedAuthApi() {
+                override suspend fun register(body: RegisterRequestDto): UserDto {
+                    throw CancellationException("cancelled")
+                }
+            },
             usersApi = unusedUsersApi(),
             tokenStore = newTokenStore()
         )
@@ -99,47 +133,14 @@ class AuthRepositoryImplTest {
         }
     }
 
-    private fun authApi(
-        forgotPassword: suspend (ForgotPasswordRequestDto) -> ForgotPasswordResponseDto = { error("Unused") },
-        resetPassword: suspend (ResetPasswordRequestDto) -> ResetPasswordResponseDto = { error("Unused") }
-    ) = object : AuthApi {
+    private fun unusedAuthApi() = object : AuthApi {
         override suspend fun register(body: RegisterRequestDto): UserDto =
             error("Unused")
 
         override suspend fun login(body: LoginRequestDto): LoginResponseDto =
             error("Unused")
 
-        override suspend fun verifyEmail(body: VerifyEmailRequestDto): VerifyEmailResponseDto =
-            error("Unused")
-
-        override suspend fun resendVerification(body: ResendVerificationRequestDto): ResendVerificationResponseDto =
-            error("Unused")
-
-        override suspend fun forgotPassword(body: ForgotPasswordRequestDto): ForgotPasswordResponseDto =
-            forgotPassword(body)
-
-        override suspend fun resetPassword(body: ResetPasswordRequestDto): ResetPasswordResponseDto =
-            resetPassword(body)
-
-        override suspend fun refresh(body: RefreshRequestDto): AuthTokensDto =
-            error("Unused")
-
-        override suspend fun logout(body: LogoutRequestDto): LogoutResponseDto =
-            error("Unused")
-
-        override suspend fun verifyTwoFactor(body: TwoFactorVerifyRequestDto): AuthTokensDto =
-            error("Unused")
-
-        override suspend fun resendTwoFactor(body: ResendTwoFactorRequestDto): ResendTwoFactorResponseDto =
-            error("Unused")
-    }
-
-    private fun cancellingAuthApi() = object : AuthApi {
-        override suspend fun register(body: RegisterRequestDto): UserDto {
-            throw CancellationException("cancelled")
-        }
-
-        override suspend fun login(body: LoginRequestDto): LoginResponseDto =
+        override suspend fun googleSignIn(body: GoogleSignInRequestDto): AuthTokensDto =
             error("Unused")
 
         override suspend fun verifyEmail(body: VerifyEmailRequestDto): VerifyEmailResponseDto =
