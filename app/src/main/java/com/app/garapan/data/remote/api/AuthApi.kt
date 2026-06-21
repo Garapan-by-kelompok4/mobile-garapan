@@ -1,6 +1,8 @@
 package com.app.garapan.data.remote.api
 
 import com.app.garapan.data.remote.dto.AuthTokensDto
+import com.app.garapan.data.remote.dto.ForgotPasswordRequestDto
+import com.app.garapan.data.remote.dto.ForgotPasswordResponseDto
 import com.app.garapan.data.remote.dto.LoginRequestDto
 import com.app.garapan.data.remote.dto.LoginResponseDto
 import com.app.garapan.data.remote.dto.LogoutRequestDto
@@ -11,6 +13,8 @@ import com.app.garapan.data.remote.dto.ResendTwoFactorRequestDto
 import com.app.garapan.data.remote.dto.ResendTwoFactorResponseDto
 import com.app.garapan.data.remote.dto.ResendVerificationRequestDto
 import com.app.garapan.data.remote.dto.ResendVerificationResponseDto
+import com.app.garapan.data.remote.dto.ResetPasswordRequestDto
+import com.app.garapan.data.remote.dto.ResetPasswordResponseDto
 import com.app.garapan.data.remote.dto.TwoFactorVerifyRequestDto
 import com.app.garapan.data.remote.dto.UserDto
 import com.app.garapan.data.remote.dto.VerifyEmailRequestDto
@@ -30,6 +34,12 @@ interface AuthApi {
 
     @POST("auth/resend-verification")
     suspend fun resendVerification(@Body body: ResendVerificationRequestDto): ResendVerificationResponseDto
+
+    @POST("auth/forgot-password")
+    suspend fun forgotPassword(@Body body: ForgotPasswordRequestDto): ForgotPasswordResponseDto
+
+    @POST("auth/reset-password")
+    suspend fun resetPassword(@Body body: ResetPasswordRequestDto): ResetPasswordResponseDto
 
     @POST("auth/refresh")
     suspend fun refresh(@Body body: RefreshRequestDto): AuthTokensDto

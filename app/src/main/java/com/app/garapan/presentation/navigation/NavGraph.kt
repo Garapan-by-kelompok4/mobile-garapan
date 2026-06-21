@@ -16,6 +16,7 @@ import com.app.garapan.presentation.screen.chat.ChatScreen
 import com.app.garapan.presentation.screen.checkout.CheckoutScreen
 import com.app.garapan.presentation.screen.edit_profile.EditProfileScreen
 import com.app.garapan.presentation.screen.edit_service.EditServiceScreen
+import com.app.garapan.presentation.screen.forgot_password.ForgotPasswordScreen
 import com.app.garapan.presentation.screen.home.HomeScreen
 import com.app.garapan.presentation.screen.jasa_detail.JasaDetailScreen
 import com.app.garapan.presentation.screen.order_history.OrderHistoryScreen
@@ -25,6 +26,7 @@ import com.app.garapan.presentation.screen.profile.ProfileScreen
 import com.app.garapan.presentation.screen.portfolio.PortfolioScreen
 import com.app.garapan.presentation.screen.profile_services.ProfileServicesScreen
 import com.app.garapan.presentation.screen.project_detail.ProjectDetailScreen
+import com.app.garapan.presentation.screen.reset_password.ResetPasswordScreen
 import com.app.garapan.presentation.screen.search.SearchScreen
 import com.app.garapan.presentation.screen.security.SecurityScreen
 import com.app.garapan.presentation.screen.two_factor.TwoFactorScreen
@@ -55,6 +57,20 @@ fun NavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             val email = Uri.decode(backStackEntry.arguments?.getString("email").orEmpty())
             VerifyEmailScreen(navController = navController, email = email)
+        }
+        composable(Routes.FORGOT_PASSWORD) {
+            ForgotPasswordScreen(navController = navController)
+        }
+        composable(
+            route = Routes.RESET_PASSWORD,
+            arguments = listOf(navArgument("email") {
+                type = NavType.StringType
+                defaultValue = ""
+                nullable = true
+            })
+        ) { backStackEntry ->
+            val email = Uri.decode(backStackEntry.arguments?.getString("email").orEmpty())
+            ResetPasswordScreen(navController = navController, email = email)
         }
         composable(
             route = Routes.TWO_FACTOR,
