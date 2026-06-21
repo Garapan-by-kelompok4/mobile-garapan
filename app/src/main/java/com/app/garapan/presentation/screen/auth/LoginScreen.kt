@@ -3,6 +3,7 @@ package com.app.garapan.presentation.screen.auth
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -227,10 +228,12 @@ fun LoginScreen(
                                 viewModel.onGoogleSignIn(idToken)
                             } catch (_: GetCredentialCancellationException) {
                                 // User dismissed the Google sheet.
-                            } catch (_: NoCredentialException) {
+                            } catch (e: NoCredentialException) {
+                                Log.e("GoogleSignIn", "NoCredentialException", e)
                                 viewModel.onGoogleSignInError("No Google account found on this device. Add a Google account in Settings and try again.")
-                            } catch (_: Exception) {
-                                viewModel.onGoogleSignInError("Unable to continue with Google. Please try again.")
+                            } catch (e: Exception) {
+                                Log.e("GoogleSignIn", "Google sign-in failed", e)
+                                viewModel.onGoogleSignInError("Google sign-in failed. Please try again.")
                             }
                         }
                     }
