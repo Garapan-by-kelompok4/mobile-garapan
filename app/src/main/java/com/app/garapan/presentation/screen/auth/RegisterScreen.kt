@@ -112,16 +112,6 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 LabeledTextField(
-                    label = "Full Name",
-                    value = uiState.fullName,
-                    onValueChange = viewModel::onFullNameChanged,
-                    placeholder = "Name",
-                    keyboardType = KeyboardType.Text
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                LabeledTextField(
                     label = "Email Address",
                     value = uiState.email,
                     onValueChange = viewModel::onEmailChanged,

@@ -19,9 +19,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+enum class LoginTab { STUDENT, CLIENT }
+
 data class RegisterUiState(
     val selectedTab: LoginTab = LoginTab.STUDENT,
-    val fullName: String = "",
     val email: String = "",
     val password: String = "",
     val confirmPassword: String = "",
@@ -51,7 +52,6 @@ class RegisterViewModel @Inject constructor(
     val events: SharedFlow<RegisterEvent> = _events.asSharedFlow()
 
     fun onTabSelected(tab: LoginTab) = _uiState.update { it.copy(selectedTab = tab, errorMessage = null) }
-    fun onFullNameChanged(value: String) = _uiState.update { it.copy(fullName = value) }
     fun onEmailChanged(value: String) = _uiState.update { it.copy(email = value, errorMessage = null) }
     fun onPasswordChanged(value: String) = _uiState.update { it.copy(password = value, errorMessage = null) }
     fun onConfirmPasswordChanged(value: String) = _uiState.update { it.copy(confirmPassword = value, errorMessage = null) }

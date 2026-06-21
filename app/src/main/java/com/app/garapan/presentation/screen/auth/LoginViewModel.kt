@@ -4,12 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.LoginResult
-import com.app.garapan.domain.model.Role
-import com.app.garapan.domain.model.User
 import com.app.garapan.domain.usecase.GetMeUseCase
 import com.app.garapan.domain.usecase.LoginUseCase
 import com.app.garapan.domain.usecase.ResendVerificationUseCase
 import com.app.garapan.presentation.navigation.Routes
+import com.app.garapan.presentation.navigation.authDestination
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,10 +20,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-enum class LoginTab { STUDENT, CLIENT }
-
 data class LoginUiState(
-    val selectedTab: LoginTab = LoginTab.STUDENT,
     val email: String = "",
     val password: String = "",
     val isPasswordVisible: Boolean = false,
@@ -53,7 +49,6 @@ class LoginViewModel @Inject constructor(
     private val _events = MutableSharedFlow<LoginEvent>()
     val events: SharedFlow<LoginEvent> = _events.asSharedFlow()
 
-    fun onTabSelected(tab: LoginTab) = _uiState.update { it.copy(selectedTab = tab, errorMessage = null) }
     fun onEmailChanged(value: String) = _uiState.update {
         it.copy(
             email = value,
@@ -136,9 +131,10 @@ class LoginViewModel @Inject constructor(
                         isLoading = false,
                         requiresTwoFactor = true,
                         infoMessage = null,
-                        errorMessage = "Two-factor login is not supported in the app yet. Disable 2FA on the web to sign in here."
+                        errorMessage = null
                     )
                 }
+                _events.emit(LoginEvent.Navigate(Routes.twoFactorRoute(result.preAuthToken)))
             }
         }
     }
@@ -155,21 +151,4 @@ class LoginViewModel @Inject constructor(
             Resource.Loading -> Unit
         }
     }
-
-    private fun User.authDestination(): String =
-        if (isProfileIncomplete()) Routes.setupRoute(role.setupRouteParam()) else Routes.HOME
-
-    private fun User.isProfileIncomplete(): Boolean =
-        when (role) {
-            Role.MAHASISWA -> mahasiswa == null || mahasiswa.university.isBlank() || mahasiswa.bio.isBlank()
-            Role.KLIEN -> klien == null || klien.bio.isBlank()
-            Role.ADMIN -> false
-        }
-
-    private fun Role.setupRouteParam(): String =
-        when (this) {
-            Role.MAHASISWA -> "student"
-            Role.KLIEN -> "client"
-            Role.ADMIN -> "admin"
-        }
 }

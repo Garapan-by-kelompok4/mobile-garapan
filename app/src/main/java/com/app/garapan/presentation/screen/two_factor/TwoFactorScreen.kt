@@ -1,6 +1,6 @@
-package com.app.garapan.presentation.screen.auth
+package com.app.garapan.presentation.screen.two_factor
 
-import androidx.compose.foundation.BorderStroke
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -21,12 +20,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -37,20 +33,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.app.garapan.R
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BrandNavy
-import com.app.garapan.ui.theme.BorderColor
+import com.app.garapan.ui.theme.ErrorRed
 import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.OnPrimary
 import com.app.garapan.ui.theme.PrimaryText
@@ -59,19 +52,29 @@ import com.app.garapan.ui.theme.Surface
 import com.app.garapan.ui.theme.White
 
 @Composable
-fun LoginScreen(
+fun TwoFactorScreen(
     navController: NavController,
-    viewModel: LoginViewModel = hiltViewModel()
+    preAuthToken: String,
+    viewModel: TwoFactorViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    LaunchedEffect(preAuthToken) {
+        viewModel.setPreAuthToken(preAuthToken)
+    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                is LoginEvent.Navigate -> navController.navigate(event.route) {
-                    popUpTo(Routes.SPLASH) { inclusive = true }
+                is TwoFactorEvent.Navigate -> navController.navigate(event.route) {
+                    popUpTo(Routes.LOGIN) { inclusive = true }
                 }
-                is LoginEvent.Toast -> Unit
+                is TwoFactorEvent.Toast -> Toast.makeText(
+                    context,
+                    event.message,
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
@@ -82,7 +85,7 @@ fun LoginScreen(
             .background(Surface)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            LoginHeader()
+            TwoFactorHeader()
 
             Column(
                 modifier = Modifier
@@ -95,7 +98,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(28.dp))
 
                 Text(
-                    text = "Welcome Back",
+                    text = "Two-Factor Verification",
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = PrimaryText
@@ -105,25 +108,15 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "Sign in to access your dashboard.",
+                    text = "Enter the 6-digit code from your authenticator or email.",
                     style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                EmailField(
-                    value = uiState.email,
-                    onValueChange = viewModel::onEmailChanged,
-                    placeholder = "your@email.com"
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                PasswordField(
-                    value = uiState.password,
-                    onValueChange = viewModel::onPasswordChanged,
-                    isPasswordVisible = uiState.isPasswordVisible,
-                    onToggleVisibility = viewModel::onTogglePasswordVisibility
+                OtpField(
+                    value = uiState.otp,
+                    onValueChange = viewModel::onOtpChanged
                 )
 
                 if (uiState.errorMessage != null) {
@@ -131,7 +124,7 @@ fun LoginScreen(
                     Text(
                         text = uiState.errorMessage.orEmpty(),
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = com.app.garapan.ui.theme.ErrorRed,
+                            color = ErrorRed,
                             fontWeight = FontWeight.Medium
                         )
                     )
@@ -148,25 +141,11 @@ fun LoginScreen(
                     )
                 }
 
-                if (uiState.canResendVerification) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "Resend verification email",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = AccentBlue,
-                            fontWeight = FontWeight.SemiBold
-                        ),
-                        modifier = Modifier.clickable(enabled = !uiState.isLoading) {
-                            viewModel.onResendVerification()
-                        }
-                    )
-                }
-
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Button(
-                    onClick = viewModel::onSignIn,
-                    enabled = !uiState.isLoading && !uiState.requiresTwoFactor,
+                    onClick = viewModel::onVerify,
+                    enabled = !uiState.isLoading && !uiState.isResending,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
@@ -184,7 +163,7 @@ fun LoginScreen(
                         )
                     } else {
                         Text(
-                            text = "Sign In",
+                            text = "Verify",
                             style = MaterialTheme.typography.bodyLarge.copy(
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -192,18 +171,45 @@ fun LoginScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                OrDivider()
+                TextButton(
+                    onClick = viewModel::onResend,
+                    enabled = !uiState.isLoading && !uiState.isResending,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (uiState.isResending) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = AccentBlue
+                        )
+                    } else {
+                        Text(
+                            text = "Resend code",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = AccentBlue,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
+                    }
+                }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                GoogleSignInButton()
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                BottomSignUpText(
-                    onCreateAccount = { navController.navigate(Routes.REGISTER) }
+                Text(
+                    text = "Back to Sign In",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = AccentBlue,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .clickable(enabled = !uiState.isLoading && !uiState.isResending) {
+                            navController.navigate(Routes.LOGIN) {
+                                popUpTo(Routes.LOGIN) { inclusive = true }
+                            }
+                        }
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -213,7 +219,7 @@ fun LoginScreen(
 }
 
 @Composable
-private fun LoginHeader() {
+private fun TwoFactorHeader() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -237,51 +243,9 @@ private fun LoginHeader() {
 }
 
 @Composable
-private fun EmailField(
+private fun OtpField(
     value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String = "your@email.com"
-) {
-    Column {
-        Text(
-            text = "Email Address",
-            style = MaterialTheme.typography.labelMedium.copy(
-                color = PrimaryText,
-                fontWeight = FontWeight.Medium
-            )
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        TextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp)),
-            placeholder = {
-                Text(text = placeholder, color = MutedText)
-            },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Surface,
-                unfocusedContainerColor = Surface,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent,
-                focusedTextColor = PrimaryText,
-                unfocusedTextColor = PrimaryText,
-            ),
-            shape = RoundedCornerShape(8.dp)
-        )
-    }
-}
-
-@Composable
-private fun PasswordField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    isPasswordVisible: Boolean,
-    onToggleVisibility: () -> Unit
+    onValueChange: (String) -> Unit
 ) {
     Column {
         Row(
@@ -290,18 +254,15 @@ private fun PasswordField(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Password",
+                text = "Authentication Code",
                 style = MaterialTheme.typography.labelMedium.copy(
                     color = PrimaryText,
                     fontWeight = FontWeight.Medium
                 )
             )
             Text(
-                text = "Forgot?",
-                style = MaterialTheme.typography.labelMedium.copy(
-                    color = AccentBlue,
-                    fontWeight = FontWeight.Medium
-                )
+                text = "${value.length}/6",
+                style = MaterialTheme.typography.labelMedium.copy(color = SecondaryText)
             )
         }
         Spacer(modifier = Modifier.height(6.dp))
@@ -311,21 +272,9 @@ private fun PasswordField(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(8.dp)),
+            placeholder = { Text(text = "000000", color = MutedText) },
             singleLine = true,
-            visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            trailingIcon = {
-                IconButton(onClick = onToggleVisibility) {
-                    Icon(
-                        painter = painterResource(
-                            if (isPasswordVisible) R.drawable.ic_visibility_off
-                            else R.drawable.ic_visibility
-                        ),
-                        contentDescription = if (isPasswordVisible) "Hide password" else "Show password",
-                        tint = MutedText
-                    )
-                }
-            },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Surface,
                 unfocusedContainerColor = Surface,
@@ -336,71 +285,6 @@ private fun PasswordField(
                 unfocusedTextColor = PrimaryText,
             ),
             shape = RoundedCornerShape(8.dp)
-        )
-    }
-}
-
-@Composable
-private fun OrDivider() {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        HorizontalDivider(modifier = Modifier.weight(1f), color = BorderColor)
-        Text(
-            text = "  Or continue with  ",
-            style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
-        )
-        HorizontalDivider(modifier = Modifier.weight(1f), color = BorderColor)
-    }
-}
-
-@Composable
-private fun GoogleSignInButton() {
-    OutlinedButton(
-        onClick = {},
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp),
-        shape = RoundedCornerShape(8.dp),
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryText),
-        border = BorderStroke(1.dp, BorderColor)
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_google),
-            contentDescription = "Google",
-            modifier = Modifier.size(20.dp),
-            tint = Color.Unspecified
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = "Google",
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = FontWeight.Medium,
-                color = PrimaryText
-            )
-        )
-    }
-}
-
-@Composable
-private fun BottomSignUpText(onCreateAccount: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "Don't have an account? ",
-            style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
-        )
-        Text(
-            text = "Create one now",
-            style = MaterialTheme.typography.bodyMedium.copy(
-                color = AccentBlue,
-                fontWeight = FontWeight.SemiBold
-            ),
-            modifier = Modifier.clickable { onCreateAccount() }
         )
     }
 }
