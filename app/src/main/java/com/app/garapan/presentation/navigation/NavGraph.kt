@@ -6,6 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navDeepLink
 import androidx.navigation.navArgument
 import com.app.garapan.presentation.screen.auth.LoginScreen
 import com.app.garapan.presentation.screen.auth.RegisterScreen
@@ -49,28 +50,46 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(
             route = Routes.VERIFY_EMAIL,
-            arguments = listOf(navArgument("email") {
-                type = NavType.StringType
-                defaultValue = ""
-                nullable = true
-            })
+            arguments = listOf(
+                navArgument("email") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                    nullable = true
+                },
+                navArgument("token") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                    nullable = true
+                }
+            ),
+            deepLinks = listOf(navDeepLink { uriPattern = "garapan://verify-email?token={token}" })
         ) { backStackEntry ->
             val email = Uri.decode(backStackEntry.arguments?.getString("email").orEmpty())
-            VerifyEmailScreen(navController = navController, email = email)
+            val token = Uri.decode(backStackEntry.arguments?.getString("token").orEmpty())
+            VerifyEmailScreen(navController = navController, email = email, token = token)
         }
         composable(Routes.FORGOT_PASSWORD) {
             ForgotPasswordScreen(navController = navController)
         }
         composable(
             route = Routes.RESET_PASSWORD,
-            arguments = listOf(navArgument("email") {
-                type = NavType.StringType
-                defaultValue = ""
-                nullable = true
-            })
+            arguments = listOf(
+                navArgument("email") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                    nullable = true
+                },
+                navArgument("token") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                    nullable = true
+                }
+            ),
+            deepLinks = listOf(navDeepLink { uriPattern = "garapan://reset-password?token={token}" })
         ) { backStackEntry ->
             val email = Uri.decode(backStackEntry.arguments?.getString("email").orEmpty())
-            ResetPasswordScreen(navController = navController, email = email)
+            val token = Uri.decode(backStackEntry.arguments?.getString("token").orEmpty())
+            ResetPasswordScreen(navController = navController, email = email, token = token)
         }
         composable(
             route = Routes.TWO_FACTOR,
