@@ -6,6 +6,7 @@ import com.app.garapan.data.mapper.toDto
 import com.app.garapan.data.remote.api.AuthApi
 import com.app.garapan.data.remote.api.UsersApi
 import com.app.garapan.data.remote.dto.ForgotPasswordRequestDto
+import com.app.garapan.data.remote.dto.GoogleSignInRequestDto
 import com.app.garapan.data.remote.dto.LoginRequestDto
 import com.app.garapan.data.remote.dto.LogoutRequestDto
 import com.app.garapan.data.remote.dto.RefreshRequestDto
@@ -59,6 +60,15 @@ class AuthRepositoryImpl @Inject constructor(
                 tokenStore.saveTokens(result.tokens)
             }
             result
+        }
+
+    override suspend fun googleSignIn(idToken: String, role: Role?): Resource<AuthTokens> =
+        safeApiCall {
+            val tokens = authApi.googleSignIn(
+                GoogleSignInRequestDto(idToken = idToken, role = role?.name)
+            ).toDomain()
+            tokenStore.saveTokens(tokens)
+            tokens
         }
 
     override suspend fun verifyTwoFactor(preAuthToken: String, otp: String): Resource<AuthTokens> =

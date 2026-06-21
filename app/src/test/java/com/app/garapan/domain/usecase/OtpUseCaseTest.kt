@@ -47,6 +47,7 @@ class OtpUseCaseTest {
         override suspend fun clearAuthTokens() = Unit
         override suspend fun register(email: String, password: String, role: Role): Resource<User> = unused()
         override suspend fun login(email: String, password: String): Resource<LoginResult> = unused()
+        override suspend fun googleSignIn(idToken: String, role: Role?): Resource<AuthTokens> = unused()
         override suspend fun verifyEmail(token: String): Resource<Boolean> = unused()
         override suspend fun resendVerification(email: String): Resource<Boolean> = unused()
         override suspend fun forgotPassword(email: String): Resource<Boolean> = unused()

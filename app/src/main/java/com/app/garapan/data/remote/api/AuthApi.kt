@@ -3,6 +3,7 @@ package com.app.garapan.data.remote.api
 import com.app.garapan.data.remote.dto.AuthTokensDto
 import com.app.garapan.data.remote.dto.ForgotPasswordRequestDto
 import com.app.garapan.data.remote.dto.ForgotPasswordResponseDto
+import com.app.garapan.data.remote.dto.GoogleSignInRequestDto
 import com.app.garapan.data.remote.dto.LoginRequestDto
 import com.app.garapan.data.remote.dto.LoginResponseDto
 import com.app.garapan.data.remote.dto.LogoutRequestDto
@@ -28,6 +29,9 @@ interface AuthApi {
 
     @POST("auth/login")
     suspend fun login(@Body body: LoginRequestDto): LoginResponseDto
+
+    @POST("auth/google")
+    suspend fun googleSignIn(@Body body: GoogleSignInRequestDto): AuthTokensDto
 
     @POST("auth/verify-email")
     suspend fun verifyEmail(@Body body: VerifyEmailRequestDto): VerifyEmailResponseDto

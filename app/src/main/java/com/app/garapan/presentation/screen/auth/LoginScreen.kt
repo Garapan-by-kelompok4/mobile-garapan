@@ -1,5 +1,8 @@
 package com.app.garapan.presentation.screen.auth
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,10 +36,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -44,9 +50,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.NoCredentialException
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.app.garapan.R
+import com.app.garapan.data.auth.GoogleAuthClient
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BrandNavy
@@ -57,6 +66,7 @@ import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
 import com.app.garapan.ui.theme.Surface
 import com.app.garapan.ui.theme.White
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -64,6 +74,9 @@ fun LoginScreen(
     viewModel: LoginViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val googleAuthClient = remember { GoogleAuthClient() }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -199,7 +212,29 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                GoogleSignInButton()
+                GoogleSignInButton(
+                    enabled = !uiState.isLoading,
+                    onClick = {
+                        coroutineScope.launch {
+                            val activity = context.findActivity()
+                            if (activity == null) {
+                                viewModel.onGoogleSignInError("Unable to start Google sign-in from this screen.")
+                                return@launch
+                            }
+
+                            try {
+                                val idToken = googleAuthClient.getIdToken(activity)
+                                viewModel.onGoogleSignIn(idToken)
+                            } catch (_: GetCredentialCancellationException) {
+                                // User dismissed the Google sheet.
+                            } catch (_: NoCredentialException) {
+                                // No account selected or available; keep the screen unchanged.
+                            } catch (_: Exception) {
+                                viewModel.onGoogleSignInError("Unable to continue with Google. Please try again.")
+                            }
+                        }
+                    }
+                )
 
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -359,9 +394,13 @@ private fun OrDivider() {
 }
 
 @Composable
-private fun GoogleSignInButton() {
+private fun GoogleSignInButton(
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
     OutlinedButton(
-        onClick = {},
+        onClick = onClick,
+        enabled = enabled,
         modifier = Modifier
             .fillMaxWidth()
             .height(48.dp),
@@ -385,6 +424,13 @@ private fun GoogleSignInButton() {
         )
     }
 }
+
+private tailrec fun Context.findActivity(): Activity? =
+    when (this) {
+        is Activity -> this
+        is ContextWrapper -> baseContext.findActivity()
+        else -> null
+    }
 
 @Composable
 private fun BottomSignUpText(onCreateAccount: () -> Unit) {
