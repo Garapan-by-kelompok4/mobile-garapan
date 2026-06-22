@@ -15,7 +15,7 @@ class KategoriRepositoryImpl @Inject constructor(
 
     override suspend fun getKategoriList(): Resource<List<Kategori>> =
         safeApiCall {
-            kategoriApi.getKategoriList().value.map { it.toDomain() }
+            kategoriApi.getKategoriList().map { it.toDomain() }
         }
 
     private suspend fun <T> safeApiCall(block: suspend () -> T): Resource<T> =
