@@ -42,5 +42,6 @@ private val PUBLIC_AUTH_PATHS = setOf(
     "/auth/refresh",
     "/auth/logout",
     "/auth/2fa/verify",
-    "/auth/2fa/resend"
+    "/auth/2fa/resend",
+    "/kategori"
 )
