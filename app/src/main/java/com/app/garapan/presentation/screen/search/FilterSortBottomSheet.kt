@@ -61,6 +61,9 @@ import com.app.garapan.ui.theme.White
 @Composable
 fun FilterSortBottomSheet(
     state: FilterSortState,
+    categories: List<String>,
+    isCategoryLoading: Boolean,
+    categoryErrorMessage: String?,
     sheetState: SheetState,
     onDismiss: () -> Unit,
     onTypeSelected: (FilterType) -> Unit,
@@ -128,11 +131,27 @@ fun FilterSortBottomSheet(
             // KATEGORI
             SectionLabel(text = "KATEGORI")
             Spacer(modifier = Modifier.height(10.dp))
+            when {
+                isCategoryLoading -> {
+                    Text(
+                        text = "Memuat kategori...",
+                        style = MaterialTheme.typography.bodySmall.copy(color = MutedText)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+                categoryErrorMessage != null -> {
+                    Text(
+                        text = "Gagal memuat kategori. Menampilkan kategori bawaan.",
+                        style = MaterialTheme.typography.bodySmall.copy(color = MutedText)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+            }
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                categoryOptions.forEach { category ->
+                categories.forEach { category ->
                     val isSelected = category == state.selectedCategory
                     Box(
                         modifier = Modifier
