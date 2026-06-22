@@ -1,7 +1,11 @@
 package com.app.garapan.presentation.screen.search
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.app.garapan.domain.common.Resource
+import com.app.garapan.domain.usecase.GetKategoriListUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,14 +20,11 @@ enum class SortOption(val label: String) {
     HARGA_TERENDAH("Harga Terendah")
 }
 
-val categoryOptions = listOf(
-    "Semua Kategori", "Coding", "Fullstack Dev", "Data Analysis", "Backend Dev",
-    "UI/UX Design", "Mobile Dev", "DevOps", "AI/ML", "Cyber Security"
-)
+private const val ALL_CATEGORIES = "Semua Kategori"
 
 data class FilterSortState(
     val selectedType: FilterType = FilterType.PROYEK,
-    val selectedCategory: String = "Semua Kategori",
+    val selectedCategory: String = ALL_CATEGORIES,
     val minPrice: String = "100000",
     val maxPrice: String = "5000000",
     val sortBy: SortOption = SortOption.PALING_POPULER
@@ -41,6 +42,9 @@ data class SearchResultItem(
 
 data class SearchUiState(
     val query: String = "",
+    val categories: List<String> = listOf(ALL_CATEGORIES),
+    val isCategoryLoading: Boolean = false,
+    val categoryErrorMessage: String? = null,
     val showFilterSheet: Boolean = false,
     val showResults: Boolean = false,
     val filter: FilterSortState = FilterSortState(),
@@ -57,10 +61,49 @@ private val dummyResults = listOf(
 )
 
 @HiltViewModel
-class SearchViewModel @Inject constructor() : ViewModel() {
+class SearchViewModel @Inject constructor(
+    private val getKategoriListUseCase: GetKategoriListUseCase
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SearchUiState(results = dummyResults))
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
+
+    init {
+        loadCategories()
+    }
+
+    private fun loadCategories() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCategoryLoading = true, categoryErrorMessage = null) }
+            when (val result = getKategoriListUseCase()) {
+                is Resource.Success -> {
+                    val categoryNames = result.data.map { it.name }
+                    val categories = listOf(ALL_CATEGORIES) + categoryNames
+                    _uiState.update { state ->
+                        val selectedCategory = state.filter.selectedCategory
+                            .takeIf { it in categories }
+                            ?: ALL_CATEGORIES
+                        state.copy(
+                            categories = categories,
+                            isCategoryLoading = false,
+                            categoryErrorMessage = null,
+                            filter = state.filter.copy(selectedCategory = selectedCategory)
+                        )
+                    }
+                }
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            categories = listOf(ALL_CATEGORIES),
+                            isCategoryLoading = false,
+                            categoryErrorMessage = result.message
+                        )
+                    }
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
 
     fun onQueryChanged(query: String) = _uiState.update {
         it.copy(query = query, showResults = query.isNotEmpty())

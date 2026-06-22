@@ -86,6 +86,9 @@ fun SearchScreen(
     if (uiState.showFilterSheet) {
         FilterSortBottomSheet(
             state = uiState.filter,
+            categories = uiState.categories,
+            isCategoryLoading = uiState.isCategoryLoading,
+            categoryErrorMessage = uiState.categoryErrorMessage,
             sheetState = sheetState,
             onDismiss = viewModel::onDismissFilter,
             onTypeSelected = viewModel::onFilterTypeSelected,
