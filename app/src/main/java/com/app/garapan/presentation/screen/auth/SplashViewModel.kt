@@ -2,6 +2,7 @@ package com.app.garapan.presentation.screen.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.app.garapan.BuildConfig
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.usecase.CheckAuthTokenUseCase
 import com.app.garapan.domain.usecase.GetMeUseCase
@@ -46,6 +47,12 @@ class SplashViewModel @Inject constructor(
     private fun checkAuth() {
         viewModelScope.launch {
             delay(2000L)
+            if (BuildConfig.DEV_AUTH_BYPASS) {
+                _uiState.value = SplashUiState(isLoading = false)
+                _events.emit(SplashEvent.Navigate(Routes.HOME))
+                return@launch
+            }
+
             val isLoggedIn = checkAuthTokenUseCase()
             if (!isLoggedIn) {
                 _uiState.value = SplashUiState(isLoading = false)

@@ -37,6 +37,7 @@ android {
     buildTypes {
         debug {
             signingConfig = signingConfigs.getByName("debug")
+            buildConfigField("Boolean", "DEV_AUTH_BYPASS", "true")
             buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"16674215831-1ojhq6t9cvh3liv0qjqch9rptnqnk7dn.apps.googleusercontent.com\"")
         }
 
@@ -47,6 +48,7 @@ android {
                 "proguard-rules.pro"
             )
             // Emulator fallback: "http://10.0.2.2:3000/"
+            buildConfigField("Boolean", "DEV_AUTH_BYPASS", "false")
             buildConfigField("String", "BASE_URL", "\"https://api-garapan.up.railway.app/\"")
             buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"16674215831-1ojhq6t9cvh3liv0qjqch9rptnqnk7dn.apps.googleusercontent.com\"")
         }
