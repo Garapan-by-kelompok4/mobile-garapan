@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.Role
-import com.app.garapan.domain.usecase.GetMeUseCase
+import com.app.garapan.domain.usecase.LoadSessionUseCase
 import com.app.garapan.domain.usecase.GoogleSignInUseCase
 import com.app.garapan.domain.usecase.RegisterUseCase
 import com.app.garapan.domain.usecase.ResendVerificationUseCase
@@ -46,7 +46,7 @@ sealed interface RegisterEvent {
 class RegisterViewModel @Inject constructor(
     private val registerUseCase: RegisterUseCase,
     private val googleSignInUseCase: GoogleSignInUseCase,
-    private val getMeUseCase: GetMeUseCase,
+    private val loadSessionUseCase: LoadSessionUseCase,
     private val resendVerificationUseCase: ResendVerificationUseCase
 ) : ViewModel() {
 
@@ -135,7 +135,7 @@ class RegisterViewModel @Inject constructor(
         }
 
     private suspend fun routeAfterAuthenticatedGoogleSignIn() {
-        when (val result = getMeUseCase()) {
+        when (val result = loadSessionUseCase()) {
             is Resource.Success -> {
                 _uiState.update { it.copy(isLoading = false) }
                 _events.emit(RegisterEvent.Navigate(result.data.authDestination()))
