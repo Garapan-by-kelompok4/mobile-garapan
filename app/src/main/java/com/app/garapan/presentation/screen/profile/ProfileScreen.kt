@@ -70,12 +70,14 @@ import kotlinx.coroutines.flow.collectLatest
 private data class ProfileMenuItem(
     val label: String,
     val icon: ImageVector,
+    val muted: Boolean = false,
     val onClick: () -> Unit = {}
 )
 
 @Composable
 fun ProfileScreen(
     navController: NavController,
+    showBackButton: Boolean = true,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -92,9 +94,6 @@ fun ProfileScreen(
     }
 
     Scaffold(
-        bottomBar = {
-            ProfileBottomNav(navController = navController)
-        },
         containerColor = White
     ) { innerPadding ->
         val initials = uiState.name
@@ -108,8 +107,12 @@ fun ProfileScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 28.dp)
+                .padding(bottom = 32.dp)
         ) {
-            ProfileTopBar(onBack = { navController.navigateUp() })
+            ProfileTopBar(
+                onBack = { navController.navigateUp() },
+                showBackButton = showBackButton
+            )
             Spacer(modifier = Modifier.height(18.dp))
 
             ProfileHeaderCard(
@@ -146,35 +149,44 @@ fun ProfileScreen(
                     },
                     ProfileMenuItem("Pusat Bantuan", Icons.AutoMirrored.Filled.Help),
                     ProfileMenuItem("Syarat & Ketentuan", Icons.AutoMirrored.Filled.Article),
-                    ProfileMenuItem("Kebijakan Privasi", Icons.Filled.PrivacyTip)
+                    ProfileMenuItem("Kebijakan Privasi", Icons.Filled.PrivacyTip),
+                    ProfileMenuItem(
+                        label = "Keluar (Log Out)",
+                        icon = Icons.AutoMirrored.Filled.Logout,
+                        muted = true,
+                        onClick = { viewModel.onLogout() }
+                    )
                 )
             )
 
-            Spacer(modifier = Modifier.height(14.dp))
-            LogoutCard(onClick = { viewModel.onLogout() })
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
 
 @Composable
-private fun ProfileTopBar(onBack: () -> Unit) {
+private fun ProfileTopBar(
+    onBack: () -> Unit,
+    showBackButton: Boolean = true
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(
-            onClick = onBack,
-            modifier = Modifier.size(40.dp)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-                tint = PrimaryText,
-                modifier = Modifier.size(30.dp)
-            )
+        if (showBackButton) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = PrimaryText,
+                    modifier = Modifier.size(30.dp)
+                )
+            }
         }
         Text(
             text = "Profile",
@@ -280,7 +292,7 @@ private fun ProfileMenuGroup(
         items.forEachIndexed { index, item ->
             ProfileMenuRow(
                 item = item,
-                muted = muted
+                muted = item.muted || muted
             )
             if (index != items.lastIndex) {
                 HorizontalDivider(
@@ -308,7 +320,7 @@ private fun ProfileMenuRow(
         Icon(
             imageVector = item.icon,
             contentDescription = null,
-            tint = PrimaryText,
+            tint = if (muted) SecondaryText else PrimaryText,
             modifier = Modifier.size(25.dp)
         )
         Text(
@@ -319,118 +331,5 @@ private fun ProfileMenuRow(
             ),
             modifier = Modifier.padding(start = 18.dp)
         )
-    }
-}
-
-@Composable
-private fun LogoutCard(onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .border(1.dp, Color(0xFFB7B7B7), RoundedCornerShape(10.dp))
-            .clickable { onClick() }
-            .padding(horizontal = 18.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.Logout,
-            contentDescription = null,
-            tint = SecondaryText,
-            modifier = Modifier.size(25.dp)
-        )
-        Text(
-            text = "Keluar (Log Out)",
-            style = MaterialTheme.typography.bodyLarge.copy(
-                fontWeight = FontWeight.ExtraBold,
-                color = SecondaryText
-            ),
-            modifier = Modifier.padding(start = 18.dp)
-        )
-    }
-}
-
-private data class NavItem(
-    val label: String,
-    val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector
-)
-
-@Composable
-private fun ProfileBottomNav(navController: NavController) {
-    val navItems = listOf(
-        NavItem("Home", Icons.Filled.Home, Icons.Outlined.Home),
-        NavItem("Search", Icons.Filled.Search, Icons.Outlined.Search),
-        NavItem("New", Icons.Default.Add, Icons.Default.Add),
-        NavItem("Pesan", Icons.Outlined.ChatBubbleOutline, Icons.Outlined.ChatBubbleOutline),
-        NavItem("Profile", Icons.Filled.Person, Icons.Outlined.Person),
-    )
-    val selectedIndex = 4
-
-    NavigationBar(
-        containerColor = White,
-        tonalElevation = 0.dp,
-        modifier = Modifier.border(width = 1.dp, color = BorderColor, shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp))
-    ) {
-        navItems.forEachIndexed { index, item ->
-            if (index == 2) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(64.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(52.dp)
-                            .clip(CircleShape)
-                            .clickable { navController.navigate(Routes.POST_PROJECT) }
-                            .background(BrandNavy),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = item.label,
-                            tint = White,
-                            modifier = Modifier.size(26.dp)
-                        )
-                    }
-                }
-            } else {
-                NavigationBarItem(
-                    selected = selectedIndex == index,
-                    onClick = {
-                        when (index) {
-                            0 -> navController.navigate(Routes.HOME) {
-                                popUpTo(Routes.HOME) { inclusive = true }
-                            }
-                            1 -> navController.navigate(Routes.SEARCH)
-                            3 -> navController.navigate(Routes.PESAN)
-                            else -> {}
-                        }
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = if (selectedIndex == index) item.selectedIcon else item.unselectedIcon,
-                            contentDescription = item.label,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    },
-                    label = {
-                        Text(
-                            text = item.label,
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BrandNavy,
-                        selectedTextColor = BrandNavy,
-                        unselectedIconColor = MutedText,
-                        unselectedTextColor = MutedText,
-                        indicatorColor = BrandNavy.copy(alpha = 0.1f)
-                    )
-                )
-            }
-        }
     }
 }

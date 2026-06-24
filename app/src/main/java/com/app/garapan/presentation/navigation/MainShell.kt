@@ -1,0 +1,266 @@
+package com.app.garapan.presentation.navigation
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Store
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.ReceiptLong
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Store
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.runtime.collectAsState
+import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.app.garapan.domain.model.Role
+import com.app.garapan.presentation.screen.home.HomeScreen
+import com.app.garapan.presentation.screen.order_history.OrderHistoryScreen
+import com.app.garapan.presentation.screen.pesan.PesanScreen
+import com.app.garapan.presentation.screen.post_project.PostProjectScreen
+import com.app.garapan.presentation.screen.profile.ProfileScreen
+import com.app.garapan.presentation.screen.profile_services.ProfileServicesScreen
+import com.app.garapan.presentation.screen.search.SearchScreen
+import com.app.garapan.ui.theme.BorderColor
+import com.app.garapan.ui.theme.BrandNavy
+import com.app.garapan.ui.theme.MutedText
+import com.app.garapan.ui.theme.Surface
+import com.app.garapan.ui.theme.White
+
+private data class MainTabItem(
+    val route: String,
+    val label: String,
+    val selectedIcon: ImageVector,
+    val unselectedIcon: ImageVector,
+    val isCenterAction: Boolean = false
+)
+
+@Composable
+fun MainShell(
+    rootNavController: NavController,
+    viewModel: MainShellViewModel = hiltViewModel()
+) {
+    val currentUser by viewModel.currentUser.collectAsState()
+    val role = currentUser?.role
+
+    if (role == null) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Surface),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = BrandNavy)
+        }
+        return
+    }
+
+    val tabNavController = rememberNavController()
+    val navBackStackEntry by tabNavController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route?.let(::leafRoute).orEmpty()
+    val tabs = tabsForRole(role)
+
+    Scaffold(
+        containerColor = Surface,
+        bottomBar = {
+            MainBottomBar(
+                tabs = tabs,
+                currentRoute = currentRoute,
+                onTabSelected = { route ->
+                    tabNavController.navigateMainTab(route)
+                }
+            )
+        }
+    ) { innerPadding ->
+        NavHost(
+            navController = tabNavController,
+            startDestination = Routes.HOME,
+            modifier = Modifier.padding(innerPadding)
+        ) {
+            composable(Routes.HOME) {
+                HomeScreen(
+                    navController = rootNavController,
+                    tabNavController = tabNavController
+                )
+            }
+            composable(Routes.SEARCH) {
+                SearchScreen(
+                    navController = rootNavController,
+                    showBackButton = false
+                )
+            }
+            composable(Routes.PROFILE_SERVICES) {
+                ProfileServicesScreen(
+                    navController = rootNavController,
+                    showBackButton = false
+                )
+            }
+            composable(Routes.ORDER_HISTORY) {
+                OrderHistoryScreen(
+                    navController = rootNavController,
+                    showBackButton = false
+                )
+            }
+            composable(Routes.PESAN) {
+                PesanScreen(navController = rootNavController)
+            }
+            composable(Routes.POST_PROJECT) {
+                PostProjectScreen(navController = rootNavController)
+            }
+            composable(Routes.PROFILE) {
+                ProfileScreen(
+                    navController = rootNavController,
+                    showBackButton = false
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MainBottomBar(
+    tabs: List<MainTabItem>,
+    currentRoute: String,
+    onTabSelected: (String) -> Unit
+) {
+    NavigationBar(
+        containerColor = White,
+        tonalElevation = 0.dp,
+        modifier = Modifier.border(
+            width = 1.dp,
+            color = BorderColor,
+            shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp)
+        )
+    ) {
+        tabs.forEach { tab ->
+            if (tab.isCenterAction) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(64.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(52.dp)
+                            .clip(CircleShape)
+                            .clickable { onTabSelected(tab.route) }
+                            .background(BrandNavy),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = tab.label,
+                            tint = White,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+                }
+            } else {
+                val selected = currentRoute == leafRoute(tab.route)
+                NavigationBarItem(
+                    selected = selected,
+                    onClick = { onTabSelected(tab.route) },
+                    icon = {
+                        Icon(
+                            imageVector = if (selected) tab.selectedIcon else tab.unselectedIcon,
+                            contentDescription = tab.label,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = tab.label,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = BrandNavy,
+                        selectedTextColor = BrandNavy,
+                        unselectedIconColor = MutedText,
+                        unselectedTextColor = MutedText,
+                        indicatorColor = BrandNavy.copy(alpha = 0.1f)
+                    )
+                )
+            }
+        }
+    }
+}
+
+private fun tabsForRole(role: Role): List<MainTabItem> =
+    when (role) {
+        Role.KLIEN, Role.ADMIN -> listOf(
+            MainTabItem(Routes.HOME, "Home", Icons.Filled.Home, Icons.Outlined.Home),
+            MainTabItem(Routes.SEARCH, "Cari Jasa", Icons.Filled.Search, Icons.Outlined.Search),
+            MainTabItem(Routes.POST_PROJECT, "New", Icons.Default.Add, Icons.Default.Add, isCenterAction = true),
+            MainTabItem(
+                Routes.ORDER_HISTORY,
+                "Pesanan",
+                Icons.Outlined.ReceiptLong,
+                Icons.Outlined.ReceiptLong
+            ),
+            MainTabItem(Routes.PROFILE, "Profile", Icons.Filled.Person, Icons.Outlined.Person)
+        )
+        Role.MAHASISWA -> listOf(
+            MainTabItem(Routes.HOME, "Home", Icons.Filled.Home, Icons.Outlined.Home),
+            MainTabItem(Routes.PROFILE_SERVICES, "My Jasa", Icons.Filled.Store, Icons.Outlined.Store),
+            MainTabItem(
+                Routes.ORDER_HISTORY,
+                "Pesanan",
+                Icons.Outlined.ReceiptLong,
+                Icons.Outlined.ReceiptLong
+            ),
+            MainTabItem(
+                Routes.PESAN,
+                "Chat",
+                Icons.Outlined.ChatBubbleOutline,
+                Icons.Outlined.ChatBubbleOutline
+            ),
+            MainTabItem(Routes.PROFILE, "Profile", Icons.Filled.Person, Icons.Outlined.Person)
+        )
+    }
+
+private fun NavController.navigateMainTab(route: String) {
+    navigate(route) {
+        popUpTo(graph.findStartDestination().id) {
+            saveState = true
+        }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
+
+private fun leafRoute(route: String?): String =
+    route?.substringAfterLast('/')?.ifBlank { route } ?: ""

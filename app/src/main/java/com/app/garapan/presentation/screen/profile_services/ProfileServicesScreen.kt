@@ -56,6 +56,7 @@ import com.app.garapan.ui.theme.White
 @Composable
 fun ProfileServicesScreen(
     navController: NavController,
+    showBackButton: Boolean = true,
     viewModel: ProfileServicesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -69,7 +70,10 @@ fun ProfileServicesScreen(
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
             item {
-                ProfileServicesTopBar(onBack = { navController.navigateUp() })
+                ProfileServicesTopBar(
+                    onBack = { navController.navigateUp() },
+                    showBackButton = showBackButton
+                )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = "Keahlian & Layanan",
@@ -115,17 +119,22 @@ fun ProfileServicesScreen(
 }
 
 @Composable
-private fun ProfileServicesTopBar(onBack: () -> Unit) {
+private fun ProfileServicesTopBar(
+    onBack: () -> Unit,
+    showBackButton: Boolean = true
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-                tint = AccentBlue
-            )
+        if (showBackButton) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = AccentBlue
+                )
+            }
         }
         Text(
             text = "Edit Keahlian & Layanan",

@@ -11,6 +11,7 @@ object Routes {
     const val RESET_PASSWORD = "reset_password?email={email}&token={token}"
     const val TWO_FACTOR = "two_factor?preAuthToken={preAuthToken}"
     const val SETUP = "setup"
+    const val MAIN = "main"
     const val HOME = "home"
     const val SEARCH = "search"
     const val PESAN = "pesan"

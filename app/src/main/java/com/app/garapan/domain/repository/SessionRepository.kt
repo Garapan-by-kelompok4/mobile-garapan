@@ -6,6 +6,8 @@ import kotlinx.coroutines.flow.StateFlow
 interface SessionRepository {
     val currentUser: StateFlow<User?>
 
+    fun peekCurrentUser(): User?
+
     fun setUser(user: User)
 
     fun clear()

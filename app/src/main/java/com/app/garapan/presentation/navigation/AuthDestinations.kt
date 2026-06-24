@@ -4,7 +4,7 @@ import com.app.garapan.domain.model.Role
 import com.app.garapan.domain.model.User
 
 fun User.authDestination(): String =
-    if (isProfileIncomplete()) Routes.setupRoute(role.setupRouteParam()) else Routes.HOME
+    if (isProfileIncomplete()) Routes.setupRoute(role.setupRouteParam()) else Routes.MAIN
 
 private fun User.isProfileIncomplete(): Boolean =
     when (role) {

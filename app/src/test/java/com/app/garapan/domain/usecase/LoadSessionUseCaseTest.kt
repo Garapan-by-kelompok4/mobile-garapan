@@ -62,6 +62,8 @@ class LoadSessionUseCaseTest {
         private val _currentUser = MutableStateFlow<User?>(null)
         override val currentUser: StateFlow<User?> = _currentUser
 
+        override fun peekCurrentUser(): User? = _currentUser.value
+
         override fun setUser(user: User) {
             _currentUser.value = user
         }

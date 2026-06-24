@@ -15,6 +15,8 @@ class SessionRepositoryImpl @Inject constructor() : SessionRepository {
 
     override val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
 
+    override fun peekCurrentUser(): User? = _currentUser.value
+
     override fun setUser(user: User) {
         _currentUser.value = user
     }

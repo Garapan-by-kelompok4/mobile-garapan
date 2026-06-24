@@ -61,6 +61,8 @@ class AuthTokenAuthenticatorTest {
     private class NoOpSessionRepository : SessionRepository {
         override val currentUser: StateFlow<com.app.garapan.domain.model.User?> = MutableStateFlow(null)
 
+        override fun peekCurrentUser(): com.app.garapan.domain.model.User? = null
+
         override fun setUser(user: com.app.garapan.domain.model.User) = Unit
 
         override fun clear() = Unit

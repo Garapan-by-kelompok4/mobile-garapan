@@ -122,7 +122,7 @@ class SetupAccountViewModel @Inject constructor(
             when (val result = updateProfileUseCase(params)) {
                 is Resource.Success -> {
                     _uiState.value = SetupAccountUiState(isLoading = false)
-                    _events.emit(SetupAccountEvent.Navigate(Routes.HOME))
+                    _events.emit(SetupAccountEvent.Navigate(Routes.MAIN))
                 }
                 is Resource.Error -> _uiState.value = SetupAccountUiState(
                     isLoading = false,
