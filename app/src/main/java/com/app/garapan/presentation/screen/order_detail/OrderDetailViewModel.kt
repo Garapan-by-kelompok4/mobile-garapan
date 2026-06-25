@@ -39,6 +39,7 @@ data class OrderDetailUiState(
     val canDeliver: Boolean = false,
     val canComplete: Boolean = false,
     val canPay: Boolean = false,
+    val canDispute: Boolean = false,
     val isLoading: Boolean = false,
     val isActionLoading: Boolean = false,
     val errorMessage: String? = null,
@@ -81,7 +82,8 @@ class OrderDetailViewModel @Inject constructor(
                             it.copy(
                                 canDeliver = canDeliver(state.statusRaw),
                                 canComplete = canComplete(state.statusRaw),
-                                canPay = canPay(state.statusRaw)
+                                canPay = canPay(state.statusRaw),
+                                canDispute = canDispute(state.statusRaw)
                             )
                         }
                     }
@@ -282,6 +284,7 @@ class OrderDetailViewModel @Inject constructor(
                 canDeliver = canDeliver(pesanan.status),
                 canComplete = canComplete(pesanan.status),
                 canPay = canPay(pesanan.status),
+                canDispute = canDispute(pesanan.status),
                 isLoading = false,
                 isActionLoading = false,
                 errorMessage = null
@@ -297,4 +300,7 @@ class OrderDetailViewModel @Inject constructor(
 
     private fun canPay(status: PesananStatus): Boolean =
         currentRole == Role.KLIEN && status == PesananStatus.PENDING
+
+    private fun canDispute(status: PesananStatus): Boolean =
+        currentRole == Role.KLIEN && (status == PesananStatus.IN_PROGRESS || status == PesananStatus.DELIVERED)
 }

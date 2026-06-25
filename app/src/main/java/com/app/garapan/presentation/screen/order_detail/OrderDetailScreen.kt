@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -26,8 +27,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import com.app.garapan.presentation.navigation.Routes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -132,7 +135,7 @@ fun OrderDetailScreen(
             }
         },
         bottomBar = {
-            if (uiState.canPay || uiState.canDeliver || uiState.canComplete) {
+            if (uiState.canPay || uiState.canDeliver || uiState.canComplete || uiState.canDispute) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -177,34 +180,57 @@ fun OrderDetailScreen(
                                 Text("Perbarui Status")
                             }
                         } else {
-                            Button(
-                                onClick = {
-                                    if (uiState.canDeliver) viewModel.onDeliverClicked()
-                                    else viewModel.onCompleteClicked()
-                                },
-                                enabled = !uiState.isActionLoading,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(54.dp),
-                                shape = RoundedCornerShape(50.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = BrandNavy,
-                                    contentColor = White
-                                )
-                            ) {
-                                if (uiState.isActionLoading) {
-                                    CircularProgressIndicator(
-                                        color = White,
-                                        strokeWidth = 2.dp,
-                                        modifier = Modifier.height(22.dp)
+                            if (uiState.canDeliver || uiState.canComplete) {
+                                Button(
+                                    onClick = {
+                                        if (uiState.canDeliver) viewModel.onDeliverClicked()
+                                        else viewModel.onCompleteClicked()
+                                    },
+                                    enabled = !uiState.isActionLoading,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(54.dp),
+                                    shape = RoundedCornerShape(50.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = BrandNavy,
+                                        contentColor = White
                                     )
-                                } else {
+                                ) {
+                                    if (uiState.isActionLoading) {
+                                        CircularProgressIndicator(
+                                            color = White,
+                                            strokeWidth = 2.dp,
+                                            modifier = Modifier.height(22.dp)
+                                        )
+                                    } else {
+                                        Text(
+                                            text = if (uiState.canDeliver) {
+                                                "Tandai Sudah Dikirim"
+                                            } else {
+                                                "Terima Pekerjaan"
+                                            },
+                                            style = MaterialTheme.typography.bodyLarge.copy(
+                                                fontWeight = FontWeight.ExtraBold
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                            if (uiState.canDispute) {
+                                OutlinedButton(
+                                    onClick = { navController.navigate(Routes.disputeRoute(uiState.id)) },
+                                    enabled = !uiState.isActionLoading,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(54.dp),
+                                    shape = RoundedCornerShape(50.dp),
+                                    border = BorderStroke(1.dp, Color(0xFFE31B23)),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = Color(0xFFE31B23)
+                                    )
+                                ) {
                                     Text(
-                                        text = if (uiState.canDeliver) {
-                                            "Tandai Sudah Dikirim"
-                                        } else {
-                                            "Terima Pekerjaan"
-                                        },
+                                        text = "Ajukan Dispute / Komplain",
                                         style = MaterialTheme.typography.bodyLarge.copy(
                                             fontWeight = FontWeight.ExtraBold
                                         )
