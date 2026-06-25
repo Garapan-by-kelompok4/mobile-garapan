@@ -2,6 +2,7 @@ package com.app.garapan.di
 
 import com.app.garapan.BuildConfig
 import com.app.garapan.data.remote.api.AuthApi
+import com.app.garapan.data.remote.api.KategoriApi
 import com.app.garapan.data.remote.api.PortofolioApi
 import com.app.garapan.data.remote.api.UsersApi
 import com.app.garapan.data.remote.interceptor.AuthInterceptor
@@ -72,6 +73,11 @@ object NetworkModule {
     @Singleton
     fun provideUsersApi(retrofit: Retrofit): UsersApi =
         retrofit.create(UsersApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideKategoriApi(retrofit: Retrofit): KategoriApi =
+        retrofit.create(KategoriApi::class.java)
 
     @Provides
     @Singleton
