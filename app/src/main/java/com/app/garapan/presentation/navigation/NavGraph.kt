@@ -22,6 +22,7 @@ import com.app.garapan.presentation.screen.edit_portfolio.EditPortfolioScreen
 import com.app.garapan.presentation.screen.edit_service.EditServiceScreen
 import com.app.garapan.presentation.screen.forgot_password.ForgotPasswordScreen
 import com.app.garapan.presentation.screen.jasa_detail.JasaDetailScreen
+import com.app.garapan.presentation.screen.order_detail.OrderDetailScreen
 import com.app.garapan.presentation.screen.order_history.OrderHistoryScreen
 import com.app.garapan.presentation.screen.portfolio.PortfolioScreen
 import com.app.garapan.presentation.screen.profile_services.ProfileServicesScreen
@@ -177,6 +178,12 @@ fun NavGraph(navController: NavHostController) {
         composable(Routes.ORDER_HISTORY) {
             OrderHistoryScreen(navController = navController)
         }
+        composable(
+            route = Routes.ORDER_DETAIL,
+            arguments = listOf(navArgument("pesananId") { type = NavType.StringType })
+        ) {
+            OrderDetailScreen(navController = navController)
+        }
         composable(Routes.SECURITY) {
             SecurityScreen(navController = navController)
         }
@@ -198,8 +205,17 @@ fun NavGraph(navController: NavHostController) {
         ) {
             ChatScreen(navController = navController)
         }
-        composable(Routes.CHECKOUT) {
-            CheckoutScreen(navController = navController)
+        composable(
+            route = Routes.CHECKOUT,
+            arguments = listOf(navArgument("jasaId") { type = NavType.StringType })
+        ) {
+            RoleGuard(
+                allowedRoles = setOf(Role.KLIEN, Role.ADMIN),
+                navController = navController,
+                fallbackRoute = Routes.MAIN
+            ) {
+                CheckoutScreen(navController = navController)
+            }
         }
         composable(
             route = Routes.BLOG_DETAIL,

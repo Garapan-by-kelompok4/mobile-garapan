@@ -46,7 +46,7 @@ socketio = "2.1.0"
 firebaseBom = "33.7.0"
 
 # Payments
-midtrans = "2.0.0"
+browser = "1.9.0"
 
 [libraries]
 # AndroidX Core
@@ -116,8 +116,8 @@ firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.r
 firebase-messaging-ktx = { group = "com.google.firebase", name = "firebase-messaging-ktx" }
 firebase-analytics-ktx = { group = "com.google.firebase", name = "firebase-analytics-ktx" }
 
-# Midtrans payments
-midtrans-uikit = { group = "com.midtrans", name = "uikit", version.ref = "midtrans" }
+# Snap payment (Custom Tabs redirect)
+androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
 
 # Test
 junit = { group = "junit", name = "junit", version.ref = "junit" }

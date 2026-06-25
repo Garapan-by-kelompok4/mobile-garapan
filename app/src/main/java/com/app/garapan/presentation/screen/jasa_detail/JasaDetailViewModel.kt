@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.Jasa
 import com.app.garapan.domain.model.JasaStatus
+import com.app.garapan.domain.model.Role
 import com.app.garapan.domain.usecase.GetJasaDetailUseCase
 import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
 import com.app.garapan.presentation.util.CurrencyFormatter
@@ -57,6 +58,7 @@ data class JasaDetailUiState(
     val reviews: List<JasaReviewItem> = emptyList(),
     val ratingBreakdown: Map<Int, Int> = emptyMap(),
     val isOwner: Boolean = false,
+    val isKlien: Boolean = false,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
@@ -72,6 +74,7 @@ class JasaDetailViewModel @Inject constructor(
 
     private var currentUserId: String? = null
     private var currentMahasiswaId: String? = null
+    private var currentRole: Role? = null
     private var loadedJasa: Jasa? = null
 
     private val _uiState = MutableStateFlow(JasaDetailUiState(isLoading = true))
@@ -82,6 +85,7 @@ class JasaDetailViewModel @Inject constructor(
             observeCurrentUserUseCase().collect { user ->
                 currentUserId = user?.id
                 currentMahasiswaId = user?.mahasiswa?.id
+                currentRole = user?.role
                 loadedJasa?.let { jasa -> _uiState.value = jasa.toUiState(isJasaOwner(jasa)) }
             }
         }
@@ -157,6 +161,7 @@ class JasaDetailViewModel @Inject constructor(
                 )
             },
             isOwner = isOwner,
+            isKlien = currentRole == Role.KLIEN,
             isLoading = false,
             errorMessage = null
         )

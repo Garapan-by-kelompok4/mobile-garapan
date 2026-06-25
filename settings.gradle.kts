@@ -19,10 +19,6 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven {
-            url = uri("https://api.midtrans.com/mobile/android/maven")
-            content { includeGroup("com.midtrans") }
-        }
     }
 }
 
