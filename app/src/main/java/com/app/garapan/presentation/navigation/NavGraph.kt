@@ -18,20 +18,16 @@ import com.app.garapan.presentation.screen.checkout.CheckoutScreen
 import com.app.garapan.presentation.screen.edit_profile.EditProfileScreen
 import com.app.garapan.presentation.screen.edit_service.EditServiceScreen
 import com.app.garapan.presentation.screen.forgot_password.ForgotPasswordScreen
-import com.app.garapan.presentation.screen.home.HomeScreen
 import com.app.garapan.presentation.screen.jasa_detail.JasaDetailScreen
 import com.app.garapan.presentation.screen.order_history.OrderHistoryScreen
-import com.app.garapan.presentation.screen.pesan.PesanScreen
-import com.app.garapan.presentation.screen.post_project.PostProjectScreen
-import com.app.garapan.presentation.screen.profile.ProfileScreen
 import com.app.garapan.presentation.screen.portfolio.PortfolioScreen
 import com.app.garapan.presentation.screen.profile_services.ProfileServicesScreen
 import com.app.garapan.presentation.screen.project_detail.ProjectDetailScreen
 import com.app.garapan.presentation.screen.reset_password.ResetPasswordScreen
-import com.app.garapan.presentation.screen.search.SearchScreen
 import com.app.garapan.presentation.screen.security.SecurityScreen
 import com.app.garapan.presentation.screen.two_factor.TwoFactorScreen
 import com.app.garapan.presentation.screen.verify_email.VerifyEmailScreen
+import com.app.garapan.domain.model.Role
 
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -112,20 +108,8 @@ fun NavGraph(navController: NavHostController) {
             val role = backStackEntry.arguments?.getString("role") ?: "student"
             SetupAccountScreen(navController = navController, role = role)
         }
-        composable(Routes.HOME) {
-            HomeScreen(navController = navController)
-        }
-        composable(Routes.SEARCH) {
-            SearchScreen(navController = navController)
-        }
-        composable(Routes.PESAN) {
-            PesanScreen(navController = navController)
-        }
-        composable(Routes.POST_PROJECT) {
-            PostProjectScreen(navController = navController)
-        }
-        composable(Routes.PROFILE) {
-            ProfileScreen(navController = navController)
+        composable(Routes.MAIN) {
+            MainShell(rootNavController = navController)
         }
         composable(Routes.PROFILE_PORTFOLIO) {
             PortfolioScreen(navController = navController)
@@ -140,7 +124,13 @@ fun NavGraph(navController: NavHostController) {
             route = Routes.EDIT_SERVICE,
             arguments = listOf(navArgument("serviceId") { type = NavType.StringType })
         ) {
-            EditServiceScreen(navController = navController)
+            RoleGuard(
+                allowedRoles = setOf(Role.MAHASISWA),
+                navController = navController,
+                fallbackRoute = Routes.MAIN
+            ) {
+                EditServiceScreen(navController = navController)
+            }
         }
         composable(Routes.ORDER_HISTORY) {
             OrderHistoryScreen(navController = navController)

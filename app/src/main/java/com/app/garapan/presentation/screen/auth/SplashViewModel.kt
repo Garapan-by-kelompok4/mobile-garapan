@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.usecase.CheckAuthTokenUseCase
-import com.app.garapan.domain.usecase.GetMeUseCase
+import com.app.garapan.domain.usecase.LoadSessionUseCase
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.navigation.authDestination
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,7 +30,7 @@ sealed interface SplashEvent {
 @HiltViewModel
 class SplashViewModel @Inject constructor(
     private val checkAuthTokenUseCase: CheckAuthTokenUseCase,
-    private val getMeUseCase: GetMeUseCase
+    private val loadSessionUseCase: LoadSessionUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SplashUiState())
@@ -53,7 +53,7 @@ class SplashViewModel @Inject constructor(
                 return@launch
             }
 
-            when (val result = getMeUseCase()) {
+            when (val result = loadSessionUseCase()) {
                 is Resource.Success -> {
                     _uiState.value = SplashUiState(isLoading = false)
                     _events.emit(SplashEvent.Navigate(result.data.authDestination()))

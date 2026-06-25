@@ -3,7 +3,7 @@ package com.app.garapan.presentation.screen.two_factor
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
-import com.app.garapan.domain.usecase.GetMeUseCase
+import com.app.garapan.domain.usecase.LoadSessionUseCase
 import com.app.garapan.domain.usecase.ResendOtpUseCase
 import com.app.garapan.domain.usecase.VerifyOtpUseCase
 import com.app.garapan.presentation.navigation.authDestination
@@ -36,7 +36,7 @@ sealed interface TwoFactorEvent {
 class TwoFactorViewModel @Inject constructor(
     private val verifyOtpUseCase: VerifyOtpUseCase,
     private val resendOtpUseCase: ResendOtpUseCase,
-    private val getMeUseCase: GetMeUseCase
+    private val loadSessionUseCase: LoadSessionUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TwoFactorUiState())
@@ -107,7 +107,7 @@ class TwoFactorViewModel @Inject constructor(
     }
 
     private suspend fun routeAfterVerification() {
-        when (val result = getMeUseCase()) {
+        when (val result = loadSessionUseCase()) {
             is Resource.Success -> {
                 _uiState.update { it.copy(isLoading = false) }
                 _events.emit(TwoFactorEvent.Navigate(result.data.authDestination()))

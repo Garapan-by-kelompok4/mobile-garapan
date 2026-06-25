@@ -47,6 +47,7 @@ import com.app.garapan.ui.theme.White
 @Composable
 fun OrderHistoryScreen(
     navController: NavController,
+    showBackButton: Boolean = true,
     viewModel: OrderHistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -57,7 +58,10 @@ fun OrderHistoryScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            OrderHistoryTopBar(onBack = { navController.navigateUp() })
+            OrderHistoryTopBar(
+                onBack = { navController.navigateUp() },
+                showBackButton = showBackButton
+            )
             MonthChip()
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 14.dp),
@@ -72,19 +76,26 @@ fun OrderHistoryScreen(
 }
 
 @Composable
-private fun OrderHistoryTopBar(onBack: () -> Unit) {
+private fun OrderHistoryTopBar(
+    onBack: () -> Unit,
+    showBackButton: Boolean = true
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-                tint = AccentBlue
-            )
+        if (showBackButton) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = AccentBlue
+                )
+            }
+        } else {
+            Spacer(modifier = Modifier.size(48.dp))
         }
         Text(
             text = "Riwayat Pesanan",

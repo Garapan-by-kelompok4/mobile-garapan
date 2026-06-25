@@ -75,9 +75,6 @@ fun PesanScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
-        bottomBar = {
-            PesanBottomNav(navController = navController)
-        },
         containerColor = Surface
     ) { innerPadding ->
         LazyColumn(
@@ -362,90 +359,5 @@ private fun UnreadBadge(count: Int) {
                 color = White
             )
         )
-    }
-}
-
-private data class NavItem(
-    val label: String,
-    val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector
-)
-
-@Composable
-private fun PesanBottomNav(navController: NavController) {
-    val navItems = listOf(
-        NavItem("Home", Icons.Filled.Home, Icons.Outlined.Home),
-        NavItem("Search", Icons.Filled.Search, Icons.Outlined.Search),
-        NavItem("New", Icons.Default.Add, Icons.Default.Add),
-        NavItem("Pesan", Icons.Outlined.ChatBubbleOutline, Icons.Outlined.ChatBubbleOutline),
-        NavItem("Profile", Icons.Filled.Person, Icons.Outlined.Person),
-    )
-    val selectedIndex = 3
-
-    NavigationBar(
-        containerColor = White,
-        tonalElevation = 0.dp,
-        modifier = Modifier.border(width = 1.dp, color = BorderColor, shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp))
-    ) {
-        navItems.forEachIndexed { index, item ->
-            if (index == 2) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(64.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(52.dp)
-                            .clip(CircleShape)
-                            .clickable { navController.navigate(Routes.POST_PROJECT) }
-                            .background(BrandNavy),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = item.label,
-                            tint = White,
-                            modifier = Modifier.size(26.dp)
-                        )
-                    }
-                }
-            } else {
-                NavigationBarItem(
-                    selected = selectedIndex == index,
-                    onClick = {
-                        when (index) {
-                            0 -> navController.navigate(Routes.HOME) {
-                                popUpTo(Routes.HOME) { inclusive = true }
-                            }
-                            1 -> navController.navigate(Routes.SEARCH)
-                            4 -> navController.navigate(Routes.PROFILE)
-                            else -> {}
-                        }
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = if (selectedIndex == index) item.selectedIcon else item.unselectedIcon,
-                            contentDescription = item.label,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    },
-                    label = {
-                        Text(
-                            text = item.label,
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BrandNavy,
-                        selectedTextColor = BrandNavy,
-                        unselectedIconColor = MutedText,
-                        unselectedTextColor = MutedText,
-                        indicatorColor = BrandNavy.copy(alpha = 0.1f)
-                    )
-                )
-            }
-        }
     }
 }

@@ -2,6 +2,7 @@ package com.app.garapan.data.remote.interceptor
 
 import com.app.garapan.BuildConfig
 import com.app.garapan.data.local.AuthTokenStore
+import com.app.garapan.domain.repository.SessionRepository
 import com.app.garapan.data.remote.dto.AuthTokensDto
 import com.app.garapan.domain.model.AuthTokens
 import com.google.gson.Gson
@@ -18,6 +19,7 @@ import javax.inject.Inject
 
 class AuthTokenAuthenticator @Inject constructor(
     private val tokenStore: AuthTokenStore,
+    private val sessionRepository: SessionRepository,
     private val gson: Gson
 ) : Authenticator {
     private val refreshClient by lazy { OkHttpClient.Builder().build() }
@@ -66,6 +68,7 @@ class AuthTokenAuthenticator @Inject constructor(
             }
             if (currentRefreshToken == refreshToken) {
                 tokenStore.clearTokens()
+                sessionRepository.clear()
             }
             return null
         }

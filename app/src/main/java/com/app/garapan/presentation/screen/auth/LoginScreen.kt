@@ -82,8 +82,17 @@ fun LoginScreen(
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                is LoginEvent.Navigate -> navController.navigate(event.route) {
-                    popUpTo(Routes.SPLASH) { inclusive = true }
+                is LoginEvent.Navigate -> {
+                    val isAuthenticatedDestination =
+                        event.route == Routes.MAIN || event.route.startsWith("${Routes.SETUP}")
+                    navController.navigate(event.route) {
+                        if (isAuthenticatedDestination) {
+                            popUpTo(Routes.LOGIN) { inclusive = true }
+                        } else {
+                            popUpTo(Routes.SPLASH) { inclusive = true }
+                        }
+                        launchSingleTop = true
+                    }
                 }
                 is LoginEvent.Toast -> Unit
             }

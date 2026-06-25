@@ -77,6 +77,7 @@ import com.app.garapan.ui.theme.White
 @Composable
 fun SearchScreen(
     navController: NavController,
+    showBackButton: Boolean = true,
     viewModel: SearchViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -97,9 +98,6 @@ fun SearchScreen(
     }
 
     Scaffold(
-        bottomBar = {
-            SearchBottomNav(navController = navController)
-        },
         containerColor = White
     ) { innerPadding ->
         Column(
@@ -107,7 +105,10 @@ fun SearchScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            SearchTopBar(onBack = { navController.navigateUp() })
+            SearchTopBar(
+                onBack = { navController.navigateUp() },
+                showBackButton = showBackButton
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -138,7 +139,10 @@ fun SearchScreen(
 }
 
 @Composable
-private fun SearchTopBar(onBack: () -> Unit) {
+private fun SearchTopBar(
+    onBack: () -> Unit,
+    showBackButton: Boolean = true
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -146,12 +150,16 @@ private fun SearchTopBar(onBack: () -> Unit) {
             .padding(horizontal = 4.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-                tint = PrimaryText
-            )
+        if (showBackButton) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = PrimaryText
+                )
+            }
+        } else {
+            Spacer(modifier = Modifier.width(8.dp))
         }
         Text(
             text = "Cari Layanan",
@@ -413,90 +421,5 @@ private fun SearchEmptyState() {
             ),
             textAlign = TextAlign.Center
         )
-    }
-}
-
-private data class NavItem(
-    val label: String,
-    val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector
-)
-
-@Composable
-private fun SearchBottomNav(navController: NavController) {
-    val navItems = listOf(
-        NavItem("Home", Icons.Filled.Home, Icons.Outlined.Home),
-        NavItem("Search", Icons.Filled.Search, Icons.Outlined.Search),
-        NavItem("New", Icons.Default.Add, Icons.Default.Add),
-        NavItem("Pesan", Icons.Outlined.ChatBubbleOutline, Icons.Outlined.ChatBubbleOutline),
-        NavItem("Profile", Icons.Filled.Person, Icons.Outlined.Person),
-    )
-    val selectedIndex = 1
-
-    NavigationBar(
-        containerColor = White,
-        tonalElevation = 0.dp,
-        modifier = Modifier.border(width = 1.dp, color = BorderColor, shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp))
-    ) {
-        navItems.forEachIndexed { index, item ->
-            if (index == 2) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(64.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(52.dp)
-                            .clip(CircleShape)
-                            .clickable { navController.navigate(Routes.POST_PROJECT) }
-                            .background(BrandNavy),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = item.label,
-                            tint = White,
-                            modifier = Modifier.size(26.dp)
-                        )
-                    }
-                }
-            } else {
-                NavigationBarItem(
-                    selected = selectedIndex == index,
-                    onClick = {
-                        when (index) {
-                            0 -> navController.navigate(Routes.HOME) {
-                                popUpTo(Routes.HOME) { inclusive = true }
-                            }
-                            3 -> navController.navigate(Routes.PESAN)
-                            4 -> navController.navigate(Routes.PROFILE)
-                            else -> {}
-                        }
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = if (selectedIndex == index) item.selectedIcon else item.unselectedIcon,
-                            contentDescription = item.label,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    },
-                    label = {
-                        Text(
-                            text = item.label,
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BrandNavy,
-                        selectedTextColor = BrandNavy,
-                        unselectedIconColor = MutedText,
-                        unselectedTextColor = MutedText,
-                        indicatorColor = BrandNavy.copy(alpha = 0.1f)
-                    )
-                )
-            }
-        }
     }
 }

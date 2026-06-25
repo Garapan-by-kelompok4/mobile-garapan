@@ -3,7 +3,10 @@ package com.app.garapan.data.remote.interceptor
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.app.garapan.data.local.AuthTokenStore
 import com.app.garapan.domain.model.AuthTokens
+import com.app.garapan.domain.repository.SessionRepository
 import com.google.gson.Gson
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -22,7 +25,7 @@ class AuthTokenAuthenticatorTest {
     fun `does not clear tokens when another request already refreshed`() = runBlocking {
         val tokenStore = newTokenStore()
         tokenStore.saveTokens(AuthTokens(accessToken = "fresh-access", refreshToken = "fresh-refresh"))
-        val authenticator = AuthTokenAuthenticator(tokenStore, Gson())
+        val authenticator = AuthTokenAuthenticator(tokenStore, NoOpSessionRepository(), Gson())
         val failedRequest = Request.Builder()
             .url("https://api-garapan.up.railway.app/api/users/me")
             .header("Authorization", "Bearer stale-access")
@@ -53,5 +56,15 @@ class AuthTokenAuthenticatorTest {
             produceFile = { file }
         )
         return AuthTokenStore(dataStore)
+    }
+
+    private class NoOpSessionRepository : SessionRepository {
+        override val currentUser: StateFlow<com.app.garapan.domain.model.User?> = MutableStateFlow(null)
+
+        override fun peekCurrentUser(): com.app.garapan.domain.model.User? = null
+
+        override fun setUser(user: com.app.garapan.domain.model.User) = Unit
+
+        override fun clear() = Unit
     }
 }
