@@ -2,86 +2,175 @@ package com.app.garapan.presentation.screen.project_detail
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.app.garapan.domain.common.Resource
+import com.app.garapan.domain.model.Project
+import com.app.garapan.domain.model.ProjectStatus
+import com.app.garapan.domain.model.Role
+import com.app.garapan.domain.usecase.GetProjectDetailUseCase
+import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
+import com.app.garapan.domain.usecase.TakeProjectUseCase
+import com.app.garapan.presentation.util.CurrencyFormatter
+import com.app.garapan.presentation.util.UserMessageLocalizer
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import javax.inject.Inject
 
 data class ProjectDetailUiState(
     val id: String = "",
     val category: String = "",
     val title: String = "",
-    val viewerRole: String = "client",
     val deadline: String = "",
     val budget: String = "",
-    val teamSize: String = "",
+    val teamSize: String = "-",
     val clientName: String = "",
     val clientType: String = "",
     val isVerified: Boolean = true,
-    val description: String = ""
+    val description: String = "",
+    val imageUrl: String = "",
+    val status: ProjectStatus = ProjectStatus.OPEN,
+    val canTake: Boolean = false,
+    val showTakeButton: Boolean = false,
+    val canEdit: Boolean = false,
+    val showEditButton: Boolean = false,
+    val isLoading: Boolean = false,
+    val isTaking: Boolean = false,
+    val errorMessage: String? = null
 )
 
-private val dummyDetails = mapOf(
-    "1" to ProjectDetailUiState(
-        id = "1",
-        category = "Ed-Tech",
-        title = "Platform e-Learning Interaktif untuk Bimbingan Belajar",
-        deadline = "20 April 2026",
-        budget = "Rp 5.000.000 - Rp 8.000.000",
-        teamSize = "Tim (2-3 Orang)",
-        clientName = "Indo Sejahtera Global",
-        clientType = "Startup Ed Tech",
-        isVerified = true,
-        description = "Kami mencari talenta mahasiswa berbakat untuk membantu membangun platform e-learning interaktif yang akan digunakan oleh ribuan pelajar di seluruh Indonesia.\n\nPlatform ini akan mencakup fitur video streaming, quiz interaktif, dan sistem pelacakan progres belajar. Kandidat ideal memiliki pengalaman di bidang pengembangan web atau mobile, serta semangat tinggi untuk berkontribusi dalam dunia pendidikan digital."
-    ),
-    "2" to ProjectDetailUiState(
-        id = "2",
-        category = "Mobile Dev",
-        title = "Aplikasi Manajemen Inventaris Gudang",
-        deadline = "18 Mei 2026",
-        budget = "Rp 3.000.000 - Rp 5.000.000",
-        teamSize = "Tim (1-2 Orang)",
-        clientName = "CV Berkah Mandiri",
-        clientType = "Perusahaan Distribusi",
-        isVerified = true,
-        description = "Dibutuhkan developer untuk membangun aplikasi manajemen inventaris gudang berbasis mobile. Aplikasi mencakup fitur scan barcode, laporan stok real-time, dan notifikasi stok menipis.\n\nKami membutuhkan developer yang berpengalaman dengan React Native atau Flutter dan pernah menangani proyek serupa."
-    ),
-    "3" to ProjectDetailUiState(
-        id = "3",
-        category = "DevOps",
-        title = "Sistem Monitoring Jaringan Real-Time",
-        deadline = "10 Juni 2026",
-        budget = "Rp 4.000.000 - Rp 6.000.000",
-        teamSize = "Individu",
-        clientName = "PT Teknologi Maju",
-        clientType = "Perusahaan IT",
-        isVerified = true,
-        description = "Proyek ini mencakup pembuatan sistem monitoring jaringan berbasis web yang dapat memantau performa server, bandwidth, dan memberikan alert otomatis ketika terjadi gangguan.\n\nDibutuhkan keahlian di bidang networking, Linux, dan tools monitoring seperti Grafana atau Prometheus."
-    ),
-    "4" to ProjectDetailUiState(
-        id = "4",
-        category = "Data Science",
-        title = "Dashboard Analitik Data Penjualan",
-        deadline = "30 April 2026",
-        budget = "Rp 2.500.000 - Rp 4.000.000",
-        teamSize = "Tim (1-2 Orang)",
-        clientName = "Startup Kopi",
-        clientType = "F&B Startup",
-        isVerified = false,
-        description = "Kami membutuhkan dashboard analitik interaktif untuk memvisualisasikan data penjualan harian, mingguan, dan bulanan. Dashboard harus dapat menghasilkan laporan otomatis dan menampilkan tren penjualan produk.\n\nDibutuhkan keahlian Python, SQL, dan tools visualisasi seperti Tableau atau Power BI."
-    )
-)
+sealed interface ProjectDetailEvent {
+    data class ShowMessage(val message: String) : ProjectDetailEvent
+    data class NavigateToOrder(val pesananId: String) : ProjectDetailEvent
+}
 
 @HiltViewModel
 class ProjectDetailViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    private val getProjectDetailUseCase: GetProjectDetailUseCase,
+    private val takeProjectUseCase: TakeProjectUseCase,
+    observeCurrentUserUseCase: ObserveCurrentUserUseCase
 ) : ViewModel() {
 
-    private val projectId: String = savedStateHandle["projectId"] ?: "1"
+    private val projectId: String = savedStateHandle["projectId"] ?: ""
 
-    private val _uiState = MutableStateFlow(
-        dummyDetails[projectId] ?: dummyDetails["1"]!!
-    )
+    private var currentRole: Role? = null
+    private var currentKlienId: String? = null
+    private var loadedProject: Project? = null
+
+    private val _uiState = MutableStateFlow(ProjectDetailUiState(isLoading = true))
     val uiState: StateFlow<ProjectDetailUiState> = _uiState.asStateFlow()
+
+    private val _events = MutableSharedFlow<ProjectDetailEvent>()
+    val events: SharedFlow<ProjectDetailEvent> = _events.asSharedFlow()
+
+    init {
+        viewModelScope.launch {
+            observeCurrentUserUseCase().collect { user ->
+                currentRole = user?.role
+                currentKlienId = user?.klien?.id
+                loadedProject?.let { project ->
+                    _uiState.value = project.toUiState()
+                }
+            }
+        }
+        loadProjectDetail()
+    }
+
+    fun retry() = loadProjectDetail()
+
+    fun onTakeProject() {
+        if (_uiState.value.isTaking || !_uiState.value.canTake) return
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isTaking = true) }
+            when (val result = takeProjectUseCase(projectId)) {
+                is Resource.Success -> {
+                    _uiState.update { it.copy(isTaking = false) }
+                    _events.emit(ProjectDetailEvent.NavigateToOrder(result.data.id))
+                }
+                is Resource.Error -> {
+                    _uiState.update { it.copy(isTaking = false) }
+                    _events.emit(
+                        ProjectDetailEvent.ShowMessage(
+                            UserMessageLocalizer.localize(result.message)
+                        )
+                    )
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    private fun loadProjectDetail() {
+        if (projectId.isBlank()) {
+            _uiState.value = ProjectDetailUiState(
+                isLoading = false,
+                errorMessage = "Proyek tidak ditemukan."
+            )
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            when (val result = getProjectDetailUseCase(projectId)) {
+                is Resource.Success -> {
+                    loadedProject = result.data
+                    _uiState.value = result.data.toUiState()
+                }
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = UserMessageLocalizer.localize(result.message)
+                        )
+                    }
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    private fun Project.toUiState(): ProjectDetailUiState {
+        val isMahasiswa = currentRole == Role.MAHASISWA
+        val isKlienOwner = currentKlienId == klienId && currentRole == Role.KLIEN
+        val isOpen = status == ProjectStatus.OPEN && assignedMahasiswaId.isNullOrBlank()
+
+        return ProjectDetailUiState(
+            id = id,
+            category = kategoriName.ifBlank { "Proyek" },
+            title = title,
+            deadline = formatDeadline(deadline),
+            budget = CurrencyFormatter.formatRupiah(budget),
+            clientName = clientName.ifBlank { "Klien" },
+            clientType = kategoriName.ifBlank { "Klien" },
+            description = description,
+            imageUrl = imageUrl,
+            status = status,
+            canTake = isMahasiswa && isOpen,
+            showTakeButton = isMahasiswa && isOpen,
+            canEdit = isKlienOwner && isOpen,
+            showEditButton = isKlienOwner && isOpen,
+            isLoading = false,
+            errorMessage = null
+        )
+    }
+
+    private fun formatDeadline(deadline: String): String {
+        if (deadline.isBlank()) return "-"
+        return runCatching {
+            val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("id", "ID"))
+            Instant.parse(deadline).atZone(ZoneId.systemDefault()).format(formatter)
+        }.getOrDefault(deadline.take(10))
+    }
 }

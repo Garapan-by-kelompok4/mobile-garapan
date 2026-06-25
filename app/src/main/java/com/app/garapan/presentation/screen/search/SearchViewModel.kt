@@ -87,15 +87,22 @@ class SearchViewModel @Inject constructor(
     private var kategoriItems: List<Kategori> = emptyList()
     private var searchJob: Job? = null
     private var unifiedSearchMode = false
+    private var filtersApplied = false
 
     private val _uiState = MutableStateFlow(SearchUiState())
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
     init {
         loadCategories()
-        if (searchFocus == Routes.SEARCH_FOCUS_JASA) {
-            _uiState.update { it.copy(showResults = true) }
-            loadJasaBrowseResults()
+        when (searchFocus) {
+            Routes.SEARCH_FOCUS_JASA -> {
+                _uiState.update { it.copy(showResults = true) }
+                loadJasaBrowseResults()
+            }
+            else -> {
+                _uiState.update { it.copy(showResults = true) }
+                loadBrowseResults()
+            }
         }
     }
 
@@ -140,7 +147,7 @@ class SearchViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     query = query,
-                    showResults = searchFocus == Routes.SEARCH_FOCUS_JASA,
+                    showResults = true,
                     jasaResults = emptyList(),
                     projectResults = emptyList(),
                     resultsErrorMessage = null,
@@ -150,6 +157,8 @@ class SearchViewModel @Inject constructor(
             }
             if (searchFocus == Routes.SEARCH_FOCUS_JASA) {
                 loadJasaBrowseResults()
+            } else {
+                loadBrowseResults()
             }
             return
         }
@@ -191,6 +200,7 @@ class SearchViewModel @Inject constructor(
         _uiState.update { it.copy(filter = it.filter.copy(sortBy = option)) }
 
     fun onApplyFilter() {
+        filtersApplied = true
         unifiedSearchMode = true
         _uiState.update {
             it.copy(
@@ -204,21 +214,11 @@ class SearchViewModel @Inject constructor(
 
     fun retryResults() = refreshResults()
 
-    private fun refreshResults() {
-        if (shouldLoadJasaBrowseOnly()) {
-            loadJasaBrowseResults()
-        } else if (_uiState.value.query.isBlank() && !unifiedSearchMode) {
-            _uiState.update {
-                it.copy(
-                    showResults = false,
-                    jasaResults = emptyList(),
-                    projectResults = emptyList(),
-                    isResultsLoading = false,
-                    resultsErrorMessage = null
-                )
-            }
-        } else {
-            loadUnifiedResults()
+    fun refreshResults() {
+        when {
+            shouldLoadJasaBrowseOnly() -> loadJasaBrowseResults()
+            _uiState.value.query.isBlank() -> loadBrowseResults()
+            else -> loadUnifiedResults()
         }
     }
 
@@ -273,6 +273,46 @@ class SearchViewModel @Inject constructor(
                     }
                 }
                 Resource.Loading -> Unit
+            }
+        }
+    }
+
+    private fun loadBrowseResults() {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            _uiState.update { it.copy(isResultsLoading = true, resultsErrorMessage = null) }
+            val state = _uiState.value
+            val jasaFilters = buildJasaFilters(state)
+            val projectFilters = buildProjectFilters(state)
+
+            val (jasaResult, projectResult) = coroutineScope {
+                val jasaDeferred = async { getJasaListUseCase(jasaFilters) }
+                val projectDeferred = async { getProjectListUseCase(projectFilters) }
+                Pair(jasaDeferred.await(), projectDeferred.await())
+            }
+
+            val jasaItems = (jasaResult as? Resource.Success)?.data.orEmpty()
+            val projectItems = (projectResult as? Resource.Success)?.data.orEmpty()
+            val jasaError = (jasaResult as? Resource.Error)?.message
+            val projectError = (projectResult as? Resource.Error)?.message
+
+            val errorMessage = when {
+                jasaItems.isEmpty() && projectItems.isEmpty() && jasaError != null && projectError != null ->
+                    jasaError
+                jasaItems.isEmpty() && projectItems.isEmpty() && jasaError != null -> jasaError
+                jasaItems.isEmpty() && projectItems.isEmpty() && projectError != null -> projectError
+                else -> null
+            }
+
+            _uiState.update {
+                it.copy(
+                    jasaResults = jasaItems.map(::toJasaSearchResultItem),
+                    projectResults = projectItems.map(::toProjectSearchResultItem),
+                    isResultsLoading = false,
+                    resultsErrorMessage = errorMessage,
+                    showResults = true,
+                    queryTooShort = false
+                )
             }
         }
     }
@@ -332,18 +372,18 @@ class SearchViewModel @Inject constructor(
     private fun buildJasaFilters(state: SearchUiState) = JasaListFilters(
         search = state.query.trim().takeIf { SearchQueryMatcher.isLongEnough(it) },
         kategoriId = resolveKategoriId(state),
-        minPrice = state.filter.minPrice.toDoubleOrNull(),
-        maxPrice = state.filter.maxPrice.toDoubleOrNull(),
-        sort = state.filter.sortBy.toApiSort(),
-        includeRelatedSkills = resolveKategoriId(state) != null
+        minPrice = state.filter.minPrice.toDoubleOrNull().takeIf { filtersApplied },
+        maxPrice = state.filter.maxPrice.toDoubleOrNull().takeIf { filtersApplied },
+        sort = state.filter.sortBy.toApiSort().takeIf { filtersApplied },
+        includeRelatedSkills = resolveKategoriId(state) != null && filtersApplied
     )
 
     private fun buildProjectFilters(state: SearchUiState) = ProjectListFilters(
         search = state.query.trim().takeIf { SearchQueryMatcher.isLongEnough(it) },
-        kategoriId = resolveKategoriId(state),
-        minBudget = state.filter.minPrice.toDoubleOrNull(),
-        maxBudget = state.filter.maxPrice.toDoubleOrNull(),
-        includeRelatedSkills = resolveKategoriId(state) != null
+        kategoriId = resolveKategoriId(state).takeIf { filtersApplied },
+        minBudget = state.filter.minPrice.toDoubleOrNull().takeIf { filtersApplied },
+        maxBudget = state.filter.maxPrice.toDoubleOrNull().takeIf { filtersApplied },
+        includeRelatedSkills = resolveKategoriId(state) != null && filtersApplied
     )
 
     private fun resolveKategoriId(state: SearchUiState): String? =
@@ -372,7 +412,7 @@ class SearchViewModel @Inject constructor(
         reviewCount = 0,
         price = CurrencyFormatter.formatRupiah(project.budget),
         duration = formatDeadline(project.deadline),
-        imageUrl = "",
+        imageUrl = project.imageUrl,
         type = SearchResultType.PROYEK
     )
 
