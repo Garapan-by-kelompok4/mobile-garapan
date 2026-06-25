@@ -31,6 +31,9 @@ object Routes {
     const val CHAT = "chat/{workerId}"
     const val CHECKOUT = "checkout"
     const val BLOG_DETAIL = "blog_detail/{blogId}"
+    const val PUBLIC_PROFILE = "public_profile/{userId}"
+    const val TOP_WORKERS = "top_workers"
+    const val ARTICLE_LIST = "article_list"
 
     fun setupRoute(role: String) = "$SETUP?role=$role"
     fun verifyEmailRoute(email: String) = "verify_email?email=${Uri.encode(email)}"
@@ -40,6 +43,7 @@ object Routes {
     fun jasaDetailRoute(jasaId: String) = "jasa_detail/$jasaId"
     fun chatRoute(workerId: String) = "chat/$workerId"
     fun blogDetailRoute(blogId: String) = "blog_detail/$blogId"
+    fun publicProfileRoute(userId: String) = "public_profile/$userId"
     fun editServiceRoute(serviceId: String) = "edit_service/$serviceId"
     fun editPortfolioRoute(portfolioId: String) = "edit_portfolio/$portfolioId"
 }

@@ -1,10 +1,22 @@
 package com.app.garapan.presentation.screen.home
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.app.garapan.domain.common.Resource
+import com.app.garapan.domain.model.Artikel
+import com.app.garapan.domain.model.TopWorker
+import com.app.garapan.domain.usecase.GetArtikelListUseCase
+import com.app.garapan.domain.usecase.GetTopWorkersUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import javax.inject.Inject
 
 data class ProjectItem(
@@ -34,10 +46,12 @@ data class ActivityItem(
 
 data class TopWorkerItem(
     val id: String,
+    val userId: String,
     val name: String,
     val skill: String,
     val rating: Float,
-    val projectsDone: Int
+    val projectsDone: Int,
+    val avatarUrl: String? = null
 )
 
 data class BlogItem(
@@ -45,7 +59,7 @@ data class BlogItem(
     val title: String,
     val category: String,
     val readTime: String,
-    val date: String = "14 April 2026"
+    val date: String = ""
 )
 
 data class HomeUiState(
@@ -55,11 +69,18 @@ data class HomeUiState(
     val services: List<ServiceItem> = emptyList(),
     val activities: List<ActivityItem> = emptyList(),
     val topWorkers: List<TopWorkerItem> = emptyList(),
-    val blogs: List<BlogItem> = emptyList()
+    val isTopWorkersLoading: Boolean = false,
+    val topWorkersError: String? = null,
+    val blogs: List<BlogItem> = emptyList(),
+    val isBlogsLoading: Boolean = false,
+    val blogsError: String? = null
 )
 
 @HiltViewModel
-class HomeViewModel @Inject constructor() : ViewModel() {
+class HomeViewModel @Inject constructor(
+    private val getTopWorkersUseCase: GetTopWorkersUseCase,
+    private val getArtikelListUseCase: GetArtikelListUseCase
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
         HomeUiState(
@@ -80,23 +101,106 @@ class HomeViewModel @Inject constructor() : ViewModel() {
                 ActivityItem("2", "Andi Pratama menyelesaikan pesanan Desain Logo", "20 menit lalu"),
                 ActivityItem("3", "Sari Dewi mendapat ulasan bintang 5 dari klien", "1 jam lalu"),
                 ActivityItem("4", "Proyek baru: Integrasi Midtrans Payment Gateway", "2 jam lalu"),
-            ),
-            topWorkers = listOf(
-                TopWorkerItem("1", "Andi Pratama", "UI/UX Design", 4.9f, 47),
-                TopWorkerItem("2", "Sari Dewi", "Web Development", 4.8f, 63),
-                TopWorkerItem("3", "Rizky Fajar", "DevOps", 5.0f, 29),
-                TopWorkerItem("4", "Budi Santoso", "AI/ML", 4.7f, 38),
-            ).sortedByDescending { it.rating },
-            blogs = listOf(
-                BlogItem("1", "5 Tips Sukses Freelance di Bidang IT", "Tips & Trik", "3 menit"),
-                BlogItem("2", "Cara Menetapkan Harga Jasa yang Tepat", "Bisnis", "5 menit"),
-                BlogItem("3", "Teknologi Yang Paling Banyak Dicari Klien 2025", "Tren", "4 menit"),
             )
         )
     )
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+    init {
+        loadTopWorkers()
+        loadBlogs()
+    }
+
     fun onNavItemSelected(index: Int) = _uiState.value.let {
         _uiState.value = it.copy(selectedNavIndex = index)
+    }
+
+    fun retryTopWorkers() = loadTopWorkers()
+
+    fun retryBlogs() = loadBlogs()
+
+    private fun loadTopWorkers() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isTopWorkersLoading = true, topWorkersError = null) }
+            when (val result = getTopWorkersUseCase()) {
+                is Resource.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            topWorkers = result.data.map(::toTopWorkerItem),
+                            isTopWorkersLoading = false,
+                            topWorkersError = null
+                        )
+                    }
+                }
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            topWorkers = emptyList(),
+                            isTopWorkersLoading = false,
+                            topWorkersError = result.message
+                        )
+                    }
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    private fun loadBlogs() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isBlogsLoading = true, blogsError = null) }
+            when (val result = getArtikelListUseCase(limit = 5)) {
+                is Resource.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            blogs = result.data.map(::toBlogItem),
+                            isBlogsLoading = false,
+                            blogsError = null
+                        )
+                    }
+                }
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            blogs = emptyList(),
+                            isBlogsLoading = false,
+                            blogsError = result.message
+                        )
+                    }
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    private fun toTopWorkerItem(worker: TopWorker) = TopWorkerItem(
+        id = worker.mahasiswaId,
+        userId = worker.userId,
+        name = worker.displayName,
+        skill = worker.skills.firstOrNull() ?: worker.university.ifBlank { "Freelancer IT" },
+        rating = worker.rating,
+        projectsDone = worker.completedOrders,
+        avatarUrl = worker.avatarUrl
+    )
+
+    private fun toBlogItem(artikel: Artikel) = BlogItem(
+        id = artikel.id,
+        title = artikel.title,
+        category = "BLOG",
+        readTime = estimateReadTime(artikel.content),
+        date = formatPublishedDate(artikel.publishedAt)
+    )
+
+    private fun estimateReadTime(content: String): String {
+        val minutes = (content.split(Regex("\\s+")).count { it.isNotBlank() } / 200).coerceAtLeast(1)
+        return "$minutes menit"
+    }
+
+    private fun formatPublishedDate(publishedAt: String?): String {
+        if (publishedAt.isNullOrBlank()) return ""
+        return runCatching {
+            val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("id", "ID"))
+            Instant.parse(publishedAt).atZone(ZoneId.systemDefault()).format(formatter)
+        }.getOrDefault("")
     }
 }

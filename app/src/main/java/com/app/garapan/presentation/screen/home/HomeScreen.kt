@@ -40,6 +40,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -56,7 +57,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import coil3.compose.AsyncImage
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -148,30 +151,81 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            SectionHeader(title = "Top Workers", onSeeAll = {})
+            SectionHeader(
+                title = "Top Workers",
+                onSeeAll = { navController.navigate(Routes.TOP_WORKERS) }
+            )
             Spacer(modifier = Modifier.height(12.dp))
             Column(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                uiState.topWorkers.forEach { worker ->
-                    TopWorkerCard(worker = worker)
+                when {
+                    uiState.isTopWorkersLoading -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = BrandNavy)
+                        }
+                    }
+                    uiState.topWorkersError != null -> {
+                        SectionErrorMessage(
+                            message = uiState.topWorkersError.orEmpty(),
+                            onRetry = viewModel::retryTopWorkers
+                        )
+                    }
+                    else -> {
+                        uiState.topWorkers.forEach { worker ->
+                            TopWorkerCard(
+                                worker = worker,
+                                onClick = {
+                                    navController.navigate(Routes.publicProfileRoute(worker.userId))
+                                }
+                            )
+                        }
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            SectionHeader(title = "Blog", onSeeAll = {})
+            SectionHeader(
+                title = "Blog",
+                onSeeAll = { navController.navigate(Routes.ARTICLE_LIST) }
+            )
             Spacer(modifier = Modifier.height(12.dp))
             Column(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                uiState.blogs.forEach { blog ->
-                    BlogCard(
-                        blog = blog,
-                        onClick = { navController.navigate(Routes.blogDetailRoute(blog.id)) }
-                    )
+                when {
+                    uiState.isBlogsLoading -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = BrandNavy)
+                        }
+                    }
+                    uiState.blogsError != null -> {
+                        SectionErrorMessage(
+                            message = uiState.blogsError.orEmpty(),
+                            onRetry = viewModel::retryBlogs
+                        )
+                    }
+                    else -> {
+                        uiState.blogs.forEach { blog ->
+                            BlogCard(
+                                blog = blog,
+                                onClick = { navController.navigate(Routes.blogDetailRoute(blog.id)) }
+                            )
+                        }
+                    }
                 }
             }
 
@@ -331,6 +385,7 @@ private fun SectionHeader(title: String, onSeeAll: () -> Unit) {
         )
         Text(
             text = "Lihat Semua",
+            modifier = Modifier.clickable(onClick = onSeeAll),
             style = MaterialTheme.typography.bodySmall.copy(
                 color = AccentBlue,
                 fontWeight = FontWeight.Medium
@@ -539,9 +594,10 @@ private fun ActivityCard(activity: ActivityItem) {
 }
 
 @Composable
-private fun TopWorkerCard(worker: TopWorkerItem) {
+fun TopWorkerCard(worker: TopWorkerItem, onClick: () -> Unit = {}) {
     Card(
         modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -557,13 +613,23 @@ private fun TopWorkerCard(worker: TopWorkerItem) {
                     .background(BrandNavy),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = worker.name.first().toString(),
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        color = White,
-                        fontWeight = FontWeight.Bold
+                val avatarUrl = worker.avatarUrl
+                if (!avatarUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = avatarUrl,
+                        contentDescription = worker.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
                     )
-                )
+                } else {
+                    Text(
+                        text = worker.name.firstOrNull()?.toString() ?: "?",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            color = White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -606,7 +672,7 @@ private fun TopWorkerCard(worker: TopWorkerItem) {
 }
 
 @Composable
-private fun BlogCard(blog: BlogItem, onClick: () -> Unit = {}) {
+fun BlogCard(blog: BlogItem, onClick: () -> Unit = {}) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         onClick = onClick,
@@ -656,6 +722,33 @@ private fun BlogCard(blog: BlogItem, onClick: () -> Unit = {}) {
                     style = MaterialTheme.typography.labelSmall.copy(color = MutedText)
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun SectionErrorMessage(
+    message: String,
+    onRetry: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(White)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Button(
+            onClick = onRetry,
+            colors = ButtonDefaults.buttonColors(containerColor = BrandNavy)
+        ) {
+            Text(text = "Coba Lagi")
         }
     }
 }

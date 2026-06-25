@@ -1,9 +1,11 @@
 package com.app.garapan.di
 
 import com.app.garapan.BuildConfig
+import com.app.garapan.data.remote.api.ArtikelApi
 import com.app.garapan.data.remote.api.AuthApi
 import com.app.garapan.data.remote.api.KategoriApi
 import com.app.garapan.data.remote.api.PortofolioApi
+import com.app.garapan.data.remote.api.TopWorkerApi
 import com.app.garapan.data.remote.api.UsersApi
 import com.app.garapan.data.remote.interceptor.AuthInterceptor
 import com.app.garapan.data.remote.interceptor.AuthTokenAuthenticator
@@ -85,4 +87,14 @@ object NetworkModule {
     @Singleton
     fun providePortofolioApi(retrofit: Retrofit): PortofolioApi =
         retrofit.create(PortofolioApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideTopWorkerApi(retrofit: Retrofit): TopWorkerApi =
+        retrofit.create(TopWorkerApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideArtikelApi(retrofit: Retrofit): ArtikelApi =
+        retrofit.create(ArtikelApi::class.java)
 }

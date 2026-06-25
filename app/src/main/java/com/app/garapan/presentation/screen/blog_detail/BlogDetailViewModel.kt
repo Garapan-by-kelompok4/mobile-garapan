@@ -2,11 +2,21 @@ package com.app.garapan.presentation.screen.blog_detail
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.app.garapan.domain.common.Resource
+import com.app.garapan.domain.model.Artikel
+import com.app.garapan.domain.usecase.GetArtikelDetailUseCase
+import com.app.garapan.domain.usecase.GetArtikelListUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import javax.inject.Inject
 
 sealed class BlogBodyBlock {
@@ -24,37 +34,134 @@ data class RecommendationItem(
 
 data class BlogDetailUiState(
     val blogId: String = "",
-    val category: String = "TIPS & KARIR",
-    val date: String = "14 April 2026",
-    val title: String = "5 Tips Sukses Freelance di Bidang IT untuk Mahasiswa",
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+    val category: String = "BLOG",
+    val date: String = "",
+    val title: String = "",
     val authorName: String = "Admin GARAPAN",
     val authorRole: String = "Tech & Career Editor",
-    val readTime: String = "3 menit baca",
-    val heroSubtitle: String = "Panduan lengkap membangun karir freelance IT sejak bangku kuliah",
-    val body: List<BlogBodyBlock> = listOf(
-        BlogBodyBlock.Paragraph("Dunia freelance IT terbuka lebar bagi mahasiswa yang ingin mendapatkan penghasilan sambil mengasah skill. Namun tanpa strategi yang tepat, banyak yang menyerah di tengah jalan."),
-        BlogBodyBlock.Heading(1, "Bangun Portofolio Sejak Awal"),
-        BlogBodyBlock.Paragraph("Portofolio adalah aset utama seorang freelancer. Mulailah dengan proyek kecil — bahkan proyek kampus pun bisa dijadikan showcase yang menarik bagi klien pertama Anda."),
-        BlogBodyBlock.Quote("Klien tidak membeli janji, mereka membeli bukti. Portofolio adalah bukti terbaik yang bisa kamu tunjukkan."),
-        BlogBodyBlock.Heading(2, "Tetapkan Harga yang Realistis"),
-        BlogBodyBlock.Paragraph("Banyak mahasiswa undervalue diri sendiri. Riset harga pasar, hitung biaya waktu dan tenaga, lalu tentukan tarif yang adil — bukan sekadar murah.")
-    ),
-    val recommendations: List<RecommendationItem> = listOf(
-        RecommendationItem("r1", "BISNIS", "Cara Menetapkan Harga Jasa yang Tepat", "Strategi penetapan harga untuk freelancer pemula agar tetap kompetitif."),
-        RecommendationItem("r2", "TREN", "Teknologi Yang Paling Banyak Dicari Klien 2025", "Skill IT terpanas yang wajib dikuasai untuk memenangkan lebih banyak proyek.")
-    )
+    val readTime: String = "",
+    val heroSubtitle: String = "",
+    val body: List<BlogBodyBlock> = emptyList(),
+    val recommendations: List<RecommendationItem> = emptyList()
 )
 
 @HiltViewModel
 class BlogDetailViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    private val getArtikelDetailUseCase: GetArtikelDetailUseCase,
+    private val getArtikelListUseCase: GetArtikelListUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BlogDetailUiState())
     val uiState: StateFlow<BlogDetailUiState> = _uiState.asStateFlow()
 
     init {
-        val blogId = savedStateHandle.get<String>("blogId") ?: ""
+        val blogId = savedStateHandle.get<String>("blogId").orEmpty()
         _uiState.update { it.copy(blogId = blogId) }
+        if (blogId.isNotBlank()) {
+            loadArtikel(blogId)
+        } else {
+            _uiState.update { it.copy(errorMessage = "Artikel tidak ditemukan") }
+        }
+    }
+
+    fun retry() {
+        val blogId = _uiState.value.blogId
+        if (blogId.isNotBlank()) loadArtikel(blogId)
+    }
+
+    private fun loadArtikel(blogId: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            when (val result = getArtikelDetailUseCase(blogId)) {
+                is Resource.Success -> {
+                    val artikel = result.data
+                    val body = parseContent(artikel.content)
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = null,
+                            category = "BLOG",
+                            date = formatPublishedDate(artikel.publishedAt),
+                            title = artikel.title,
+                            readTime = "${estimateReadTime(artikel.content)} baca",
+                            heroSubtitle = body.firstOrNull()
+                                ?.let { block -> (block as? BlogBodyBlock.Paragraph)?.text }
+                                ?.take(120)
+                                .orEmpty(),
+                            body = body
+                        )
+                    }
+                    loadRecommendations(blogId)
+                }
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = result.message,
+                            body = emptyList(),
+                            recommendations = emptyList()
+                        )
+                    }
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    private fun loadRecommendations(currentId: String) {
+        viewModelScope.launch {
+            when (val result = getArtikelListUseCase(limit = 5)) {
+                is Resource.Success -> {
+                    val recommendations = result.data
+                        .filter { it.id != currentId }
+                        .take(2)
+                        .map(::toRecommendationItem)
+                    _uiState.update { it.copy(recommendations = recommendations) }
+                }
+                is Resource.Error, Resource.Loading -> Unit
+            }
+        }
+    }
+
+    private fun toRecommendationItem(artikel: Artikel) = RecommendationItem(
+        id = artikel.id,
+        category = "BLOG",
+        title = artikel.title,
+        excerpt = artikel.content.lines().firstOrNull { it.isNotBlank() }?.take(100).orEmpty()
+    )
+
+    private fun parseContent(content: String): List<BlogBodyBlock> {
+        if (content.isBlank()) return emptyList()
+
+        return content.trim()
+            .split(Regex("\n\n+"))
+            .mapNotNull { block ->
+                val trimmed = block.trim()
+                when {
+                    trimmed.isBlank() -> null
+                    trimmed.startsWith(">") -> BlogBodyBlock.Quote(trimmed.removePrefix(">").trim())
+                    trimmed.startsWith("## ") -> BlogBodyBlock.Heading(
+                        number = 1,
+                        text = trimmed.removePrefix("## ").trim()
+                    )
+                    else -> BlogBodyBlock.Paragraph(trimmed.replace("\n", " "))
+                }
+            }
+    }
+
+    private fun estimateReadTime(content: String): String {
+        val minutes = (content.split(Regex("\\s+")).count { it.isNotBlank() } / 200).coerceAtLeast(1)
+        return "$minutes menit"
+    }
+
+    private fun formatPublishedDate(publishedAt: String?): String {
+        if (publishedAt.isNullOrBlank()) return ""
+        return runCatching {
+            val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("id", "ID"))
+            Instant.parse(publishedAt).atZone(ZoneId.systemDefault()).format(formatter)
+        }.getOrDefault("")
     }
 }
