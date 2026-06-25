@@ -9,6 +9,7 @@ import com.app.garapan.data.util.PortfolioImageReader
 import com.app.garapan.data.util.PortfolioImageReadResult
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.CreateJasaParams
+import com.app.garapan.domain.model.Jasa
 import com.app.garapan.domain.model.Kategori
 import com.app.garapan.domain.model.PortofolioImage
 import com.app.garapan.domain.model.UpdateJasaParams
@@ -39,11 +40,8 @@ data class EditServiceUiState(
     val selectedCategory: String = "",
     val isCategoryLoading: Boolean = false,
     val categoryErrorMessage: String? = null,
-    val teamSize: String = "",
     val description: String = "",
-    val minimumBudget: String = "",
-    val maximumBudget: String = "",
-    val deadline: String = "",
+    val price: String = "",
     val existingImageUrl: String = "",
     val imageUri: Uri? = null,
     val preparedImage: PortofolioImage? = null,
@@ -54,7 +52,7 @@ data class EditServiceUiState(
 )
 
 sealed interface EditServiceEvent {
-    data object Saved : EditServiceEvent
+    data class Saved(val jasa: Jasa) : EditServiceEvent
 }
 
 @HiltViewModel
@@ -67,13 +65,6 @@ class EditServiceViewModel @Inject constructor(
     private val updateJasaUseCase: UpdateJasaUseCase,
     observeCurrentUserUseCase: ObserveCurrentUserUseCase
 ) : ViewModel() {
-
-    val teamOptions = listOf(
-        "Individu (1 Orang)",
-        "Tim (2 Orang)",
-        "Tim (2-3 Orang)",
-        "Tim (4+ Orang)"
-    )
 
     private val serviceId: String = savedStateHandle["serviceId"] ?: NEW_JASA_ID
     val isNewJasa: Boolean = serviceId == NEW_JASA_ID
@@ -163,8 +154,7 @@ class EditServiceViewModel @Inject constructor(
                                 kategoriItems.firstOrNull { k -> k.id == jasa.kategoriId }?.name.orEmpty()
                             },
                             description = jasa.description,
-                            minimumBudget = jasa.price.toLong().toString(),
-                            maximumBudget = jasa.price.toLong().toString(),
+                            price = jasa.price.toLong().toString(),
                             existingImageUrl = jasa.imageUrl,
                             isLoading = false,
                             errorMessage = null
@@ -183,11 +173,8 @@ class EditServiceViewModel @Inject constructor(
 
     fun onTitleChanged(value: String) = _uiState.update { it.copy(title = value) }
     fun onCategorySelected(value: String) = _uiState.update { it.copy(selectedCategory = value) }
-    fun onTeamSizeSelected(value: String) = _uiState.update { it.copy(teamSize = value) }
     fun onDescriptionChanged(value: String) = _uiState.update { it.copy(description = value) }
-    fun onMinimumBudgetChanged(value: String) = _uiState.update { it.copy(minimumBudget = value.filter(Char::isDigit).take(9)) }
-    fun onMaximumBudgetChanged(value: String) = _uiState.update { it.copy(maximumBudget = value.filter(Char::isDigit).take(9)) }
-    fun onDeadlineChanged(value: String) = _uiState.update { it.copy(deadline = value) }
+    fun onPriceChanged(value: String) = _uiState.update { it.copy(price = value.filter(Char::isDigit).take(9)) }
 
     fun onImageSelected(uri: Uri, readContext: Context = context) {
         _uiState.update {
@@ -233,7 +220,7 @@ class EditServiceViewModel @Inject constructor(
     fun onSave() {
         val state = _uiState.value
         val kategoriId = kategoriItems.firstOrNull { it.name == state.selectedCategory }?.id
-        val price = state.minimumBudget.toDoubleOrNull()
+        val price = state.price.toDoubleOrNull()
 
         when {
             state.title.isBlank() -> {
@@ -291,7 +278,7 @@ class EditServiceViewModel @Inject constructor(
             when (result) {
                 is Resource.Success -> {
                     _uiState.update { it.copy(isSaving = false) }
-                    _events.emit(EditServiceEvent.Saved)
+                    _events.emit(EditServiceEvent.Saved(result.data))
                 }
                 is Resource.Error -> {
                     _uiState.update {

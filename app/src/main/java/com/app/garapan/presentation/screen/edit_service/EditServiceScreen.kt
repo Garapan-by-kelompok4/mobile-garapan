@@ -26,37 +26,25 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddPhotoAlternate
-import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
@@ -72,6 +60,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.app.garapan.presentation.navigation.NavResults
+import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
@@ -81,9 +71,6 @@ import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
 import com.app.garapan.ui.theme.Surface
 import com.app.garapan.ui.theme.White
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @Composable
 fun EditServiceScreen(
@@ -92,7 +79,6 @@ fun EditServiceScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    var showDeadlinePicker by remember { mutableStateOf(false) }
     val imagePicker = rememberLauncherForActivityResult(
         contract = PickVisualMedia()
     ) { uri ->
@@ -104,19 +90,17 @@ fun EditServiceScreen(
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                EditServiceEvent.Saved -> navController.navigateUp()
+                is EditServiceEvent.Saved -> {
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.let { NavResults.publishJasaSaved(it, event.jasa) }
+                    runCatching {
+                        navController.getBackStackEntry(Routes.MAIN).savedStateHandle
+                    }.getOrNull()?.let { NavResults.publishJasaSaved(it, event.jasa) }
+                    navController.navigateUp()
+                }
             }
         }
-    }
-
-    if (showDeadlinePicker) {
-        DeadlineDatePickerDialog(
-            onDismiss = { showDeadlinePicker = false },
-            onDateSelected = {
-                viewModel.onDeadlineChanged(it)
-                showDeadlinePicker = false
-            }
-        )
     }
 
     Scaffold(containerColor = Surface) { innerPadding ->
@@ -163,9 +147,9 @@ fun EditServiceScreen(
                 item {
                     FormCard(title = "Informasi Dasar Layanan") {
                         EditTextField(
-                            label = "Judul Proyek",
+                            label = "Judul Layanan",
                             value = uiState.title,
-                            placeholder = "Misal: Pembuatan Aplikasi E-Commerce Berbasis React Native",
+                            placeholder = "Misal: Pembuatan Landing Page Company Profile",
                             onValueChange = viewModel::onTitleChanged
                         )
                         Spacer(modifier = Modifier.height(18.dp))
@@ -199,16 +183,10 @@ fun EditServiceScreen(
                             onCategorySelected = viewModel::onCategorySelected
                         )
                         Spacer(modifier = Modifier.height(18.dp))
-                        TeamSizeDropdown(
-                            value = uiState.teamSize,
-                            options = viewModel.teamOptions,
-                            onSelected = viewModel::onTeamSizeSelected
-                        )
-                        Spacer(modifier = Modifier.height(18.dp))
                         EditTextField(
                             label = "Deskripsi Detail",
                             value = uiState.description,
-                            placeholder = "Jelaskan secara detail kebutuhan proyek, fitur utama, dan ekspektasi Anda terhadap freelancer...",
+                            placeholder = "Jelaskan layanan, cakupan pekerjaan, dan deliverable yang ditawarkan...",
                             onValueChange = viewModel::onDescriptionChanged,
                             minHeight = 108.dp,
                             singleLine = false
@@ -216,28 +194,20 @@ fun EditServiceScreen(
                     }
                 }
                 item {
-                    FormCard(title = "Ruang Lingkup Pekerjaan") {
+                    FormCard(title = "Harga Layanan") {
                         Text(
-                            text = "Anggaran (Range)",
+                            text = "Harga",
                             style = MaterialTheme.typography.labelMedium.copy(
                                 color = SecondaryText,
                                 fontWeight = FontWeight.SemiBold
                             )
                         )
                         Spacer(modifier = Modifier.height(10.dp))
-                        BudgetRangeFields(
-                            minimumBudget = uiState.minimumBudget,
-                            maximumBudget = uiState.maximumBudget,
-                            onMinimumBudgetChanged = viewModel::onMinimumBudgetChanged,
-                            onMaximumBudgetChanged = viewModel::onMaximumBudgetChanged
-                        )
-                        Spacer(modifier = Modifier.height(18.dp))
-                        ReadOnlyField(
-                            label = "Tenggat Waktu (Deadline)",
-                            value = uiState.deadline,
-                            placeholder = "mm/dd/yyyy",
-                            leadingIcon = Icons.Filled.CalendarToday,
-                            onClick = { showDeadlinePicker = true }
+                        PriceField(
+                            value = uiState.price,
+                            onValueChange = viewModel::onPriceChanged,
+                            placeholder = "500.000",
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }
@@ -302,7 +272,7 @@ private fun EditServiceTopBar(onBack: () -> Unit) {
             )
         }
         Text(
-            text = "Edit Keahlian & Layanan",
+            text = "Edit Layanan",
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.ExtraBold,
                 color = AccentBlue
@@ -325,7 +295,7 @@ private fun EditServiceHero() {
                 )
             )
             Text(
-                text = "Proyek",
+                text = "Layanan",
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.ExtraBold,
                     color = AccentBlue,
@@ -415,114 +385,6 @@ private fun CategoryChips(
 }
 
 @Composable
-private fun TeamSizeDropdown(
-    value: String,
-    options: List<String>,
-    onSelected: (String) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Column {
-        Text(
-            text = "Kebutuhan Tim",
-            style = MaterialTheme.typography.labelMedium.copy(
-                color = SecondaryText,
-                fontWeight = FontWeight.SemiBold
-            )
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Box {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .clickable { expanded = true }
-                    .background(Color(0xFFE1E4E6))
-                    .padding(horizontal = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Group,
-                    contentDescription = null,
-                    tint = SecondaryText,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(
-                    text = value.ifEmpty { "Pilih kebutuhan tim" },
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = if (value.isEmpty()) MutedText else PrimaryText,
-                        fontWeight = if (value.isEmpty()) FontWeight.Normal else FontWeight.SemiBold
-                    ),
-                    modifier = Modifier.weight(1f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Icon(
-                    imageVector = Icons.Filled.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = SecondaryText,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(White)
-            ) {
-                options.forEach { option ->
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = option,
-                                style = MaterialTheme.typography.bodyMedium.copy(color = PrimaryText)
-                            )
-                        },
-                        onClick = {
-                            onSelected(option)
-                            expanded = false
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun BudgetRangeFields(
-    minimumBudget: String,
-    maximumBudget: String,
-    onMinimumBudgetChanged: (String) -> Unit,
-    onMaximumBudgetChanged: (String) -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        PriceField(
-            value = minimumBudget,
-            onValueChange = onMinimumBudgetChanged,
-            placeholder = "100.000",
-            modifier = Modifier.weight(1f)
-        )
-        Text(
-            text = "  -  ",
-            style = MaterialTheme.typography.bodyMedium.copy(color = MutedText)
-        )
-        PriceField(
-            value = maximumBudget,
-            onValueChange = onMaximumBudgetChanged,
-            placeholder = "5.000.000",
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-@Composable
 private fun PriceField(
     value: String,
     onValueChange: (String) -> Unit,
@@ -568,50 +430,6 @@ private fun PriceField(
                 inner()
             }
         )
-    }
-}
-
-@Composable
-private fun ReadOnlyField(
-    label: String,
-    value: String,
-    placeholder: String,
-    leadingIcon: ImageVector,
-    onClick: () -> Unit
-) {
-    Column {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium.copy(
-                color = SecondaryText,
-                fontWeight = FontWeight.SemiBold
-            )
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)
-                .clip(RoundedCornerShape(6.dp))
-                .clickable(onClick = onClick)
-                .background(Color(0xFFE1E4E6))
-                .padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = leadingIcon,
-                contentDescription = null,
-                tint = SecondaryText,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(
-                text = value.ifEmpty { placeholder },
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = if (value.isEmpty()) MutedText else PrimaryText
-                )
-            )
-        }
     }
 }
 
@@ -665,36 +483,6 @@ private fun EditTextField(
                 }
             )
         }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DeadlineDatePickerDialog(
-    onDismiss: () -> Unit,
-    onDateSelected: (String) -> Unit
-) {
-    val datePickerState = rememberDatePickerState()
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    datePickerState.selectedDateMillis?.let { millis ->
-                        onDateSelected(formatDeadline(millis))
-                    } ?: onDismiss()
-                }
-            ) {
-                Text("Pilih")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Batal")
-            }
-        }
-    ) {
-        DatePicker(state = datePickerState)
     }
 }
 
@@ -759,9 +547,6 @@ private fun JasaImagePicker(
         }
     }
 }
-
-private fun formatDeadline(millis: Long): String =
-    SimpleDateFormat("MM/dd/yyyy", Locale.US).format(Date(millis))
 
 private object ThousandSeparatorTransformation : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {

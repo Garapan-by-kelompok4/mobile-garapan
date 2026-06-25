@@ -66,7 +66,6 @@ fun FilterSortBottomSheet(
     categoryErrorMessage: String?,
     sheetState: SheetState,
     onDismiss: () -> Unit,
-    onTypeSelected: (FilterType) -> Unit,
     onCategorySelected: (String) -> Unit,
     onMinPriceChanged: (String) -> Unit,
     onMaxPriceChanged: (String) -> Unit,
@@ -115,16 +114,6 @@ fun FilterSortBottomSheet(
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // TIPE
-            SectionLabel(text = "TIPE")
-            Spacer(modifier = Modifier.height(10.dp))
-            TypeSwitcher(
-                selected = state.selectedType,
-                onSelected = onTypeSelected
-            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -265,38 +254,6 @@ private fun SectionLabel(text: String) {
             letterSpacing = 1.sp
         )
     )
-}
-
-@Composable
-private fun TypeSwitcher(selected: FilterType, onSelected: (FilterType) -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(Surface)
-            .padding(4.dp)
-    ) {
-        FilterType.entries.forEach { type ->
-            val isSelected = type == selected
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(if (isSelected) BrandNavy else Surface)
-                    .clickable { onSelected(type) }
-                    .padding(vertical = 10.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = if (type == FilterType.PROYEK) "Proyek" else "Jasa",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = if (isSelected) White else SecondaryText,
-                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
-                    )
-                )
-            }
-        }
-    }
 }
 
 @Composable

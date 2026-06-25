@@ -95,7 +95,6 @@ fun SearchScreen(
             categoryErrorMessage = uiState.categoryErrorMessage,
             sheetState = sheetState,
             onDismiss = viewModel::onDismissFilter,
-            onTypeSelected = viewModel::onFilterTypeSelected,
             onCategorySelected = viewModel::onCategorySelected,
             onMinPriceChanged = viewModel::onMinPriceChanged,
             onMaxPriceChanged = viewModel::onMaxPriceChanged,
@@ -161,25 +160,22 @@ fun SearchScreen(
                         }
                     }
                     else -> {
-                        if (uiState.results.isEmpty()) {
+                        val hasResults = uiState.jasaResults.isNotEmpty() || uiState.projectResults.isNotEmpty()
+                        if (!hasResults) {
                             SearchNoResultsState(
-                                filterType = uiState.filter.selectedType,
                                 query = uiState.query,
                                 onOpenFilter = viewModel::onShowFilter
                             )
                         } else {
-                            SearchResultsList(
-                                results = uiState.results,
-                                resultLabel = if (uiState.filter.selectedType == FilterType.JASA) {
-                                    "Layanan"
-                                } else {
-                                    "Proyek"
-                                },
-                                onItemClick = { itemId ->
-                                    if (uiState.filter.selectedType == FilterType.JASA) {
-                                        navController.navigate(Routes.jasaDetailRoute(itemId))
-                                    } else {
-                                        navController.navigate(Routes.projectDetailRoute(itemId))
+                            SearchGroupedResultsList(
+                                projectResults = uiState.projectResults,
+                                jasaResults = uiState.jasaResults,
+                                onItemClick = { item ->
+                                    when (item.type) {
+                                        SearchResultType.JASA ->
+                                            navController.navigate(Routes.jasaDetailRoute(item.id))
+                                        SearchResultType.PROYEK ->
+                                            navController.navigate(Routes.projectDetailRoute(item.id))
                                     }
                                 },
                                 modifier = Modifier.fillMaxSize()
@@ -300,12 +296,13 @@ private fun SearchBar(
 }
 
 @Composable
-private fun SearchResultsList(
-    results: List<SearchResultItem>,
-    resultLabel: String,
-    onItemClick: (String) -> Unit,
+private fun SearchGroupedResultsList(
+    projectResults: List<SearchResultItem>,
+    jasaResults: List<SearchResultItem>,
+    onItemClick: (SearchResultItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val totalCount = projectResults.size + jasaResults.size
     LazyColumn(
         modifier = modifier,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(
@@ -316,7 +313,7 @@ private fun SearchResultsList(
     ) {
         item {
             Text(
-                text = "${results.size} $resultLabel Ditemukan",
+                text = "$totalCount Hasil Ditemukan",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold,
                     color = PrimaryText
@@ -324,13 +321,41 @@ private fun SearchResultsList(
                 modifier = Modifier.padding(bottom = 4.dp)
             )
         }
-        items(results) { item ->
-            SearchResultCard(
-                item = item,
-                onClick = { onItemClick(item.id) }
-            )
+        if (projectResults.isNotEmpty()) {
+            item {
+                SearchSectionHeader(title = "Proyek")
+            }
+            items(projectResults, key = { "project-${it.id}" }) { item ->
+                SearchResultCard(
+                    item = item,
+                    onClick = { onItemClick(item) }
+                )
+            }
+        }
+        if (jasaResults.isNotEmpty()) {
+            item {
+                SearchSectionHeader(title = "Jasa")
+            }
+            items(jasaResults, key = { "jasa-${it.id}" }) { item ->
+                SearchResultCard(
+                    item = item,
+                    onClick = { onItemClick(item) }
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun SearchSectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleSmall.copy(
+            fontWeight = FontWeight.Bold,
+            color = BrandNavy
+        ),
+        modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
+    )
 }
 
 @Composable
@@ -453,11 +478,9 @@ private fun SearchResultCard(
 
 @Composable
 private fun SearchNoResultsState(
-    filterType: FilterType,
     query: String,
     onOpenFilter: () -> Unit
 ) {
-    val typeLabel = if (filterType == FilterType.JASA) "jasa" else "proyek"
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -466,7 +489,7 @@ private fun SearchNoResultsState(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Tidak ada $typeLabel ditemukan",
+            text = "Tidak ada hasil ditemukan",
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Bold,
                 color = PrimaryText
@@ -476,9 +499,9 @@ private fun SearchNoResultsState(
         Spacer(modifier = Modifier.height(10.dp))
         Text(
             text = if (query.isBlank()) {
-                "Coba ubah filter atau pilih tipe ${if (filterType == FilterType.JASA) "Proyek" else "Jasa"} di pengaturan filter."
+                "Coba ubah filter kategori atau rentang harga."
             } else {
-                "Tidak ada hasil untuk \"$query\". Coba kata kunci lain atau ganti tipe pencarian di filter."
+                "Tidak ada hasil untuk \"$query\". Coba kata kunci lain atau sesuaikan filter."
             },
             style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText),
             textAlign = TextAlign.Center
