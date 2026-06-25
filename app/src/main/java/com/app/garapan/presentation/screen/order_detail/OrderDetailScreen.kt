@@ -103,6 +103,9 @@ fun OrderDetailScreen(
                 is OrderDetailEvent.ShowMessage -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
                 }
+                is OrderDetailEvent.NavigateToReview -> {
+                    navController.navigate(com.app.garapan.presentation.navigation.Routes.reviewRoute(event.pesananId))
+                }
             }
         }
     }
@@ -135,7 +138,7 @@ fun OrderDetailScreen(
             }
         },
         bottomBar = {
-            if (uiState.canPay || uiState.canDeliver || uiState.canComplete || uiState.canDispute) {
+            if (uiState.canPay || uiState.canDeliver || uiState.canComplete || uiState.canReview || uiState.canDispute) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -178,6 +181,26 @@ fun OrderDetailScreen(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text("Perbarui Status")
+                            }
+                        } else if (uiState.canReview) {
+                            Button(
+                                onClick = viewModel::onReviewClicked,
+                                enabled = !uiState.isActionLoading,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(54.dp),
+                                shape = RoundedCornerShape(50.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = BrandNavy,
+                                    contentColor = White
+                                )
+                            ) {
+                                Text(
+                                    text = uiState.reviewButtonLabel,
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        fontWeight = FontWeight.ExtraBold
+                                    )
+                                )
                             }
                         } else {
                             if (uiState.canDeliver || uiState.canComplete) {

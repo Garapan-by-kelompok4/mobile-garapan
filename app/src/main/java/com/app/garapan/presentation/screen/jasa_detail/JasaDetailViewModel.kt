@@ -6,16 +6,23 @@ import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.Jasa
 import com.app.garapan.domain.model.JasaStatus
+import com.app.garapan.domain.model.Review
 import com.app.garapan.domain.model.Role
 import com.app.garapan.domain.usecase.GetJasaDetailUseCase
+import com.app.garapan.domain.usecase.GetReviewsUseCase
 import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
 import com.app.garapan.presentation.util.CurrencyFormatter
+import com.app.garapan.presentation.util.UserMessageLocalizer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import javax.inject.Inject
 
 data class JasaFeatureItem(
@@ -57,6 +64,7 @@ data class JasaDetailUiState(
     val portfolios: List<JasaPortfolioItem> = emptyList(),
     val reviews: List<JasaReviewItem> = emptyList(),
     val ratingBreakdown: Map<Int, Int> = emptyMap(),
+    val reviewsErrorMessage: String? = null,
     val isOwner: Boolean = false,
     val isKlien: Boolean = false,
     val isLoading: Boolean = false,
@@ -67,6 +75,7 @@ data class JasaDetailUiState(
 class JasaDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getJasaDetailUseCase: GetJasaDetailUseCase,
+    private val getReviewsUseCase: GetReviewsUseCase,
     observeCurrentUserUseCase: ObserveCurrentUserUseCase
 ) : ViewModel() {
 
@@ -76,6 +85,8 @@ class JasaDetailViewModel @Inject constructor(
     private var currentMahasiswaId: String? = null
     private var currentRole: Role? = null
     private var loadedJasa: Jasa? = null
+    private var loadedReviews: List<Review> = emptyList()
+    private var reviewsErrorMessage: String? = null
 
     private val _uiState = MutableStateFlow(JasaDetailUiState(isLoading = true))
     val uiState: StateFlow<JasaDetailUiState> = _uiState.asStateFlow()
@@ -86,7 +97,13 @@ class JasaDetailViewModel @Inject constructor(
                 currentUserId = user?.id
                 currentMahasiswaId = user?.mahasiswa?.id
                 currentRole = user?.role
-                loadedJasa?.let { jasa -> _uiState.value = jasa.toUiState(isJasaOwner(jasa)) }
+                loadedJasa?.let { jasa ->
+                    _uiState.value = jasa.toUiState(
+                        isOwner = isJasaOwner(jasa),
+                        reviews = loadedReviews,
+                        reviewError = reviewsErrorMessage
+                    )
+                }
             }
         }
         loadJasaDetail()
@@ -104,19 +121,53 @@ class JasaDetailViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            _uiState.update { it.copy(isLoading = true, errorMessage = null, reviewsErrorMessage = null) }
             when (val result = getJasaDetailUseCase(jasaId)) {
                 is Resource.Success -> {
                     loadedJasa = result.data
-                    _uiState.value = result.data.toUiState(isJasaOwner(result.data))
+                    loadedReviews = emptyList()
+                    reviewsErrorMessage = null
+                    _uiState.value = result.data.toUiState(
+                        isOwner = isJasaOwner(result.data),
+                        reviews = loadedReviews,
+                        reviewError = null
+                    )
+                    loadReviews(result.data)
                 }
                 is Resource.Error -> {
                     _uiState.update {
-                        it.copy(isLoading = false, errorMessage = result.message)
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = UserMessageLocalizer.localize(result.message)
+                        )
                     }
                 }
                 Resource.Loading -> Unit
             }
+        }
+    }
+
+    private suspend fun loadReviews(jasa: Jasa) {
+        when (val result = getReviewsUseCase(jasa.id)) {
+            is Resource.Success -> {
+                loadedReviews = result.data
+                reviewsErrorMessage = null
+                _uiState.value = jasa.toUiState(
+                    isOwner = isJasaOwner(jasa),
+                    reviews = result.data,
+                    reviewError = null
+                )
+            }
+            is Resource.Error -> {
+                reviewsErrorMessage = UserMessageLocalizer.localize(result.message)
+                _uiState.update {
+                    it.copy(
+                        reviewsErrorMessage = reviewsErrorMessage,
+                        isLoading = false
+                    )
+                }
+            }
+            Resource.Loading -> Unit
         }
     }
 
@@ -131,17 +182,35 @@ class JasaDetailViewModel @Inject constructor(
             jasa.mahasiswaId == mahasiswaId
     }
 
-    private fun Jasa.toUiState(isOwner: Boolean): JasaDetailUiState {
+    private fun Jasa.toUiState(
+        isOwner: Boolean,
+        reviews: List<Review>,
+        reviewError: String?
+    ): JasaDetailUiState {
         val workerSubtitle = buildList {
             if (kategoriName.isNotBlank()) add(kategoriName)
             if (workerUniversity.isNotBlank()) add(workerUniversity)
-        }.joinToString(" · ").ifBlank { "Mahasiswa IT" }
+        }.joinToString(" - ").ifBlank { "Mahasiswa IT" }
+
+        val reviewItems = reviews.map { review ->
+            JasaReviewItem(
+                reviewerName = review.reviewerName.ifBlank { "Klien" },
+                date = formatReviewDate(review.createdAt),
+                rating = review.rating,
+                comment = review.comment
+            )
+        }
+        val liveRating = reviews.takeIf { it.isNotEmpty() }
+            ?.map { it.rating }
+            ?.average()
+            ?.toFloat()
+        val fallbackRating = rating.toFloat().takeIf { it > 0f } ?: workerRating.toFloat()
 
         return JasaDetailUiState(
             id = id,
             title = title,
-            rating = rating.toFloat().takeIf { it > 0f } ?: workerRating.toFloat(),
-            reviewCount = reviewCount,
+            rating = liveRating ?: fallbackRating,
+            reviewCount = reviews.size.takeIf { it > 0 } ?: reviewCount,
             isVerified = status == JasaStatus.ACTIVE,
             price = CurrencyFormatter.formatRupiah(price),
             imageUrl = imageUrl,
@@ -160,10 +229,23 @@ class JasaDetailViewModel @Inject constructor(
                     imageUrl = item.imageUrl
                 )
             },
+            reviews = reviewItems,
+            ratingBreakdown = reviews
+                .groupingBy { it.rating.coerceIn(1, 5) }
+                .eachCount(),
+            reviewsErrorMessage = reviewError,
             isOwner = isOwner,
             isKlien = currentRole == Role.KLIEN,
             isLoading = false,
             errorMessage = null
         )
+    }
+
+    private fun formatReviewDate(isoDate: String): String {
+        if (isoDate.isBlank()) return ""
+        return runCatching {
+            val date = Instant.parse(isoDate).atZone(ZoneId.systemDefault()).toLocalDate()
+            date.format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale("id", "ID")))
+        }.getOrDefault(isoDate)
     }
 }

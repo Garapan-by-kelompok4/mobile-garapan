@@ -24,7 +24,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
@@ -50,6 +49,10 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -58,7 +61,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import coil3.compose.AsyncImage
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -67,6 +73,7 @@ import androidx.compose.ui.unit.sp
 import com.app.garapan.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
@@ -87,6 +94,29 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val refreshStateHandle = remember(navController) {
+        runCatching { navController.getBackStackEntry(Routes.MAIN).savedStateHandle }.getOrNull()
+    }
+
+    LaunchedEffect(refreshStateHandle) {
+        val handle = refreshStateHandle ?: return@LaunchedEffect
+        handle.getStateFlow(NavResults.PROJECT_REFRESH, false).collect { shouldRefresh ->
+            if (!shouldRefresh) return@collect
+            NavResults.clearProjectRefresh(handle)
+            viewModel.refreshProjects()
+        }
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refreshProjects()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     Scaffold(
         containerColor = Surface
@@ -100,23 +130,51 @@ fun HomeScreen(
             HomeTopBar(onSearchClick = { onNavigateTab(Routes.searchRoute()) })
             Spacer(modifier = Modifier.height(16.dp))
 
-            HeroBanner()
-            Spacer(modifier = Modifier.height(16.dp))
-
-            StatsRow()
+            HeroBanner(onGetStarted = { onNavigateTab(Routes.searchRoute()) })
             Spacer(modifier = Modifier.height(24.dp))
 
-            SectionHeader(title = "Proyek Tersedia", onSeeAll = {})
+            SectionHeader(
+                title = "Proyek Tersedia",
+                onSeeAll = { onNavigateTab(Routes.searchRoute()) }
+            )
             Spacer(modifier = Modifier.height(12.dp))
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(uiState.projects) { project ->
-                    ProjectCard(
-                        project = project,
-                        onClick = { navController.navigate(Routes.projectDetailRoute(project.id)) }
+            when {
+                uiState.isProjectsLoading -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = BrandNavy)
+                    }
+                }
+                uiState.projectsError != null -> {
+                    SectionErrorMessage(
+                        message = uiState.projectsError.orEmpty(),
+                        onRetry = viewModel::retryProjects,
+                        modifier = Modifier.padding(horizontal = 16.dp)
                     )
+                }
+                uiState.projects.isEmpty() -> {
+                    Text(
+                        text = "Belum ada proyek tersedia.",
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+                    )
+                }
+                else -> {
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(uiState.projects) { project ->
+                            ProjectCard(
+                                project = project,
+                                onClick = { navController.navigate(Routes.projectDetailRoute(project.id)) }
+                            )
+                        }
+                    }
                 }
             }
 
@@ -157,19 +215,6 @@ fun HomeScreen(
                             )
                         }
                     }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            SectionHeader(title = "Aktivitas Terbaru", onSeeAll = {})
-            Spacer(modifier = Modifier.height(12.dp))
-            Column(
-                modifier = Modifier.padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                uiState.activities.forEach { activity ->
-                    ActivityCard(activity = activity)
                 }
             }
 
@@ -300,7 +345,7 @@ private fun HomeTopBar(onSearchClick: () -> Unit) {
 }
 
 @Composable
-private fun HeroBanner() {
+private fun HeroBanner(onGetStarted: () -> Unit) {
     Box(
         modifier = Modifier
             .padding(horizontal = 16.dp)
@@ -328,7 +373,7 @@ private fun HeroBanner() {
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-                onClick = {},
+                onClick = onGetStarted,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = White,
                     contentColor = BrandNavy
@@ -343,50 +388,6 @@ private fun HeroBanner() {
                     )
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun StatsRow() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        StatCard(value = "500+", label = "Freelancer", modifier = Modifier.weight(1f))
-        StatCard(value = "1.0k+", label = "Proyek", modifier = Modifier.weight(1f))
-        StatCard(value = "4.9★", label = "Rating", modifier = Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun StatCard(value: String, label: String, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = BrandNavy
-                )
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
-            )
         }
     }
 }
@@ -432,8 +433,18 @@ private fun ProjectCard(project: ProjectItem, onClick: () -> Unit = {}) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(150.dp)
-                    .background(LightGray)
-            )
+                    .background(LightGray),
+                contentAlignment = Alignment.Center
+            ) {
+                if (project.imageUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = project.imageUrl,
+                        contentDescription = project.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(
                     text = project.title,
@@ -478,17 +489,12 @@ private fun ProjectCard(project: ProjectItem, onClick: () -> Unit = {}) {
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Group,
-                        contentDescription = null,
-                        tint = MutedText,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = project.teamSize,
+                        text = project.category,
                         style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = project.clientName,
@@ -577,50 +583,6 @@ private fun ServiceCard(service: ServiceItem, onClick: () -> Unit = {}) {
                         style = MaterialTheme.typography.labelSmall.copy(color = SecondaryText)
                     )
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ActivityCard(activity: ActivityItem) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.Top
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(BrandNavy.copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Notifications,
-                    contentDescription = null,
-                    tint = BrandNavy,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = activity.message,
-                    style = MaterialTheme.typography.bodySmall.copy(color = PrimaryText),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = activity.timeAgo,
-                    style = MaterialTheme.typography.labelSmall.copy(color = MutedText)
-                )
             }
         }
     }

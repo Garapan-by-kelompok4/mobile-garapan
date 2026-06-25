@@ -2,7 +2,10 @@ package com.app.garapan.presentation.screen.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.app.garapan.domain.model.Role
+import com.app.garapan.domain.model.User
 import com.app.garapan.domain.usecase.LogoutUseCase
+import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
 import com.app.garapan.presentation.navigation.Routes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -11,12 +14,14 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class ProfileUiState(
-    val name: String = "Magnus Licharlessen",
-    val email: String = "Magnus@gmail.com"
+    val name: String = "",
+    val email: String = "",
+    val role: Role? = null
 )
 
 sealed interface ProfileEvent {
@@ -25,7 +30,8 @@ sealed interface ProfileEvent {
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val logoutUseCase: LogoutUseCase
+    private val logoutUseCase: LogoutUseCase,
+    observeCurrentUserUseCase: ObserveCurrentUserUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -34,10 +40,31 @@ class ProfileViewModel @Inject constructor(
     private val _events = MutableSharedFlow<ProfileEvent>()
     val events: SharedFlow<ProfileEvent> = _events.asSharedFlow()
 
+    init {
+        viewModelScope.launch {
+            observeCurrentUserUseCase().collect { user ->
+                _uiState.update {
+                    it.copy(
+                        name = user.resolveDisplayName().ifBlank { it.name },
+                        email = user?.email.orEmpty().ifBlank { it.email },
+                        role = user?.role
+                    )
+                }
+            }
+        }
+    }
+
     fun onLogout() {
         viewModelScope.launch {
             logoutUseCase()
             _events.emit(ProfileEvent.Navigate(Routes.LOGIN))
         }
     }
+}
+
+private fun User?.resolveDisplayName(): String {
+    if (this == null) return ""
+    return klien?.companyName?.takeIf { it.isNotBlank() }
+        ?: mahasiswa?.university?.takeIf { it.isNotBlank() }
+        ?: email.substringBefore("@")
 }
