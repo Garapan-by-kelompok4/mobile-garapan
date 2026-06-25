@@ -31,6 +31,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,8 +73,27 @@ fun MainShell(
     rootNavController: NavController,
     viewModel: MainShellViewModel = hiltViewModel()
 ) {
+    val tabNavController = rememberNavController()
     val currentUser by viewModel.currentUser.collectAsState()
     val role = currentUser?.role
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                MainShellEvent.NavigateToLogin -> {
+                    rootNavController.navigate(Routes.LOGIN) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(role) {
+        if (role == null) {
+            viewModel.resolveSessionIfNeeded()
+        }
+    }
 
     if (role == null) {
         Box(
@@ -87,7 +107,6 @@ fun MainShell(
         return
     }
 
-    val tabNavController = rememberNavController()
     val navBackStackEntry by tabNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route?.let(::leafRoute).orEmpty()
     val tabs = tabsForRole(role)
@@ -142,7 +161,7 @@ fun MainShell(
                     navController = tabNavController,
                     fallbackRoute = Routes.HOME
                 ) {
-                    PostProjectScreen(navController = rootNavController)
+                    PostProjectScreen(navController = tabNavController)
                 }
             }
             composable(Routes.PROFILE) {
