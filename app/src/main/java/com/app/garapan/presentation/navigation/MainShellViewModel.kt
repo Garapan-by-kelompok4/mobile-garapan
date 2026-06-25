@@ -2,10 +2,9 @@ package com.app.garapan.presentation.navigation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.User
-import com.app.garapan.domain.usecase.CheckAuthTokenUseCase
-import com.app.garapan.domain.usecase.LoadSessionUseCase
+import com.app.garapan.domain.usecase.EnsureSessionResult
+import com.app.garapan.domain.usecase.EnsureSessionUseCase
 import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,8 +25,7 @@ sealed interface MainShellEvent {
 @HiltViewModel
 class MainShellViewModel @Inject constructor(
     observeCurrentUserUseCase: ObserveCurrentUserUseCase,
-    private val checkAuthTokenUseCase: CheckAuthTokenUseCase,
-    private val loadSessionUseCase: LoadSessionUseCase
+    private val ensureSessionUseCase: EnsureSessionUseCase
 ) : ViewModel() {
     val currentUser: StateFlow<User?> = observeCurrentUserUseCase()
         .stateIn(
@@ -46,15 +44,8 @@ class MainShellViewModel @Inject constructor(
             sessionResolveMutex.withLock {
                 if (currentUser.value != null) return@withLock
 
-                if (!checkAuthTokenUseCase()) {
+                if (ensureSessionUseCase() == EnsureSessionResult.RequiresLogin) {
                     _events.emit(MainShellEvent.NavigateToLogin)
-                    return@withLock
-                }
-
-                when (loadSessionUseCase()) {
-                    is Resource.Success -> Unit
-                    is Resource.Error -> _events.emit(MainShellEvent.NavigateToLogin)
-                    Resource.Loading -> Unit
                 }
             }
         }

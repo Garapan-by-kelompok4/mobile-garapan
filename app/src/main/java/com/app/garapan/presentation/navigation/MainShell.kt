@@ -159,6 +159,7 @@ fun MainShell(
                 RoleGuard(
                     allowedRoles = setOf(Role.KLIEN, Role.ADMIN),
                     navController = tabNavController,
+                    authNavController = rootNavController,
                     fallbackRoute = Routes.HOME
                 ) {
                     PostProjectScreen(navController = tabNavController)

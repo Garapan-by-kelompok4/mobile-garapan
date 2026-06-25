@@ -21,11 +21,30 @@ fun RoleGuard(
     allowedRoles: Set<Role>,
     navController: NavController,
     fallbackRoute: String,
+    authNavController: NavController = navController,
     viewModel: RoleGuardViewModel = hiltViewModel(),
     content: @Composable () -> Unit
 ) {
     val currentUser by viewModel.currentUser.collectAsState()
     val role = currentUser?.role
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                RoleGuardEvent.NavigateToLogin -> {
+                    authNavController.navigate(Routes.LOGIN) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(role) {
+        if (role == null) {
+            viewModel.resolveSessionIfNeeded()
+        }
+    }
 
     when {
         role == null -> {
