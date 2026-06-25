@@ -2,16 +2,23 @@ package com.app.garapan.presentation.screen.edit_service
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.app.garapan.domain.common.Resource
+import com.app.garapan.domain.usecase.GetKategoriListUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class EditServiceUiState(
     val title: String = "",
-    val selectedCategory: String = "Web Development",
+    val categories: List<String> = emptyList(),
+    val selectedCategory: String = "",
+    val isCategoryLoading: Boolean = false,
+    val categoryErrorMessage: String? = null,
     val teamSize: String = "",
     val description: String = "",
     val minimumBudget: String = "",
@@ -42,16 +49,10 @@ private val dummyServices = mapOf(
 
 @HiltViewModel
 class EditServiceViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    private val getKategoriListUseCase: GetKategoriListUseCase
 ) : ViewModel() {
 
-    val categories = listOf(
-        "Web Development",
-        "Mobile Apps",
-        "UI/UX Design",
-        "Data Science",
-        "Lainnya"
-    )
     val teamOptions = listOf(
         "Individu (1 Orang)",
         "Tim (2 Orang)",
@@ -62,6 +63,43 @@ class EditServiceViewModel @Inject constructor(
     private val serviceId: String = savedStateHandle["serviceId"] ?: "service-1"
     private val _uiState = MutableStateFlow(dummyServices[serviceId] ?: dummyServices["service-1"]!!)
     val uiState: StateFlow<EditServiceUiState> = _uiState.asStateFlow()
+
+    init {
+        loadCategories()
+    }
+
+    private fun loadCategories() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCategoryLoading = true, categoryErrorMessage = null) }
+            when (val result = getKategoriListUseCase()) {
+                is Resource.Success -> {
+                    val categories = result.data.map { it.name }
+                    _uiState.update { state ->
+                        val selectedCategory = state.selectedCategory
+                            .takeIf { it in categories }
+                            ?: categories.firstOrNull().orEmpty()
+                        state.copy(
+                            categories = categories,
+                            selectedCategory = selectedCategory,
+                            isCategoryLoading = false,
+                            categoryErrorMessage = null
+                        )
+                    }
+                }
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            categories = emptyList(),
+                            selectedCategory = "",
+                            isCategoryLoading = false,
+                            categoryErrorMessage = result.message
+                        )
+                    }
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
 
     fun onTitleChanged(value: String) = _uiState.update { it.copy(title = value) }
     fun onCategorySelected(value: String) = _uiState.update { it.copy(selectedCategory = value) }
