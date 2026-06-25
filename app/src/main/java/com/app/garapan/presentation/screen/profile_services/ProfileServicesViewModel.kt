@@ -1,11 +1,14 @@
 package com.app.garapan.presentation.screen.profile_services
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class ProfileServiceItem(
@@ -24,16 +27,12 @@ data class ProfileServicesUiState(
 )
 
 @HiltViewModel
-class ProfileServicesViewModel @Inject constructor() : ViewModel() {
+class ProfileServicesViewModel @Inject constructor(
+    observeCurrentUserUseCase: ObserveCurrentUserUseCase
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
         ProfileServicesUiState(
-            skills = listOf(
-                "Web Development",
-                "Mobile Apps",
-                "UI/UX Design",
-                "Data Science"
-            ),
             services = listOf(
                 ProfileServiceItem(
                     id = "service-1",
@@ -57,6 +56,16 @@ class ProfileServicesViewModel @Inject constructor() : ViewModel() {
         )
     )
     val uiState: StateFlow<ProfileServicesUiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            observeCurrentUserUseCase().collect { user ->
+                _uiState.update { state ->
+                    state.copy(skills = user?.mahasiswa?.skills.orEmpty())
+                }
+            }
+        }
+    }
 
     fun onDeleteService(serviceId: String) {
         _uiState.update { state ->

@@ -2,6 +2,7 @@ package com.app.garapan.di
 
 import com.app.garapan.BuildConfig
 import com.app.garapan.data.remote.api.AuthApi
+import com.app.garapan.data.remote.api.PortofolioApi
 import com.app.garapan.data.remote.api.UsersApi
 import com.app.garapan.data.remote.interceptor.AuthInterceptor
 import com.app.garapan.data.remote.interceptor.AuthTokenAuthenticator
@@ -15,6 +16,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 @Module
@@ -32,13 +34,17 @@ object NetworkModule {
         authenticator: AuthTokenAuthenticator
     ): OkHttpClient {
         val builder = OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(90, TimeUnit.SECONDS)
+            .writeTimeout(120, TimeUnit.SECONDS)
             .addInterceptor(authInterceptor)
             .authenticator(authenticator)
 
         if (BuildConfig.DEBUG) {
             val loggingInterceptor = HttpLoggingInterceptor().apply {
                 redactHeader("Authorization")
-                level = HttpLoggingInterceptor.Level.BODY
+                // HEADERS avoids buffering large multipart upload bodies in debug logs.
+                level = HttpLoggingInterceptor.Level.HEADERS
             }
             builder.addInterceptor(loggingInterceptor)
         }
@@ -66,4 +72,9 @@ object NetworkModule {
     @Singleton
     fun provideUsersApi(retrofit: Retrofit): UsersApi =
         retrofit.create(UsersApi::class.java)
+
+    @Provides
+    @Singleton
+    fun providePortofolioApi(retrofit: Retrofit): PortofolioApi =
+        retrofit.create(PortofolioApi::class.java)
 }

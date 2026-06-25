@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import androidx.navigation.navArgument
+import com.app.garapan.presentation.screen.add_portfolio.AddPortfolioScreen
 import com.app.garapan.presentation.screen.auth.LoginScreen
 import com.app.garapan.presentation.screen.auth.RegisterScreen
 import com.app.garapan.presentation.screen.auth.SetupAccountScreen
@@ -16,6 +17,7 @@ import com.app.garapan.presentation.screen.blog_detail.BlogDetailScreen
 import com.app.garapan.presentation.screen.chat.ChatScreen
 import com.app.garapan.presentation.screen.checkout.CheckoutScreen
 import com.app.garapan.presentation.screen.edit_profile.EditProfileScreen
+import com.app.garapan.presentation.screen.edit_portfolio.EditPortfolioScreen
 import com.app.garapan.presentation.screen.edit_service.EditServiceScreen
 import com.app.garapan.presentation.screen.forgot_password.ForgotPasswordScreen
 import com.app.garapan.presentation.screen.jasa_detail.JasaDetailScreen
@@ -25,6 +27,7 @@ import com.app.garapan.presentation.screen.profile_services.ProfileServicesScree
 import com.app.garapan.presentation.screen.project_detail.ProjectDetailScreen
 import com.app.garapan.presentation.screen.reset_password.ResetPasswordScreen
 import com.app.garapan.presentation.screen.security.SecurityScreen
+import com.app.garapan.presentation.screen.skills.SkillsScreen
 import com.app.garapan.presentation.screen.two_factor.TwoFactorScreen
 import com.app.garapan.presentation.screen.verify_email.VerifyEmailScreen
 import com.app.garapan.domain.model.Role
@@ -112,10 +115,46 @@ fun NavGraph(navController: NavHostController) {
             MainShell(rootNavController = navController)
         }
         composable(Routes.PROFILE_PORTFOLIO) {
-            PortfolioScreen(navController = navController)
+            RoleGuard(
+                allowedRoles = setOf(Role.MAHASISWA),
+                navController = navController,
+                fallbackRoute = Routes.MAIN
+            ) {
+                PortfolioScreen(navController = navController)
+            }
+        }
+        composable(Routes.ADD_PORTFOLIO) {
+            RoleGuard(
+                allowedRoles = setOf(Role.MAHASISWA),
+                navController = navController,
+                fallbackRoute = Routes.PROFILE_PORTFOLIO
+            ) {
+                AddPortfolioScreen(navController = navController)
+            }
+        }
+        composable(
+            route = Routes.EDIT_PORTFOLIO,
+            arguments = listOf(navArgument("portfolioId") { type = NavType.StringType })
+        ) {
+            RoleGuard(
+                allowedRoles = setOf(Role.MAHASISWA),
+                navController = navController,
+                fallbackRoute = Routes.PROFILE_PORTFOLIO
+            ) {
+                EditPortfolioScreen(navController = navController)
+            }
         }
         composable(Routes.PROFILE_SERVICES) {
             ProfileServicesScreen(navController = navController)
+        }
+        composable(Routes.SKILLS) {
+            RoleGuard(
+                allowedRoles = setOf(Role.MAHASISWA),
+                navController = navController,
+                fallbackRoute = Routes.MAIN
+            ) {
+                SkillsScreen(navController = navController)
+            }
         }
         composable(Routes.EDIT_PROFILE) {
             EditProfileScreen(navController = navController)

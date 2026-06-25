@@ -2,12 +2,19 @@ package com.app.garapan.presentation.screen.portfolio
 
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.app.garapan.domain.common.Resource
+import com.app.garapan.domain.model.Portofolio
+import com.app.garapan.domain.usecase.DeletePortofolioUseCase
+import com.app.garapan.domain.usecase.GetPortofolioUseCase
+import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
 import com.app.garapan.ui.theme.AccentBlue
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class PortfolioItem(
@@ -15,6 +22,7 @@ data class PortfolioItem(
     val title: String,
     val description: String,
     val tags: List<String>,
+    val imageUrl: String,
     val coverColor: Color,
     val accentColor: Color,
     val mockupTitle: String,
@@ -22,53 +30,86 @@ data class PortfolioItem(
 )
 
 data class PortfolioUiState(
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
     val items: List<PortfolioItem> = emptyList()
 )
 
-@HiltViewModel
-class PortfolioViewModel @Inject constructor() : ViewModel() {
+private val coverPalettes = listOf(
+    Color(0xFFFF8A1F) to AccentBlue,
+    Color(0xFFFF695F) to Color(0xFF1F2937),
+    Color(0xFF0F3D49) to Color(0xFFB7D9DF)
+)
 
-    private val _uiState = MutableStateFlow(
-        PortfolioUiState(
-            items = listOf(
-                PortfolioItem(
-                    id = "portfolio-1",
-                    title = "Redesign Website E-Commerce \"LokalKarya\"",
-                    description = "Meningkatkan konversi penjualan sebesar 35% melalui perancangan ulang halaman produk dan checkout.",
-                    tags = listOf("WEB DESIGN", "UI/UX"),
-                    coverColor = Color(0xFFFF8A1F),
-                    accentColor = AccentBlue,
-                    mockupTitle = "Premium Design",
-                    mockupSubtitle = "wesiigreesign"
-                ),
-                PortfolioItem(
-                    id = "portfolio-2",
-                    title = "Identitas Visual \"Kopi Senja\"",
-                    description = "Pengembangan logo dan pedoman merek komprehensif untuk kedai kopi lokal.",
-                    tags = listOf("BRANDING", "LOGO"),
-                    coverColor = Color(0xFFFF695F),
-                    accentColor = Color(0xFF1F2937),
-                    mockupTitle = "Brand Identity",
-                    mockupSubtitle = "Soft work"
-                ),
-                PortfolioItem(
-                    id = "portfolio-3",
-                    title = "Kampanye Digital \"TechFest 2023\"",
-                    description = "Desain aset media sosial untuk festival teknologi yang menjangkau lebih dari ribuan audiens.",
-                    tags = listOf("SOCIAL MEDIA", "GRAPHIC DESIGN"),
-                    coverColor = Color(0xFF0F3D49),
-                    accentColor = Color(0xFFB7D9DF),
-                    mockupTitle = "SALETI TO WORK",
-                    mockupSubtitle = "Digital Campaign"
-                )
-            )
-        )
-    )
+@HiltViewModel
+class PortfolioViewModel @Inject constructor(
+    private val getPortofolioUseCase: GetPortofolioUseCase,
+    private val deletePortofolioUseCase: DeletePortofolioUseCase,
+    observeCurrentUserUseCase: ObserveCurrentUserUseCase
+) : ViewModel() {
+
+    private val mahasiswaId: String? = observeCurrentUserUseCase.snapshot()?.mahasiswa?.id
+
+    private val _uiState = MutableStateFlow(PortfolioUiState(isLoading = true))
     val uiState: StateFlow<PortfolioUiState> = _uiState.asStateFlow()
 
-    fun onDeletePortfolio(portfolioId: String) {
-        _uiState.update { state ->
-            state.copy(items = state.items.filterNot { item -> item.id == portfolioId })
+    init {
+        loadPortofolio()
+    }
+
+    fun loadPortofolio() {
+        val id = mahasiswaId
+        if (id.isNullOrBlank()) {
+            _uiState.value = PortfolioUiState(
+                isLoading = false,
+                errorMessage = "Profil mahasiswa tidak ditemukan."
+            )
+            return
         }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            when (val result = getPortofolioUseCase(id)) {
+                is Resource.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            items = result.data.mapIndexed { index, item -> item.toUiItem(index) }
+                        )
+                    }
+                }
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(isLoading = false, errorMessage = result.message)
+                    }
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    fun onDeletePortfolio(portfolioId: String) {
+        viewModelScope.launch {
+            when (val result = deletePortofolioUseCase(portfolioId)) {
+                is Resource.Success -> loadPortofolio()
+                is Resource.Error -> _uiState.update { it.copy(errorMessage = result.message) }
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    private fun Portofolio.toUiItem(index: Int): PortfolioItem {
+        val (coverColor, accentColor) = coverPalettes[index % coverPalettes.size]
+        return PortfolioItem(
+            id = id,
+            title = title,
+            description = description,
+            tags = listOf("PORTOFOLIO"),
+            imageUrl = imageUrl,
+            coverColor = coverColor,
+            accentColor = accentColor,
+            mockupTitle = title.take(24),
+            mockupSubtitle = projectUrl ?: "Portofolio"
+        )
     }
 }

@@ -121,6 +121,7 @@ dependencies {
 
     // Coil (image loading from Cloudinary URLs)
     implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 
     // Socket.io (real-time chat — exclude org.json to avoid duplicate class conflict with Android)
     implementation(libs.socketio.client) {
