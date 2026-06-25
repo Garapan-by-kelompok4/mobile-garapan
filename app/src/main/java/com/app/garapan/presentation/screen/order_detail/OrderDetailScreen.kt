@@ -288,6 +288,9 @@ fun OrderDetailScreen(
                             style = MaterialTheme.typography.bodySmall.copy(color = AccentBlue)
                         )
                     }
+                    if (uiState.showDisputedInfoBanner) {
+                        DisputedInfoBanner()
+                    }
                     DetailCard {
                         PesananStatusBadge(status = uiState.status)
                         Spacer(modifier = Modifier.height(12.dp))
@@ -312,6 +315,30 @@ fun OrderDetailScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DisputedInfoBanner() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFFFFE1E1))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = "Pesanan dalam sengketa",
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFE31B23)
+            )
+        )
+        Text(
+            text = "Klien mengajukan komplain. Menunggu keputusan admin.",
+            style = MaterialTheme.typography.bodySmall.copy(color = PrimaryText)
+        )
     }
 }
 
