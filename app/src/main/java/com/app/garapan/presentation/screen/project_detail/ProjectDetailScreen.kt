@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.Paid
 import androidx.compose.material3.Button
@@ -52,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
@@ -72,6 +74,15 @@ fun ProjectDetailScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
+    LaunchedEffect(navController.currentBackStackEntry) {
+        val handle = navController.currentBackStackEntry?.savedStateHandle ?: return@LaunchedEffect
+        handle.getStateFlow(NavResults.PROJECT_REFRESH, false).collect { shouldRefresh ->
+            if (!shouldRefresh) return@collect
+            NavResults.clearProjectRefresh(handle)
+            viewModel.retry()
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
@@ -87,7 +98,11 @@ fun ProjectDetailScreen(
 
     Scaffold(
         topBar = {
-            ProjectDetailTopBar(onBack = { navController.navigateUp() })
+            ProjectDetailTopBar(
+                onBack = { navController.navigateUp() },
+                showEditButton = uiState.showEditButton,
+                onEdit = { navController.navigate(Routes.editProjectRoute(uiState.id)) }
+            )
         },
         bottomBar = {
             if (uiState.showTakeButton) {
@@ -320,7 +335,11 @@ private fun ProjectDetailContent(
 }
 
 @Composable
-private fun ProjectDetailTopBar(onBack: () -> Unit) {
+private fun ProjectDetailTopBar(
+    onBack: () -> Unit,
+    showEditButton: Boolean = false,
+    onEdit: () -> Unit = {}
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -344,12 +363,22 @@ private fun ProjectDetailTopBar(onBack: () -> Unit) {
             ),
             modifier = Modifier.weight(1f)
         )
-        IconButton(onClick = {}) {
-            Icon(
-                imageVector = Icons.Default.Share,
-                contentDescription = "Share",
-                tint = PrimaryText
-            )
+        if (showEditButton) {
+            IconButton(onClick = onEdit) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit proyek",
+                    tint = PrimaryText
+                )
+            }
+        } else {
+            IconButton(onClick = {}) {
+                Icon(
+                    imageVector = Icons.Default.Share,
+                    contentDescription = "Share",
+                    tint = PrimaryText
+                )
+            }
         }
     }
 }

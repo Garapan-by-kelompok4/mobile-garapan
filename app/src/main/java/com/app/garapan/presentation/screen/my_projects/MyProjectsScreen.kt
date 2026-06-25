@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.outlined.Paid
@@ -145,6 +146,7 @@ fun MyProjectsScreen(
                             canDelete = uiState.canDelete,
                             isDeleting = uiState.isDeleting,
                             onClick = { navController.navigate(Routes.projectDetailRoute(project.id)) },
+                            onEdit = { navController.navigate(Routes.editProjectRoute(project.id)) },
                             onDelete = { viewModel.onDeleteProject(project.id) }
                         )
                     }
@@ -189,6 +191,7 @@ private fun MyProjectCard(
     canDelete: Boolean,
     isDeleting: Boolean,
     onClick: () -> Unit,
+    onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     Card(
@@ -224,16 +227,30 @@ private fun MyProjectCard(
                     )
                 }
                 if (canDelete) {
-                    IconButton(
-                        onClick = onDelete,
-                        enabled = !isDeleting,
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Delete,
-                            contentDescription = "Delete project",
-                            tint = ErrorRed
-                        )
+                    Row {
+                        if (project.isEditable) {
+                            IconButton(
+                                onClick = onEdit,
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Edit,
+                                    contentDescription = "Edit project",
+                                    tint = AccentBlue
+                                )
+                            }
+                        }
+                        IconButton(
+                            onClick = onDelete,
+                            enabled = !isDeleting,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Delete,
+                                contentDescription = "Delete project",
+                                tint = ErrorRed
+                            )
+                        }
                     }
                 }
             }

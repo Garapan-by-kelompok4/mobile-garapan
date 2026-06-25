@@ -153,7 +153,10 @@ fun PostProjectScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            PostProjectTopBar(onBack = { navController.navigateUp() })
+            PostProjectTopBar(
+                title = "Post Proyek Baru",
+                onBack = { navController.navigateUp() }
+            )
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = 20.dp, top = 22.dp, end = 20.dp, bottom = 18.dp),
@@ -297,7 +300,7 @@ fun PostProjectScreen(
 }
 
 @Composable
-private fun PostProjectTopBar(onBack: () -> Unit) {
+internal fun PostProjectTopBar(title: String, onBack: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -313,7 +316,7 @@ private fun PostProjectTopBar(onBack: () -> Unit) {
             )
         }
         Text(
-            text = "Post Proyek Baru",
+            text = title,
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.ExtraBold,
                 color = AccentBlue
@@ -364,7 +367,7 @@ private fun ProjectHero() {
 }
 
 @Composable
-private fun ProjectFormCard(
+internal fun ProjectFormCard(
     title: String,
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -395,7 +398,7 @@ private fun ProjectFormCard(
 }
 
 @Composable
-private fun BudgetRangeFields(
+internal fun BudgetRangeFields(
     minimumBudget: String,
     maximumBudget: String,
     onMinimumBudgetChanged: (String) -> Unit,
@@ -474,7 +477,7 @@ private fun PriceField(
 }
 
 @Composable
-private fun CategoryChips(
+internal fun CategoryChips(
     categories: List<String>,
     selectedCategory: String,
     onCategorySelected: (String) -> Unit
@@ -583,7 +586,7 @@ private fun TeamSizeDropdown(
 }
 
 @Composable
-private fun ReadOnlyPostProjectField(
+internal fun ReadOnlyPostProjectField(
     label: String,
     value: String,
     placeholder: String,
@@ -628,7 +631,7 @@ private fun ReadOnlyPostProjectField(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DeadlineDatePickerDialog(
+internal fun DeadlineDatePickerDialog(
     onDismiss: () -> Unit,
     onDateSelected: (String) -> Unit
 ) {
@@ -660,7 +663,7 @@ private fun formatDeadline(millis: Long): String =
     SimpleDateFormat("MM/dd/yyyy", Locale.US).format(Date(millis))
 
 @Composable
-private fun PostProjectField(
+internal fun PostProjectField(
     label: String,
     value: String,
     placeholder: String,
@@ -746,11 +749,14 @@ private fun PostProjectField(
 }
 
 @Composable
-private fun ProjectImagePicker(
+internal fun ProjectImagePicker(
     imageUri: android.net.Uri?,
+    existingImageUrl: String = "",
     isProcessing: Boolean,
     onPickImage: () -> Unit
 ) {
+    val previewModel = imageUri ?: existingImageUrl.takeIf { it.isNotBlank() }
+
     Column {
         Box(
             modifier = Modifier
@@ -764,7 +770,7 @@ private fun ProjectImagePicker(
         ) {
             when {
                 isProcessing -> CircularProgressIndicator(color = BrandNavy)
-                imageUri == null -> {
+                imageUri == null && previewModel == null -> {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(
                             imageVector = Icons.Default.AddPhotoAlternate,
@@ -791,7 +797,7 @@ private fun ProjectImagePicker(
                 }
                 else -> {
                     AsyncImage(
-                        model = imageUri,
+                        model = previewModel,
                         contentDescription = "Pratinjau gambar proyek",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
@@ -799,7 +805,7 @@ private fun ProjectImagePicker(
                 }
             }
         }
-        if (imageUri != null && !isProcessing) {
+        if (previewModel != null && !isProcessing) {
             TextButton(
                 onClick = onPickImage,
                 modifier = Modifier.align(Alignment.End)

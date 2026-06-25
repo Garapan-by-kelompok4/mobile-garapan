@@ -19,6 +19,7 @@ import com.app.garapan.presentation.screen.chat.ChatScreen
 import com.app.garapan.presentation.screen.checkout.CheckoutScreen
 import com.app.garapan.presentation.screen.edit_profile.EditProfileScreen
 import com.app.garapan.presentation.screen.edit_portfolio.EditPortfolioScreen
+import com.app.garapan.presentation.screen.edit_project.EditProjectScreen
 import com.app.garapan.presentation.screen.edit_service.EditServiceScreen
 import com.app.garapan.presentation.screen.forgot_password.ForgotPasswordScreen
 import com.app.garapan.presentation.screen.jasa_detail.JasaDetailScreen
@@ -196,6 +197,18 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(Routes.SECURITY) {
             SecurityScreen(navController = navController)
+        }
+        composable(
+            route = Routes.EDIT_PROJECT,
+            arguments = listOf(navArgument("projectId") { type = NavType.StringType })
+        ) {
+            RoleGuard(
+                allowedRoles = setOf(Role.KLIEN, Role.ADMIN),
+                navController = navController,
+                fallbackRoute = Routes.MAIN
+            ) {
+                EditProjectScreen(navController = navController)
+            }
         }
         composable(
             route = Routes.PROJECT_DETAIL,

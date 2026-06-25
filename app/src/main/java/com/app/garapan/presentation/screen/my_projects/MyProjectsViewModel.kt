@@ -33,7 +33,8 @@ data class MyProjectItem(
     val category: String,
     val deadline: String,
     val status: String,
-    val assigneeName: String = ""
+    val assigneeName: String = "",
+    val isEditable: Boolean = false
 )
 
 data class MyProjectsUiState(
@@ -163,7 +164,8 @@ class MyProjectsViewModel @Inject constructor(
             ProjectStatus.OPEN -> "Terbuka"
             ProjectStatus.CLOSED -> "Ditutup"
         },
-        assigneeName = project.assigneeName
+        assigneeName = project.assigneeName,
+        isEditable = project.status == ProjectStatus.OPEN && project.assignedMahasiswaId.isNullOrBlank()
     )
 
     private fun formatDeadline(deadline: String): String {
