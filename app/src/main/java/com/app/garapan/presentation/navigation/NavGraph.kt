@@ -13,6 +13,7 @@ import com.app.garapan.presentation.screen.auth.LoginScreen
 import com.app.garapan.presentation.screen.auth.RegisterScreen
 import com.app.garapan.presentation.screen.auth.SetupAccountScreen
 import com.app.garapan.presentation.screen.auth.SplashScreen
+import com.app.garapan.presentation.screen.article_list.ArticleListScreen
 import com.app.garapan.presentation.screen.blog_detail.BlogDetailScreen
 import com.app.garapan.presentation.screen.chat.ChatScreen
 import com.app.garapan.presentation.screen.checkout.CheckoutScreen
@@ -24,7 +25,9 @@ import com.app.garapan.presentation.screen.jasa_detail.JasaDetailScreen
 import com.app.garapan.presentation.screen.order_history.OrderHistoryScreen
 import com.app.garapan.presentation.screen.portfolio.PortfolioScreen
 import com.app.garapan.presentation.screen.profile_services.ProfileServicesScreen
+import com.app.garapan.presentation.screen.public_profile.PublicProfileScreen
 import com.app.garapan.presentation.screen.project_detail.ProjectDetailScreen
+import com.app.garapan.presentation.screen.top_workers.TopWorkersListScreen
 import com.app.garapan.presentation.screen.reset_password.ResetPasswordScreen
 import com.app.garapan.presentation.screen.security.SecurityScreen
 import com.app.garapan.presentation.screen.skills.SkillsScreen
@@ -203,6 +206,18 @@ fun NavGraph(navController: NavHostController) {
             arguments = listOf(navArgument("blogId") { type = NavType.StringType })
         ) {
             BlogDetailScreen(navController = navController)
+        }
+        composable(
+            route = Routes.PUBLIC_PROFILE,
+            arguments = listOf(navArgument("userId") { type = NavType.StringType })
+        ) {
+            PublicProfileScreen(navController = navController)
+        }
+        composable(Routes.TOP_WORKERS) {
+            TopWorkersListScreen(navController = navController)
+        }
+        composable(Routes.ARTICLE_LIST) {
+            ArticleListScreen(navController = navController)
         }
     }
 }

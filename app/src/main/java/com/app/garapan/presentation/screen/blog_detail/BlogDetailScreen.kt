@@ -1,6 +1,7 @@
 package com.app.garapan.presentation.screen.blog_detail
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,6 +21,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,9 +42,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.app.garapan.ui.theme.BrandNavy
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
-import com.app.garapan.ui.theme.BrandNavy
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
 import com.app.garapan.ui.theme.Surface
@@ -56,93 +60,126 @@ fun BlogDetailScreen(
     Column(modifier = Modifier.fillMaxSize().background(White)) {
         BlogDetailTopBar(onBack = { navController.navigateUp() })
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-        ) {
-            BlogHeroSection(uiState = uiState)
-
-            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(AccentBlue.copy(alpha = 0.1f))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+        when {
+            uiState.isLoading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = BrandNavy)
+                }
+            }
+            uiState.errorMessage != null -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = uiState.errorMessage.orEmpty(),
+                        style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = viewModel::retry,
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandNavy)
                     ) {
+                        Text(text = "Coba Lagi")
+                    }
+                }
+            }
+            else -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    BlogHeroSection(uiState = uiState)
+
+                    Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(AccentBlue.copy(alpha = 0.1f))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = uiState.category,
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = AccentBlue
+                                    )
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "·",
+                                style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = uiState.date,
+                                style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
                         Text(
-                            text = uiState.category,
-                            style = MaterialTheme.typography.labelSmall.copy(
+                            text = uiState.title,
+                            style = MaterialTheme.typography.headlineSmall.copy(
                                 fontWeight = FontWeight.ExtraBold,
-                                color = AccentBlue
+                                color = PrimaryText
                             )
                         )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "·",
-                        style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = uiState.date,
-                        style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
-                    )
-                }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = uiState.title,
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        color = PrimaryText
-                    )
-                )
+                        Text(
+                            text = uiState.heroSubtitle,
+                            style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
+                        )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
 
-                Text(
-                    text = uiState.heroSubtitle,
-                    style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
-                )
+                        AuthorRow(uiState = uiState)
 
-                Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
+                        HorizontalDivider(color = BorderColor)
+                        Spacer(modifier = Modifier.height(20.dp))
 
-                AuthorRow(uiState = uiState)
+                        uiState.body.forEach { block ->
+                            BlogBlock(block = block)
+                        }
 
-                Spacer(modifier = Modifier.height(20.dp))
-                HorizontalDivider(color = BorderColor)
-                Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(32.dp))
 
-                uiState.body.forEach { block ->
-                    BlogBlock(block = block)
-                }
+                        Text(
+                            text = "Rekomendasi Artikel",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.ExtraBold,
+                                color = PrimaryText
+                            )
+                        )
 
-                Spacer(modifier = Modifier.height(32.dp))
-
-                Text(
-                    text = "Rekomendasi Artikel",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        color = PrimaryText
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                uiState.recommendations.forEachIndexed { index, item ->
-                    RecommendationCard(item = item)
-                    if (index < uiState.recommendations.lastIndex) {
                         Spacer(modifier = Modifier.height(12.dp))
+
+                        uiState.recommendations.forEachIndexed { index, item ->
+                            RecommendationCard(item = item)
+                            if (index < uiState.recommendations.lastIndex) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.navigationBarsPadding())
                     }
                 }
-
-                Spacer(modifier = Modifier.height(24.dp))
-                Spacer(modifier = Modifier.navigationBarsPadding())
             }
         }
     }
