@@ -23,6 +23,7 @@ object Routes {
     const val ADD_PORTFOLIO = "add_portfolio"
     const val EDIT_PORTFOLIO = "edit_portfolio/{portfolioId}"
     const val PROFILE_SERVICES = "profile_services"
+    const val MY_PROJECTS = "my_projects"
     const val SKILLS = "skills"
     const val EDIT_PROFILE = "edit_profile"
     const val EDIT_SERVICE = "edit_service/{serviceId}"

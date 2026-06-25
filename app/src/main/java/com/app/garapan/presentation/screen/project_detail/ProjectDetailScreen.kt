@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.Paid
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,6 +38,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -44,10 +46,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil3.compose.AsyncImage
+import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
@@ -67,54 +72,123 @@ fun ProjectDetailScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is ProjectDetailEvent.ShowMessage -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+                is ProjectDetailEvent.NavigateToOrder -> {
+                    navController.navigate(Routes.orderDetailRoute(event.pesananId))
+                }
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             ProjectDetailTopBar(onBack = { navController.navigateUp() })
         },
         bottomBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(White)
-                    .navigationBarsPadding()
-                    .padding(horizontal = 20.dp, vertical = 12.dp)
-            ) {
-                Button(
-                    onClick = {
-                        if (uiState.viewerRole == "client") {
-                            Toast.makeText(
-                                context,
-                                "Hanya mahasiswa yang bisa mengambil proyek.",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    },
+            if (uiState.showTakeButton) {
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(50.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = BrandNavy,
-                        contentColor = OnPrimary
-                    )
+                        .background(White)
+                        .navigationBarsPadding()
+                        .padding(horizontal = 20.dp, vertical = 12.dp)
                 ) {
-                    Text(
-                        text = "Ambil Proyek Ini",
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.SemiBold
+                    Button(
+                        onClick = viewModel::onTakeProject,
+                        enabled = uiState.canTake && !uiState.isTaking,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(50.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = BrandNavy,
+                            contentColor = OnPrimary
                         )
-                    )
+                    ) {
+                        if (uiState.isTaking) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(22.dp),
+                                color = OnPrimary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text(
+                                text = "Ambil Proyek Ini",
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            )
+                        }
+                    }
                 }
             }
         },
         containerColor = Surface
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-        ) {
+        when {
+            uiState.isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = BrandNavy)
+                }
+            }
+            uiState.errorMessage != null -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = uiState.errorMessage.orEmpty(),
+                        style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = viewModel::retry) {
+                        Text("Coba Lagi")
+                    }
+                }
+            }
+            else -> ProjectDetailContent(
+                uiState = uiState,
+                modifier = Modifier.padding(innerPadding)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProjectDetailContent(
+    uiState: ProjectDetailUiState,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    ) {
+            if (uiState.imageUrl.isNotBlank()) {
+                AsyncImage(
+                    model = uiState.imageUrl,
+                    contentDescription = uiState.title,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
             // Title + meta section
             Column(
                 modifier = Modifier
@@ -242,7 +316,6 @@ fun ProjectDetailScreen(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-        }
     }
 }
 

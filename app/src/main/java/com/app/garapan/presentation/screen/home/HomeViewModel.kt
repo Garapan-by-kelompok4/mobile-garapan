@@ -6,9 +6,12 @@ import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.Artikel
 import com.app.garapan.domain.model.Jasa
 import com.app.garapan.domain.model.JasaListFilters
+import com.app.garapan.domain.model.Project
+import com.app.garapan.domain.model.ProjectListFilters
 import com.app.garapan.domain.model.TopWorker
 import com.app.garapan.domain.usecase.GetArtikelListUseCase
 import com.app.garapan.domain.usecase.GetJasaListUseCase
+import com.app.garapan.domain.usecase.GetProjectListUseCase
 import com.app.garapan.domain.usecase.GetTopWorkersUseCase
 import com.app.garapan.presentation.util.CurrencyFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,8 +32,8 @@ data class ProjectItem(
     val budget: String,
     val category: String,
     val deadline: String,
-    val teamSize: String,
-    val clientName: String
+    val clientName: String,
+    val imageUrl: String = ""
 )
 
 data class ServiceItem(
@@ -41,12 +44,6 @@ data class ServiceItem(
     val workerName: String,
     val rating: Float,
     val imageUrl: String = ""
-)
-
-data class ActivityItem(
-    val id: String,
-    val message: String,
-    val timeAgo: String
 )
 
 data class TopWorkerItem(
@@ -68,13 +65,13 @@ data class BlogItem(
 )
 
 data class HomeUiState(
-    val userName: String = "Praffi",
     val selectedNavIndex: Int = 0,
     val projects: List<ProjectItem> = emptyList(),
+    val isProjectsLoading: Boolean = false,
+    val projectsError: String? = null,
     val services: List<ServiceItem> = emptyList(),
     val isServicesLoading: Boolean = false,
     val servicesError: String? = null,
-    val activities: List<ActivityItem> = emptyList(),
     val topWorkers: List<TopWorkerItem> = emptyList(),
     val isTopWorkersLoading: Boolean = false,
     val topWorkersError: String? = null,
@@ -87,28 +84,15 @@ data class HomeUiState(
 class HomeViewModel @Inject constructor(
     private val getTopWorkersUseCase: GetTopWorkersUseCase,
     private val getArtikelListUseCase: GetArtikelListUseCase,
-    private val getJasaListUseCase: GetJasaListUseCase
+    private val getJasaListUseCase: GetJasaListUseCase,
+    private val getProjectListUseCase: GetProjectListUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(
-        HomeUiState(
-            projects = listOf(
-                ProjectItem("1", "Platform e-Learning Interaktif untuk Bimbingan Belajar", "Rp 5.000.000 - Rp 8.000.000", "Ed-Tech", "20 April 2026", "Tim (2-3 Orang)", "PT Nusantara Global"),
-                ProjectItem("2", "Aplikasi Manajemen Inventaris Gudang", "Rp 3.000.000 - Rp 5.000.000", "Mobile Dev", "18 Mei 2026", "Tim (1-2 Orang)", "CV Berkah Mandiri"),
-                ProjectItem("3", "Sistem Monitoring Jaringan Real-Time", "Rp 4.000.000 - Rp 6.000.000", "DevOps", "10 Juni 2026", "Individu", "PT Teknologi Maju"),
-                ProjectItem("4", "Dashboard Analitik Data Penjualan", "Rp 2.500.000 - Rp 4.000.000", "Data Science", "30 April 2026", "Tim (1-2 Orang)", "Startup Kopi"),
-            ),
-            activities = listOf(
-                ActivityItem("1", "PT Maju Jaya membuka proyek baru: Buat Website E-Commerce", "5 menit lalu"),
-                ActivityItem("2", "Andi Pratama menyelesaikan pesanan Desain Logo", "20 menit lalu"),
-                ActivityItem("3", "Sari Dewi mendapat ulasan bintang 5 dari klien", "1 jam lalu"),
-                ActivityItem("4", "Proyek baru: Integrasi Midtrans Payment Gateway", "2 jam lalu"),
-            )
-        )
-    )
+    private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
+        loadFeaturedProjects()
         loadTopWorkers()
         loadBlogs()
         loadFeaturedServices()
@@ -123,6 +107,46 @@ class HomeViewModel @Inject constructor(
     fun retryBlogs() = loadBlogs()
 
     fun retryServices() = loadFeaturedServices()
+
+    fun retryProjects() = loadFeaturedProjects()
+
+    fun refreshProjects() = loadFeaturedProjects()
+
+    private fun loadFeaturedProjects(refresh: Boolean = false) {
+        viewModelScope.launch {
+            val hasCachedProjects = _uiState.value.projects.isNotEmpty()
+            val showFullScreenLoading = !refresh && !hasCachedProjects
+
+            _uiState.update {
+                it.copy(
+                    isProjectsLoading = showFullScreenLoading,
+                    projectsError = if (refresh) null else it.projectsError
+                )
+            }
+
+            when (val result = getProjectListUseCase(ProjectListFilters(limit = 4))) {
+                is Resource.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            projects = result.data.map(::toProjectItem),
+                            isProjectsLoading = false,
+                            projectsError = null
+                        )
+                    }
+                }
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            projects = emptyList(),
+                            isProjectsLoading = false,
+                            projectsError = result.message
+                        )
+                    }
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
 
     private fun loadFeaturedServices() {
         viewModelScope.launch {
@@ -215,6 +239,16 @@ class HomeViewModel @Inject constructor(
         imageUrl = jasa.imageUrl
     )
 
+    private fun toProjectItem(project: Project) = ProjectItem(
+        id = project.id,
+        title = project.title,
+        budget = CurrencyFormatter.formatRupiah(project.budget),
+        category = project.kategoriName.ifBlank { "Proyek" },
+        deadline = formatProjectDeadline(project.deadline),
+        clientName = project.clientName.ifBlank { "Klien" },
+        imageUrl = project.imageUrl
+    )
+
     private fun toTopWorkerItem(worker: TopWorker) = TopWorkerItem(
         id = worker.mahasiswaId,
         userId = worker.userId,
@@ -244,5 +278,13 @@ class HomeViewModel @Inject constructor(
             val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("id", "ID"))
             Instant.parse(publishedAt).atZone(ZoneId.systemDefault()).format(formatter)
         }.getOrDefault("")
+    }
+
+    private fun formatProjectDeadline(deadline: String): String {
+        if (deadline.isBlank()) return "-"
+        return runCatching {
+            val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("id", "ID"))
+            Instant.parse(deadline).atZone(ZoneId.systemDefault()).format(formatter)
+        }.getOrDefault(deadline.take(10))
     }
 }

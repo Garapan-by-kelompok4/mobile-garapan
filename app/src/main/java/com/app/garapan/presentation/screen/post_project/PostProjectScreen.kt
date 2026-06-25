@@ -1,5 +1,9 @@
 package com.app.garapan.presentation.screen.post_project
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,7 +27,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Home
@@ -43,15 +47,19 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,21 +71,27 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import coil3.compose.AsyncImage
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
+import com.app.garapan.ui.theme.LightGray
 import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
@@ -90,10 +104,35 @@ import java.util.Locale
 @Composable
 fun PostProjectScreen(
     navController: NavController,
+    rootNavController: NavController,
     viewModel: PostProjectViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
     var showDeadlinePicker by remember { mutableStateOf(false) }
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = PickVisualMedia()
+    ) { uri ->
+        uri?.let { pickedUri ->
+            viewModel.onImageSelected(pickedUri, context)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is PostProjectEvent.ShowMessage -> snackbarHostState.showSnackbar(event.message)
+                PostProjectEvent.Published -> {
+                    Toast.makeText(context, "Proyek berhasil dipublikasikan.", Toast.LENGTH_SHORT).show()
+                    runCatching {
+                        rootNavController.getBackStackEntry(Routes.MAIN).savedStateHandle
+                    }.getOrNull()?.let(NavResults::publishProjectRefresh)
+                    rootNavController.navigate(Routes.MY_PROJECTS)
+                }
+            }
+        }
+    }
 
     if (showDeadlinePicker) {
         DeadlineDatePickerDialog(
@@ -106,7 +145,8 @@ fun PostProjectScreen(
     }
 
     Scaffold(
-        containerColor = Surface
+        containerColor = Surface,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -175,6 +215,24 @@ fun PostProjectScreen(
                             minHeight = 108.dp,
                             singleLine = false
                         )
+                        Spacer(modifier = Modifier.height(18.dp))
+                        Text(
+                            text = "Gambar Proyek (Opsional)",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                color = SecondaryText,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        ProjectImagePicker(
+                            imageUri = uiState.imageUri,
+                            isProcessing = uiState.isProcessingImage,
+                            onPickImage = {
+                                imagePicker.launch(
+                                    PickVisualMediaRequest(PickVisualMedia.ImageOnly)
+                                )
+                            }
+                        )
                     }
                 }
                 item {
@@ -205,7 +263,8 @@ fun PostProjectScreen(
                 }
                 item {
                     Button(
-                        onClick = {},
+                        onClick = viewModel::onPublish,
+                        enabled = !uiState.isSubmitting && !uiState.isProcessingImage,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(54.dp),
@@ -216,12 +275,20 @@ fun PostProjectScreen(
                         shape = RoundedCornerShape(50.dp),
                         contentPadding = PaddingValues(horizontal = 18.dp)
                     ) {
-                        Text(
-                            text = "Publikasikan Proyek",
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                fontWeight = FontWeight.ExtraBold
+                        if (uiState.isSubmitting) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(22.dp),
+                                color = White,
+                                strokeWidth = 2.dp
                             )
-                        )
+                        } else {
+                            Text(
+                                text = "Publikasikan Proyek",
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                            )
+                        }
                     }
                 }
             }
@@ -673,6 +740,71 @@ private fun PostProjectField(
                     tint = SecondaryText,
                     modifier = Modifier.size(22.dp)
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProjectImagePicker(
+    imageUri: android.net.Uri?,
+    isProcessing: Boolean,
+    onPickImage: () -> Unit
+) {
+    Column {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(LightGray)
+                .border(1.dp, BorderColor, RoundedCornerShape(16.dp))
+                .clickable(enabled = !isProcessing, onClick = onPickImage),
+            contentAlignment = Alignment.Center
+        ) {
+            when {
+                isProcessing -> CircularProgressIndicator(color = BrandNavy)
+                imageUri == null -> {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Default.AddPhotoAlternate,
+                            contentDescription = null,
+                            tint = BrandNavy,
+                            modifier = Modifier.size(40.dp)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Ketuk untuk pilih gambar",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = PrimaryText,
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Opsional",
+                            style = MaterialTheme.typography.bodySmall.copy(color = MutedText),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+                else -> {
+                    AsyncImage(
+                        model = imageUri,
+                        contentDescription = "Pratinjau gambar proyek",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
+        }
+        if (imageUri != null && !isProcessing) {
+            TextButton(
+                onClick = onPickImage,
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Text("Ganti gambar")
             }
         }
     }

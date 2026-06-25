@@ -27,6 +27,7 @@ import com.app.garapan.presentation.screen.order_history.OrderHistoryScreen
 import com.app.garapan.presentation.screen.portfolio.PortfolioScreen
 import com.app.garapan.presentation.screen.profile_services.ProfileServicesScreen
 import com.app.garapan.presentation.screen.public_profile.PublicProfileScreen
+import com.app.garapan.presentation.screen.my_projects.MyProjectsScreen
 import com.app.garapan.presentation.screen.project_detail.ProjectDetailScreen
 import com.app.garapan.presentation.screen.top_workers.TopWorkersListScreen
 import com.app.garapan.presentation.screen.reset_password.ResetPasswordScreen
@@ -150,6 +151,15 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(Routes.PROFILE_SERVICES) {
             ProfileServicesScreen(navController = navController)
+        }
+        composable(Routes.MY_PROJECTS) {
+            RoleGuard(
+                allowedRoles = setOf(Role.KLIEN, Role.MAHASISWA, Role.ADMIN),
+                navController = navController,
+                fallbackRoute = Routes.MAIN
+            ) {
+                MyProjectsScreen(navController = navController)
+            }
         }
         composable(Routes.SKILLS) {
             RoleGuard(

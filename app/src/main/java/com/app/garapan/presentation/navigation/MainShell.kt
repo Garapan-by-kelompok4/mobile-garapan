@@ -174,7 +174,10 @@ fun MainShell(
                     authNavController = rootNavController,
                     fallbackRoute = Routes.HOME
                 ) {
-                    PostProjectScreen(navController = tabNavController)
+                    PostProjectScreen(
+                        navController = tabNavController,
+                        rootNavController = rootNavController
+                    )
                 }
             }
             composable(Routes.PROFILE) {

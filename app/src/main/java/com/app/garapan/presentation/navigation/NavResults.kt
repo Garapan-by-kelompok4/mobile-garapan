@@ -7,6 +7,7 @@ import com.app.garapan.domain.model.JasaStatus
 object NavResults {
     const val PORTFOLIO_REFRESH = "portfolio_refresh"
     const val JASA_REFRESH = "jasa_refresh"
+    const val PROJECT_REFRESH = "project_refresh"
 
     private const val JASA_SAVED_ID = "jasa_saved_id"
     private const val JASA_SAVED_TITLE = "jasa_saved_title"
@@ -54,5 +55,13 @@ object NavResults {
         handle.remove<String>(JASA_SAVED_IMAGE_URL)
         handle.remove<String>(JASA_SAVED_KATEGORI_NAME)
         handle.remove<String>(JASA_SAVED_STATUS)
+    }
+
+    fun publishProjectRefresh(handle: SavedStateHandle?) {
+        handle?.set(PROJECT_REFRESH, true)
+    }
+
+    fun clearProjectRefresh(handle: SavedStateHandle) {
+        handle[PROJECT_REFRESH] = false
     }
 }

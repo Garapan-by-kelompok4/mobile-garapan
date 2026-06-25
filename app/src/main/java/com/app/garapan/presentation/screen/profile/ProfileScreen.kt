@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material.icons.filled.Security
@@ -53,6 +54,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.app.garapan.R
+import com.app.garapan.domain.model.Role
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
@@ -134,17 +136,39 @@ fun ProfileScreen(
 
             item {
                 ProfileMenuCard(
-                    items = listOf(
-                        ProfileMenuItem("Keamanan Akun", Icons.Filled.Security) {
-                            navController.navigate(Routes.SECURITY)
-                        },
-                        ProfileMenuItem("Portofolio", Icons.Filled.Work) {
-                            navController.navigate(Routes.PROFILE_PORTFOLIO)
-                        },
-                        ProfileMenuItem("Keahlian", Icons.Filled.Computer) {
-                            navController.navigate(Routes.SKILLS)
+                    items = buildList {
+                        add(
+                            ProfileMenuItem("Keamanan Akun", Icons.Filled.Security) {
+                                navController.navigate(Routes.SECURITY)
+                            }
+                        )
+                        if (uiState.role == Role.MAHASISWA) {
+                            add(
+                                ProfileMenuItem("Portofolio", Icons.Filled.Work) {
+                                    navController.navigate(Routes.PROFILE_PORTFOLIO)
+                                }
+                            )
+                            add(
+                                ProfileMenuItem("Keahlian", Icons.Filled.Computer) {
+                                    navController.navigate(Routes.SKILLS)
+                                }
+                            )
                         }
-                    ),
+                        if (uiState.role == Role.KLIEN || uiState.role == Role.MAHASISWA || uiState.role == Role.ADMIN) {
+                            add(
+                                ProfileMenuItem(
+                                    label = if (uiState.role == Role.MAHASISWA) {
+                                        "Proyek Diambil"
+                                    } else {
+                                        "Proyek Saya"
+                                    },
+                                    icon = Icons.Filled.Assignment
+                                ) {
+                                    navController.navigate(Routes.MY_PROJECTS)
+                                }
+                            )
+                        }
+                    },
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             }
