@@ -12,6 +12,7 @@ import com.app.garapan.data.repository.PembayaranRepositoryImpl
 import com.app.garapan.data.repository.PesananRepositoryImpl
 import com.app.garapan.data.repository.PortofolioRepositoryImpl
 import com.app.garapan.data.repository.ProjectRepositoryImpl
+import com.app.garapan.data.repository.ReviewRepositoryImpl
 import com.app.garapan.data.repository.SessionRepositoryImpl
 import com.app.garapan.data.repository.SkillRepositoryImpl
 import com.app.garapan.data.repository.SupportChatRepositoryImpl
@@ -26,6 +27,7 @@ import com.app.garapan.domain.repository.PembayaranRepository
 import com.app.garapan.domain.repository.PesananRepository
 import com.app.garapan.domain.repository.PortofolioRepository
 import com.app.garapan.domain.repository.ProjectRepository
+import com.app.garapan.domain.repository.ReviewRepository
 import com.app.garapan.domain.repository.SessionRepository
 import com.app.garapan.domain.repository.SkillRepository
 import com.app.garapan.domain.repository.SupportChatRepository
@@ -105,4 +107,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindPembayaranRepository(impl: PembayaranRepositoryImpl): PembayaranRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindReviewRepository(impl: ReviewRepositoryImpl): ReviewRepository
 }

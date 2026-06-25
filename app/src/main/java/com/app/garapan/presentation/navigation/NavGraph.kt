@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import androidx.navigation.navArgument
 import com.app.garapan.presentation.screen.add_portfolio.AddPortfolioScreen
+import com.app.garapan.presentation.screen.all_reviews.AllReviewsScreen
 import com.app.garapan.presentation.screen.auth.LoginScreen
 import com.app.garapan.presentation.screen.auth.RegisterScreen
 import com.app.garapan.presentation.screen.auth.SetupAccountScreen
@@ -28,6 +29,7 @@ import com.app.garapan.presentation.screen.portfolio.PortfolioScreen
 import com.app.garapan.presentation.screen.profile_services.ProfileServicesScreen
 import com.app.garapan.presentation.screen.public_profile.PublicProfileScreen
 import com.app.garapan.presentation.screen.project_detail.ProjectDetailScreen
+import com.app.garapan.presentation.screen.review.ReviewScreen
 import com.app.garapan.presentation.screen.top_workers.TopWorkersListScreen
 import com.app.garapan.presentation.screen.reset_password.ResetPasswordScreen
 import com.app.garapan.presentation.screen.security.SecurityScreen
@@ -184,6 +186,18 @@ fun NavGraph(navController: NavHostController) {
         ) {
             OrderDetailScreen(navController = navController)
         }
+        composable(
+            route = Routes.REVIEW,
+            arguments = listOf(navArgument("pesananId") { type = NavType.StringType })
+        ) {
+            RoleGuard(
+                allowedRoles = setOf(Role.KLIEN),
+                navController = navController,
+                fallbackRoute = Routes.ORDER_HISTORY
+            ) {
+                ReviewScreen(navController = navController)
+            }
+        }
         composable(Routes.SECURITY) {
             SecurityScreen(navController = navController)
         }
@@ -198,6 +212,12 @@ fun NavGraph(navController: NavHostController) {
             arguments = listOf(navArgument("jasaId") { type = NavType.StringType })
         ) {
             JasaDetailScreen(navController = navController)
+        }
+        composable(
+            route = Routes.ALL_REVIEWS,
+            arguments = listOf(navArgument("jasaId") { type = NavType.StringType })
+        ) {
+            AllReviewsScreen(navController = navController)
         }
         composable(
             route = Routes.CHAT,
