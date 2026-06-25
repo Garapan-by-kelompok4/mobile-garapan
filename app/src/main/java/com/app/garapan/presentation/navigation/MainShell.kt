@@ -137,7 +137,13 @@ fun MainShell(
                 PesanScreen(navController = rootNavController)
             }
             composable(Routes.POST_PROJECT) {
-                PostProjectScreen(navController = rootNavController)
+                RoleGuard(
+                    allowedRoles = setOf(Role.KLIEN, Role.ADMIN),
+                    navController = tabNavController,
+                    fallbackRoute = Routes.HOME
+                ) {
+                    PostProjectScreen(navController = rootNavController)
+                }
             }
             composable(Routes.PROFILE) {
                 ProfileScreen(

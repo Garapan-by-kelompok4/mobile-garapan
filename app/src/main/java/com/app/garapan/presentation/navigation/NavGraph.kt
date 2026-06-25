@@ -27,6 +27,7 @@ import com.app.garapan.presentation.screen.reset_password.ResetPasswordScreen
 import com.app.garapan.presentation.screen.security.SecurityScreen
 import com.app.garapan.presentation.screen.two_factor.TwoFactorScreen
 import com.app.garapan.presentation.screen.verify_email.VerifyEmailScreen
+import com.app.garapan.domain.model.Role
 
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -123,7 +124,13 @@ fun NavGraph(navController: NavHostController) {
             route = Routes.EDIT_SERVICE,
             arguments = listOf(navArgument("serviceId") { type = NavType.StringType })
         ) {
-            EditServiceScreen(navController = navController)
+            RoleGuard(
+                allowedRoles = setOf(Role.MAHASISWA),
+                navController = navController,
+                fallbackRoute = Routes.MAIN
+            ) {
+                EditServiceScreen(navController = navController)
+            }
         }
         composable(Routes.ORDER_HISTORY) {
             OrderHistoryScreen(navController = navController)
