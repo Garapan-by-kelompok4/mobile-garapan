@@ -1,5 +1,6 @@
 package com.app.garapan.presentation.screen.jasa_detail
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -33,6 +34,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,11 +49,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil3.compose.AsyncImage
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
@@ -119,13 +123,47 @@ fun JasaDetailScreen(
         },
         containerColor = Surface
     ) { innerPadding ->
+        when {
+            uiState.isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = BrandNavy)
+                }
+            }
+            uiState.errorMessage != null -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(horizontal = 20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = uiState.errorMessage.orEmpty(),
+                        style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = viewModel::retry,
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandNavy)
+                    ) {
+                        Text(text = "Coba Lagi")
+                    }
+                }
+            }
+            else -> {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Hero image placeholder
+            // Hero image
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -133,10 +171,19 @@ fun JasaDetailScreen(
                     .background(LightGray),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "Gambar Jasa",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = MutedText)
-                )
+                if (uiState.imageUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = uiState.imageUrl,
+                        contentDescription = uiState.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Text(
+                        text = "Gambar Jasa",
+                        style = MaterialTheme.typography.bodyMedium.copy(color = MutedText)
+                    )
+                }
             }
 
             // Title + rating section
@@ -242,16 +289,25 @@ fun JasaDetailScreen(
                                 .border(1.dp, BorderColor, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = uiState.workerName
-                                    .split(" ")
-                                    .take(2)
-                                    .joinToString("") { it.first().uppercase() },
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = BrandNavy
+                            if (uiState.workerAvatarUrl.isNotBlank()) {
+                                AsyncImage(
+                                    model = uiState.workerAvatarUrl,
+                                    contentDescription = uiState.workerName,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
                                 )
-                            )
+                            } else {
+                                Text(
+                                    text = uiState.workerName
+                                        .split(" ")
+                                        .take(2)
+                                        .joinToString("") { it.first().uppercase() },
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = BrandNavy
+                                    )
+                                )
+                            }
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
@@ -363,6 +419,14 @@ fun JasaDetailScreen(
                         )
                         Text(
                             text = "Lihat Semua",
+                            modifier = Modifier.clickable(
+                                enabled = uiState.workerUserId.isNotBlank(),
+                                onClick = {
+                                    navController.navigate(
+                                        Routes.publicProfileRoute(uiState.workerUserId)
+                                    )
+                                }
+                            ),
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = AccentBlue,
                                 fontWeight = FontWeight.SemiBold
@@ -425,6 +489,8 @@ fun JasaDetailScreen(
                     }
                 }
                 Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
             }
         }
     }
@@ -533,8 +599,18 @@ private fun PortfolioCard(portfolio: JasaPortfolioItem) {
                 .width(160.dp)
                 .height(110.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(LightGray)
-        )
+                .background(LightGray),
+            contentAlignment = Alignment.Center
+        ) {
+            if (portfolio.imageUrl.isNotBlank()) {
+                AsyncImage(
+                    model = portfolio.imageUrl,
+                    contentDescription = portfolio.title,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
+        }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = portfolio.title,

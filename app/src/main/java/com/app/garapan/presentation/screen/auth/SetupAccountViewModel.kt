@@ -4,14 +4,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.UpdateProfileParams
+import com.app.garapan.domain.usecase.GetSkillListUseCase
 import com.app.garapan.domain.usecase.UpdateProfileUseCase
 import com.app.garapan.presentation.navigation.Routes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -38,24 +39,15 @@ data class ClientSetupState(
 
 data class SetupAccountUiState(
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val skillOptions: List<String> = emptyList(),
+    val isSkillOptionsLoading: Boolean = true,
+    val skillOptionsError: String? = null
 )
 
 sealed interface SetupAccountEvent {
     data class Navigate(val route: String) : SetupAccountEvent
 }
-
-val studentExpertiseOptions = listOf(
-    "UI/UX Design", "Web Development", "Mobile App", "Data Science",
-    "Cyber Security", "Cloud Computing", "Backend Dev", "Frontend Dev",
-    "Fullstack", "DevOps", "AI/ML", "QA"
-)
-
-val clientLookingForOptions = listOf(
-    "UI/UX Design", "Backend Dev", "Cloud", "Fullstack",
-    "Frontend Dev", "QA", "Mobile Dev", "Data Science",
-    "AI/ML", "DevOps", "Cyber Security"
-)
 
 val statusOptions = listOf("Individual", "Company", "Startup", "Government")
 val industryOptions = listOf("Technology", "Finance", "Education", "Healthcare", "Retail", "Other")
@@ -63,6 +55,7 @@ val yearsOfExperienceOptions = listOf("0-1 years", "1-3 years", "3-5 years", "5+
 
 @HiltViewModel
 class SetupAccountViewModel @Inject constructor(
+    private val getSkillListUseCase: GetSkillListUseCase,
     private val updateProfileUseCase: UpdateProfileUseCase
 ) : ViewModel() {
 
@@ -77,6 +70,41 @@ class SetupAccountViewModel @Inject constructor(
 
     private val _events = MutableSharedFlow<SetupAccountEvent>()
     val events: SharedFlow<SetupAccountEvent> = _events.asSharedFlow()
+
+    init {
+        loadSkillOptions()
+    }
+
+    private fun loadSkillOptions() {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(isSkillOptionsLoading = true, skillOptionsError = null)
+            }
+            when (val result = getSkillListUseCase()) {
+                is Resource.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            skillOptions = result.data.map { skill -> skill.name },
+                            isSkillOptionsLoading = false,
+                            skillOptionsError = null
+                        )
+                    }
+                }
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            skillOptions = emptyList(),
+                            isSkillOptionsLoading = false,
+                            skillOptionsError = result.message
+                        )
+                    }
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    fun retrySkillOptions() = loadSkillOptions()
 
     // Student
     fun onStudentFullNameChanged(v: String) = _student.update { it.copy(fullName = v) }
@@ -103,7 +131,7 @@ class SetupAccountViewModel @Inject constructor(
 
     fun onComplete(role: String) {
         viewModelScope.launch {
-            _uiState.value = SetupAccountUiState(isLoading = true)
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             val params = if (role == "student") {
                 val state = _student.value
                 UpdateProfileParams(
@@ -121,10 +149,10 @@ class SetupAccountViewModel @Inject constructor(
 
             when (val result = updateProfileUseCase(params)) {
                 is Resource.Success -> {
-                    _uiState.value = SetupAccountUiState(isLoading = false)
+                    _uiState.value = _uiState.value.copy(isLoading = false)
                     _events.emit(SetupAccountEvent.Navigate(Routes.MAIN))
                 }
-                is Resource.Error -> _uiState.value = SetupAccountUiState(
+                is Resource.Error -> _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     errorMessage = result.message
                 )

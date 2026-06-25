@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.app.garapan.domain.model.ProfileSkill
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BrandNavy
 import com.app.garapan.ui.theme.LinkText
@@ -275,22 +276,28 @@ private fun PublicProfileHeader(profile: com.app.garapan.domain.model.PublicProf
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun SkillChips(skills: List<String>) {
+private fun SkillChips(skills: List<ProfileSkill>) {
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         skills.forEach { skill ->
-            Box(
+            Column(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
                     .background(AccentBlue.copy(alpha = 0.1f))
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Text(
-                    text = skill,
+                    text = skill.name,
                     style = MaterialTheme.typography.labelMedium.copy(color = AccentBlue)
                 )
+                if (skill.kategoriName.isNotBlank()) {
+                    Text(
+                        text = skill.kategoriName,
+                        style = MaterialTheme.typography.labelSmall.copy(color = SecondaryText)
+                    )
+                }
             }
         }
     }

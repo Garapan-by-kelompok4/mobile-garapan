@@ -24,8 +24,11 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.outlined.Paid
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,11 +42,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil3.compose.AsyncImage
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.LightGray
@@ -104,15 +109,66 @@ fun ProfileServicesScreen(
 
             item {
                 SectionHeader(title = "Layanan Aktif")
+                Spacer(modifier = Modifier.height(10.dp))
+                Button(
+                    onClick = { navController.navigate(Routes.editServiceRoute("new")) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentBlue)
+                ) {
+                    Text(
+                        text = "Buat Layanan",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = White
+                        )
+                    )
+                }
             }
 
-            items(uiState.services) { service ->
-                ProfileServiceCard(
-                    service = service,
-                    onClick = { navController.navigate(Routes.editServiceRoute(service.id)) },
-                    onEditClick = { navController.navigate(Routes.editServiceRoute(service.id)) },
-                    onDeleteClick = { viewModel.onDeleteService(service.id) }
-                )
+            when {
+                uiState.isLoading -> {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = AccentBlue)
+                        }
+                    }
+                }
+                uiState.errorMessage != null -> {
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = uiState.errorMessage.orEmpty(),
+                                style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Button(
+                                onClick = viewModel::loadMyJasa,
+                                colors = ButtonDefaults.buttonColors(containerColor = AccentBlue)
+                            ) {
+                                Text(text = "Coba Lagi")
+                            }
+                        }
+                    }
+                }
+                else -> items(uiState.services) { service ->
+                    ProfileServiceCard(
+                        service = service,
+                        onClick = { navController.navigate(Routes.editServiceRoute(service.id)) },
+                        onEditClick = { navController.navigate(Routes.editServiceRoute(service.id)) },
+                        onDeleteClick = { viewModel.onDeleteService(service.id) }
+                    )
+                }
             }
         }
     }
@@ -244,6 +300,14 @@ private fun ProfileServiceCard(
                     .background(LightGray),
                 contentAlignment = Alignment.TopEnd
             ) {
+                if (service.imageUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = service.imageUrl,
+                        contentDescription = service.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
                 Row(
                     modifier = Modifier.padding(8.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)

@@ -1,6 +1,10 @@
 package com.app.garapan.presentation.screen.edit_service
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,11 +25,13 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
@@ -39,6 +45,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,20 +57,25 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil3.compose.AsyncImage
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
+import com.app.garapan.ui.theme.LightGray
 import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
@@ -79,7 +91,23 @@ fun EditServiceScreen(
     viewModel: EditServiceViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     var showDeadlinePicker by remember { mutableStateOf(false) }
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = PickVisualMedia()
+    ) { uri ->
+        uri?.let { pickedUri ->
+            viewModel.onImageSelected(pickedUri, context)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                EditServiceEvent.Saved -> navController.navigateUp()
+            }
+        }
+    }
 
     if (showDeadlinePicker) {
         DeadlineDatePickerDialog(
@@ -92,6 +120,18 @@ fun EditServiceScreen(
     }
 
     Scaffold(containerColor = Surface) { innerPadding ->
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = BrandNavy)
+            }
+            return@Scaffold
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -105,6 +145,20 @@ fun EditServiceScreen(
             ) {
                 item {
                     EditServiceHero()
+                }
+                item {
+                    FormCard(title = "Gambar Layanan") {
+                        JasaImagePicker(
+                            imageUri = uiState.imageUri,
+                            existingImageUrl = uiState.existingImageUrl,
+                            isProcessing = uiState.isProcessingImage,
+                            onPickImage = {
+                                imagePicker.launch(
+                                    PickVisualMediaRequest(PickVisualMedia.ImageOnly)
+                                )
+                            }
+                        )
+                    }
                 }
                 item {
                     FormCard(title = "Informasi Dasar Layanan") {
@@ -187,9 +241,19 @@ fun EditServiceScreen(
                         )
                     }
                 }
+                if (uiState.errorMessage != null) {
+                    item {
+                        Text(
+                            text = uiState.errorMessage.orEmpty(),
+                            style = MaterialTheme.typography.bodySmall.copy(color = Color(0xFFB42318)),
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
                 item {
                     Button(
-                        onClick = {},
+                        onClick = viewModel::onSave,
+                        enabled = !uiState.isSaving,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(54.dp),
@@ -200,12 +264,20 @@ fun EditServiceScreen(
                         shape = RoundedCornerShape(50.dp),
                         contentPadding = PaddingValues(horizontal = 18.dp)
                     ) {
-                        Text(
-                            text = "Simpan Perubahan",
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                fontWeight = FontWeight.ExtraBold
+                        if (uiState.isSaving) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(22.dp),
+                                color = White,
+                                strokeWidth = 2.dp
                             )
-                        )
+                        } else {
+                            Text(
+                                text = if (viewModel.isNewJasa) "Buat Layanan" else "Simpan Perubahan",
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                            )
+                        }
                     }
                 }
             }
@@ -623,6 +695,68 @@ private fun DeadlineDatePickerDialog(
         }
     ) {
         DatePicker(state = datePickerState)
+    }
+}
+
+@Composable
+private fun JasaImagePicker(
+    imageUri: android.net.Uri?,
+    existingImageUrl: String,
+    isProcessing: Boolean,
+    onPickImage: () -> Unit
+) {
+    val previewModel = imageUri ?: existingImageUrl.takeIf { it.isNotBlank() }
+
+    Column {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(LightGray)
+                .border(1.dp, BorderColor, RoundedCornerShape(16.dp))
+                .clickable(enabled = !isProcessing, onClick = onPickImage),
+            contentAlignment = Alignment.Center
+        ) {
+            when {
+                isProcessing -> CircularProgressIndicator(color = BrandNavy)
+                previewModel == null -> {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Default.AddPhotoAlternate,
+                            contentDescription = null,
+                            tint = BrandNavy,
+                            modifier = Modifier.size(40.dp)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Ketuk untuk pilih gambar",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = PrimaryText,
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+                else -> {
+                    AsyncImage(
+                        model = previewModel,
+                        contentDescription = "Pratinjau gambar jasa",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
+        }
+        if (previewModel != null && !isProcessing) {
+            TextButton(
+                onClick = onPickImage,
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Text("Ganti gambar")
+            }
+        }
     }
 }
 
