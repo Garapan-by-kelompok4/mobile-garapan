@@ -68,7 +68,14 @@ fun CreateJasaParams.toMultipartRequest(): JasaMultipartRequest {
 fun UpdateJasaParams.toRequest(): UpdateJasaRequest = UpdateJasaRequest(
     title = title,
     description = description,
-    price = price,
+    price = price?.toJasaPriceString(),
     kategoriId = kategoriId,
     status = status?.name
 )
+
+private fun Double.toJasaPriceString(): String =
+    if (this % 1.0 == 0.0) {
+        toLong().toString()
+    } else {
+        String.format(java.util.Locale.US, "%.2f", this)
+    }

@@ -22,7 +22,8 @@ data class SkillsUiState(
     val selectedSkills: Set<String> = emptySet(),
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val isOptionsEmpty: Boolean = false
 )
 
 sealed interface SkillsEvent {
@@ -36,6 +37,8 @@ class SkillsViewModel @Inject constructor(
     private val updateSkillsUseCase: UpdateSkillsUseCase
 ) : ViewModel() {
 
+    private var savedSkills: Set<String> = emptySet()
+
     private val _uiState = MutableStateFlow(SkillsUiState())
     val uiState: StateFlow<SkillsUiState> = _uiState.asStateFlow()
 
@@ -43,15 +46,18 @@ class SkillsViewModel @Inject constructor(
     val events: SharedFlow<SkillsEvent> = _events.asSharedFlow()
 
     init {
-        loadSkillOptions()
         viewModelScope.launch {
             observeCurrentUserUseCase().collect { user ->
-                val skills = user?.mahasiswa?.skills.orEmpty()
+                savedSkills = user?.mahasiswa?.skills.orEmpty().toSet()
                 _uiState.update { state ->
-                    state.copy(selectedSkills = skills.toSet())
+                    state.copy(
+                        selectedSkills = savedSkills,
+                        options = mergeSkillOptions(state.options, savedSkills)
+                    )
                 }
             }
         }
+        loadSkillOptions()
     }
 
     fun retry() = loadSkillOptions()
@@ -61,19 +67,30 @@ class SkillsViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             when (val result = getSkillListUseCase()) {
                 is Resource.Success -> {
+                    val apiOptions = result.data.map { it.name }
+                    val merged = mergeSkillOptions(apiOptions, savedSkills)
                     _uiState.update {
                         it.copy(
-                            options = result.data.map { skill -> skill.name },
+                            options = merged,
+                            selectedSkills = savedSkills,
                             isLoading = false,
-                            errorMessage = null
+                            isOptionsEmpty = apiOptions.isEmpty(),
+                            errorMessage = if (apiOptions.isEmpty()) {
+                                "Daftar keahlian dari server kosong. Hubungi admin atau coba lagi nanti."
+                            } else {
+                                null
+                            }
                         )
                     }
                 }
                 is Resource.Error -> {
+                    val merged = mergeSkillOptions(emptyList(), savedSkills)
                     _uiState.update {
                         it.copy(
-                            options = emptyList(),
+                            options = merged,
+                            selectedSkills = savedSkills,
                             isLoading = false,
+                            isOptionsEmpty = merged.isEmpty(),
                             errorMessage = result.message
                         )
                     }
@@ -82,6 +99,9 @@ class SkillsViewModel @Inject constructor(
             }
         }
     }
+
+    private fun mergeSkillOptions(apiOptions: List<String>, saved: Set<String>): List<String> =
+        (apiOptions + saved.toList()).distinct().sorted()
 
     fun onToggleSkill(skill: String) {
         _uiState.update { state ->
@@ -102,6 +122,7 @@ class SkillsViewModel @Inject constructor(
             _uiState.update { it.copy(isSaving = true, errorMessage = null) }
             when (val result = updateSkillsUseCase(selected)) {
                 is Resource.Success -> {
+                    savedSkills = selected.toSet()
                     _uiState.update { it.copy(isSaving = false) }
                     _events.emit(SkillsEvent.Saved)
                 }

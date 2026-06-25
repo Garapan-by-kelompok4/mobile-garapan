@@ -33,10 +33,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.LightGray
@@ -65,8 +70,37 @@ fun ProfileServicesScreen(
     viewModel: ProfileServicesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val refreshStateHandle = remember(navController, showBackButton) {
+        if (!showBackButton) {
+            runCatching { navController.getBackStackEntry(Routes.MAIN).savedStateHandle }.getOrNull()
+        } else {
+            navController.currentBackStackEntry?.savedStateHandle
+        }
+    }
 
-    Scaffold(containerColor = Surface) { innerPadding ->
+    LaunchedEffect(refreshStateHandle) {
+        val handle = refreshStateHandle ?: return@LaunchedEffect
+        handle.getStateFlow(NavResults.JASA_REFRESH, false).collect { shouldRefresh ->
+            if (!shouldRefresh) return@collect
+            NavResults.readJasaSaved(handle)?.let(viewModel::applySavedJasa)
+            NavResults.clearJasaSaved(handle)
+            viewModel.loadMyJasa(refresh = true)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is ProfileServicesEvent.ShowMessage -> snackbarHostState.showSnackbar(event.message)
+            }
+        }
+    }
+
+    Scaffold(
+        containerColor = Surface,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -81,7 +115,7 @@ fun ProfileServicesScreen(
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "Keahlian & Layanan",
+                    text = "Layanan Saya",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.ExtraBold,
                         color = PrimaryText
@@ -89,7 +123,7 @@ fun ProfileServicesScreen(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "Kelola keahlian teknis dan proyek layanan yang sedang Anda tawarkan kepada freelancer.",
+                    text = "Kelola layanan yang Anda tawarkan di marketplace.",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = SecondaryText,
                         lineHeight = MaterialTheme.typography.bodyMedium.lineHeight
@@ -98,18 +132,6 @@ fun ProfileServicesScreen(
             }
 
             item {
-                SectionHeader(
-                    title = "Keahlian",
-                    showEditAction = true,
-                    onEditClick = { navController.navigate(Routes.SKILLS) }
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                SkillPanel(skills = uiState.skills)
-            }
-
-            item {
-                SectionHeader(title = "Layanan Aktif")
-                Spacer(modifier = Modifier.height(10.dp))
                 Button(
                     onClick = { navController.navigate(Routes.editServiceRoute("new")) },
                     modifier = Modifier.fillMaxWidth(),
@@ -126,6 +148,29 @@ fun ProfileServicesScreen(
                 }
             }
 
+            if (uiState.isRefreshing) {
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = AccentBlue,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Memperbarui layanan...",
+                            style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+                        )
+                    }
+                }
+            }
+
             when {
                 uiState.isLoading -> {
                     item {
@@ -139,7 +184,7 @@ fun ProfileServicesScreen(
                         }
                     }
                 }
-                uiState.errorMessage != null -> {
+                uiState.loadErrorMessage != null && uiState.services.isEmpty() -> {
                     item {
                         Column(
                             modifier = Modifier
@@ -148,12 +193,12 @@ fun ProfileServicesScreen(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = uiState.errorMessage.orEmpty(),
+                                text = uiState.loadErrorMessage.orEmpty(),
                                 style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                             Button(
-                                onClick = viewModel::loadMyJasa,
+                                onClick = { viewModel.loadMyJasa() },
                                 colors = ButtonDefaults.buttonColors(containerColor = AccentBlue)
                             ) {
                                 Text(text = "Coba Lagi")
@@ -161,13 +206,26 @@ fun ProfileServicesScreen(
                         }
                     }
                 }
-                else -> items(uiState.services) { service ->
-                    ProfileServiceCard(
-                        service = service,
-                        onClick = { navController.navigate(Routes.editServiceRoute(service.id)) },
-                        onEditClick = { navController.navigate(Routes.editServiceRoute(service.id)) },
-                        onDeleteClick = { viewModel.onDeleteService(service.id) }
-                    )
+                else -> {
+                    if (uiState.services.isEmpty()) {
+                        item {
+                            Text(
+                                text = "Belum ada layanan. Ketuk Buat Layanan untuk mulai.",
+                                style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText),
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        }
+                    } else {
+                        items(uiState.services, key = { it.id }) { service ->
+                            ProfileServiceCard(
+                                service = service,
+                                isDeleting = uiState.isDeleting,
+                                onClick = { navController.navigate(Routes.editServiceRoute(service.id)) },
+                                onEditClick = { navController.navigate(Routes.editServiceRoute(service.id)) },
+                                onDeleteClick = { viewModel.onDeleteService(service.id) }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -193,7 +251,7 @@ private fun ProfileServicesTopBar(
             }
         }
         Text(
-            text = "Edit Keahlian & Layanan",
+            text = "Layanan Saya",
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.ExtraBold,
                 color = AccentBlue
@@ -280,6 +338,7 @@ private fun SkillPanel(skills: List<String>) {
 @Composable
 private fun ProfileServiceCard(
     service: ProfileServiceItem,
+    isDeleting: Boolean,
     onClick: () -> Unit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
@@ -320,6 +379,7 @@ private fun ProfileServiceCard(
                     ServiceActionButton(
                         icon = Icons.Default.Delete,
                         contentDescription = "Hapus layanan",
+                        enabled = !isDeleting,
                         onClick = onDeleteClick
                     )
                 }
@@ -368,6 +428,7 @@ private fun ProfileServiceCard(
 private fun ServiceActionButton(
     icon: ImageVector,
     contentDescription: String,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     Box(
@@ -377,7 +438,7 @@ private fun ServiceActionButton(
             .background(White.copy(alpha = 0.92f)),
         contentAlignment = Alignment.Center
     ) {
-        IconButton(onClick = onClick) {
+        IconButton(onClick = onClick, enabled = enabled) {
             Icon(
                 imageVector = icon,
                 contentDescription = contentDescription,

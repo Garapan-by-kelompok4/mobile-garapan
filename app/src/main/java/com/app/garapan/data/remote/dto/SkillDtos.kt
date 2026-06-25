@@ -8,7 +8,7 @@ data class SkillDto(
 )
 
 data class PublicSkillDto(
-    val id: String,
+    val id: String? = null,
     val name: String,
     val kategoriId: String? = null,
     val kategori: KategoriDto? = null

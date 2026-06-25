@@ -9,9 +9,13 @@ import com.app.garapan.domain.usecase.DeleteJasaUseCase
 import com.app.garapan.domain.usecase.GetMyJasaListUseCase
 import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
 import com.app.garapan.presentation.util.CurrencyFormatter
+import com.app.garapan.presentation.util.UserMessageLocalizer
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -32,9 +36,14 @@ data class ProfileServicesUiState(
     val skills: List<String> = emptyList(),
     val services: List<ProfileServiceItem> = emptyList(),
     val isLoading: Boolean = false,
-    val errorMessage: String? = null,
+    val isRefreshing: Boolean = false,
+    val loadErrorMessage: String? = null,
     val isDeleting: Boolean = false
 )
+
+sealed interface ProfileServicesEvent {
+    data class ShowMessage(val message: String) : ProfileServicesEvent
+}
 
 @HiltViewModel
 class ProfileServicesViewModel @Inject constructor(
@@ -45,6 +54,9 @@ class ProfileServicesViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(ProfileServicesUiState(isLoading = true))
     val uiState: StateFlow<ProfileServicesUiState> = _uiState.asStateFlow()
+
+    private val _events = MutableSharedFlow<ProfileServicesEvent>()
+    val events: SharedFlow<ProfileServicesEvent> = _events.asSharedFlow()
 
     init {
         viewModelScope.launch {
@@ -57,26 +69,53 @@ class ProfileServicesViewModel @Inject constructor(
         loadMyJasa()
     }
 
-    fun loadMyJasa() {
+    fun applySavedJasa(jasa: Jasa) {
+        val item = toProfileServiceItem(jasa)
+        _uiState.update { state ->
+            state.copy(
+                services = listOf(item) + state.services.filter { it.id != jasa.id },
+                isLoading = false,
+                loadErrorMessage = null
+            )
+        }
+    }
+
+    fun loadMyJasa(refresh: Boolean = false) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            val hasCachedServices = _uiState.value.services.isNotEmpty()
+            val showFullScreenLoading = !refresh && !hasCachedServices
+
+            _uiState.update {
+                it.copy(
+                    isLoading = showFullScreenLoading,
+                    isRefreshing = refresh && (hasCachedServices || !showFullScreenLoading),
+                    loadErrorMessage = if (refresh) null else it.loadErrorMessage
+                )
+            }
+
             when (val result = getMyJasaListUseCase()) {
                 is Resource.Success -> {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
+                            isRefreshing = false,
                             services = result.data.map(::toProfileServiceItem),
-                            errorMessage = null
+                            loadErrorMessage = null
                         )
                     }
                 }
                 is Resource.Error -> {
-                    _uiState.update {
-                        it.copy(
+                    val message = UserMessageLocalizer.localize(result.message)
+                    _uiState.update { state ->
+                        state.copy(
                             isLoading = false,
-                            services = emptyList(),
-                            errorMessage = result.message
+                            isRefreshing = false,
+                            services = if (refresh) state.services else emptyList(),
+                            loadErrorMessage = if (refresh) null else message
                         )
+                    }
+                    if (refresh) {
+                        _events.emit(ProfileServicesEvent.ShowMessage(message))
                     }
                 }
                 Resource.Loading -> Unit
@@ -85,17 +124,27 @@ class ProfileServicesViewModel @Inject constructor(
     }
 
     fun onDeleteService(serviceId: String) {
+        if (_uiState.value.isDeleting) return
+
         viewModelScope.launch {
-            _uiState.update { it.copy(isDeleting = true, errorMessage = null) }
+            _uiState.update { it.copy(isDeleting = true) }
             when (val result = deleteJasaUseCase(serviceId)) {
                 is Resource.Success -> {
-                    _uiState.update { it.copy(isDeleting = false) }
-                    loadMyJasa()
+                    _uiState.update {
+                        it.copy(
+                            isDeleting = false,
+                            services = it.services.filter { service -> service.id != serviceId }
+                        )
+                    }
+                    loadMyJasa(refresh = true)
                 }
                 is Resource.Error -> {
-                    _uiState.update {
-                        it.copy(isDeleting = false, errorMessage = result.message)
-                    }
+                    _uiState.update { it.copy(isDeleting = false) }
+                    _events.emit(
+                        ProfileServicesEvent.ShowMessage(
+                            UserMessageLocalizer.localize(result.message)
+                        )
+                    )
                 }
                 Resource.Loading -> Unit
             }

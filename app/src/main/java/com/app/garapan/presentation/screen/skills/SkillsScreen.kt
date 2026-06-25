@@ -103,11 +103,18 @@ fun SkillsScreen(
                     }
                 }
                 else -> {
-                    SkillChipGroup(
-                        options = uiState.options,
-                        selected = uiState.selectedSkills,
-                        onToggle = viewModel::onToggleSkill
-                    )
+                    if (uiState.options.isEmpty()) {
+                        Text(
+                            text = "Belum ada keahlian yang bisa dipilih.",
+                            style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
+                        )
+                    } else {
+                        SkillChipGroup(
+                            options = uiState.options,
+                            selected = uiState.selectedSkills,
+                            onToggle = viewModel::onToggleSkill
+                        )
+                    }
                 }
             }
             if (uiState.errorMessage != null && uiState.options.isNotEmpty()) {

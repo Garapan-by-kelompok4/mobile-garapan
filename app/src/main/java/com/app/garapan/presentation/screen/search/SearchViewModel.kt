@@ -16,6 +16,9 @@ import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.util.CurrencyFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,7 +30,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import javax.inject.Inject
 
-enum class FilterType { PROYEK, JASA }
+enum class SearchResultType { JASA, PROYEK }
 
 enum class SortOption(val label: String) {
     PALING_POPULER("Paling Populer"),
@@ -38,7 +41,6 @@ enum class SortOption(val label: String) {
 private const val ALL_CATEGORIES = "Semua Kategori"
 
 data class FilterSortState(
-    val selectedType: FilterType = FilterType.PROYEK,
     val selectedCategory: String = ALL_CATEGORIES,
     val minPrice: String = "100000",
     val maxPrice: String = "5000000",
@@ -53,7 +55,8 @@ data class SearchResultItem(
     val reviewCount: Int,
     val price: String,
     val duration: String,
-    val imageUrl: String = ""
+    val imageUrl: String = "",
+    val type: SearchResultType
 )
 
 data class SearchUiState(
@@ -64,9 +67,11 @@ data class SearchUiState(
     val showFilterSheet: Boolean = false,
     val showResults: Boolean = false,
     val filter: FilterSortState = FilterSortState(),
-    val results: List<SearchResultItem> = emptyList(),
+    val jasaResults: List<SearchResultItem> = emptyList(),
+    val projectResults: List<SearchResultItem> = emptyList(),
     val isResultsLoading: Boolean = false,
-    val resultsErrorMessage: String? = null
+    val resultsErrorMessage: String? = null,
+    val queryTooShort: Boolean = false
 )
 
 @HiltViewModel
@@ -81,6 +86,7 @@ class SearchViewModel @Inject constructor(
 
     private var kategoriItems: List<Kategori> = emptyList()
     private var searchJob: Job? = null
+    private var unifiedSearchMode = false
 
     private val _uiState = MutableStateFlow(SearchUiState())
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
@@ -88,13 +94,8 @@ class SearchViewModel @Inject constructor(
     init {
         loadCategories()
         if (searchFocus == Routes.SEARCH_FOCUS_JASA) {
-            _uiState.update {
-                it.copy(
-                    filter = it.filter.copy(selectedType = FilterType.JASA),
-                    showResults = true
-                )
-            }
-            loadJasaResults()
+            _uiState.update { it.copy(showResults = true) }
+            loadJasaBrowseResults()
         }
     }
 
@@ -134,31 +135,48 @@ class SearchViewModel @Inject constructor(
 
     fun onQueryChanged(query: String) {
         if (query.isBlank()) {
+            unifiedSearchMode = false
+            searchJob?.cancel()
             _uiState.update {
                 it.copy(
                     query = query,
                     showResults = searchFocus == Routes.SEARCH_FOCUS_JASA,
-                    results = emptyList(),
+                    jasaResults = emptyList(),
+                    projectResults = emptyList(),
                     resultsErrorMessage = null,
-                    isResultsLoading = false
+                    isResultsLoading = false,
+                    queryTooShort = false
                 )
             }
             if (searchFocus == Routes.SEARCH_FOCUS_JASA) {
-                loadJasaResults()
+                loadJasaBrowseResults()
             }
             return
         }
 
-        _uiState.update { it.copy(query = query, showResults = true) }
-        refreshResultsForCurrentType()
+        unifiedSearchMode = true
+        _uiState.update {
+            it.copy(
+                query = query,
+                showResults = true,
+                queryTooShort = !SearchQueryMatcher.isLongEnough(query),
+                jasaResults = if (SearchQueryMatcher.isLongEnough(query)) it.jasaResults else emptyList(),
+                projectResults = if (SearchQueryMatcher.isLongEnough(query)) it.projectResults else emptyList(),
+                resultsErrorMessage = null,
+                isResultsLoading = false
+            )
+        }
+
+        if (!SearchQueryMatcher.isLongEnough(query)) {
+            searchJob?.cancel()
+            return
+        }
+
+        scheduleUnifiedSearch()
     }
 
     fun onShowFilter() = _uiState.update { it.copy(showFilterSheet = true) }
     fun onDismissFilter() = _uiState.update { it.copy(showFilterSheet = false) }
-
-    fun onFilterTypeSelected(type: FilterType) {
-        _uiState.update { it.copy(filter = it.filter.copy(selectedType = type)) }
-    }
 
     fun onCategorySelected(category: String) =
         _uiState.update { it.copy(filter = it.filter.copy(selectedCategory = category)) }
@@ -173,83 +191,70 @@ class SearchViewModel @Inject constructor(
         _uiState.update { it.copy(filter = it.filter.copy(sortBy = option)) }
 
     fun onApplyFilter() {
-        _uiState.update { it.copy(showFilterSheet = false, showResults = true) }
-        refreshResultsForCurrentType()
-    }
-
-    fun retryResults() = refreshResultsForCurrentType()
-
-    private fun refreshResultsForCurrentType() {
-        when (_uiState.value.filter.selectedType) {
-            FilterType.JASA -> loadJasaResults()
-            FilterType.PROYEK -> loadProjectResults()
-        }
-    }
-
-    private fun loadProjectResults() {
-        searchJob?.cancel()
-        searchJob = viewModelScope.launch {
-            _uiState.update { it.copy(isResultsLoading = true, resultsErrorMessage = null) }
-            val state = _uiState.value
-            val kategoriId = kategoriItems
-                .firstOrNull { it.name == state.filter.selectedCategory }
-                ?.id
-                ?.takeIf { state.filter.selectedCategory != ALL_CATEGORIES }
-            val filters = ProjectListFilters(
-                search = state.query.takeIf { it.isNotBlank() },
-                kategoriId = kategoriId,
-                minBudget = state.filter.minPrice.toDoubleOrNull(),
-                maxBudget = state.filter.maxPrice.toDoubleOrNull(),
-                includeRelatedSkills = kategoriId != null
+        unifiedSearchMode = true
+        _uiState.update {
+            it.copy(
+                showFilterSheet = false,
+                showResults = true,
+                queryTooShort = false
             )
-            when (val result = getProjectListUseCase(filters)) {
-                is Resource.Success -> {
-                    _uiState.update {
-                        it.copy(
-                            results = result.data.map(::toProjectSearchResultItem),
-                            isResultsLoading = false,
-                            resultsErrorMessage = null,
-                            showResults = true
-                        )
-                    }
-                }
-                is Resource.Error -> {
-                    _uiState.update {
-                        it.copy(
-                            results = emptyList(),
-                            isResultsLoading = false,
-                            resultsErrorMessage = result.message,
-                            showResults = true
-                        )
-                    }
-                }
-                Resource.Loading -> Unit
+        }
+        refreshResults()
+    }
+
+    fun retryResults() = refreshResults()
+
+    private fun refreshResults() {
+        if (shouldLoadJasaBrowseOnly()) {
+            loadJasaBrowseResults()
+        } else if (_uiState.value.query.isBlank() && !unifiedSearchMode) {
+            _uiState.update {
+                it.copy(
+                    showResults = false,
+                    jasaResults = emptyList(),
+                    projectResults = emptyList(),
+                    isResultsLoading = false,
+                    resultsErrorMessage = null
+                )
             }
+        } else {
+            loadUnifiedResults()
         }
     }
 
-    private fun loadJasaResults() {
+    private fun shouldLoadJasaBrowseOnly(): Boolean =
+        _uiState.value.query.isBlank() &&
+            !unifiedSearchMode &&
+            searchFocus == Routes.SEARCH_FOCUS_JASA
+
+    private fun scheduleUnifiedSearch() {
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
-            _uiState.update { it.copy(isResultsLoading = true, resultsErrorMessage = null) }
+            delay(SEARCH_DEBOUNCE_MS)
+            val query = _uiState.value.query
+            if (!SearchQueryMatcher.isLongEnough(query)) return@launch
+            loadUnifiedResults()
+        }
+    }
+
+    private fun loadJasaBrowseResults() {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isResultsLoading = true,
+                    resultsErrorMessage = null,
+                    projectResults = emptyList()
+                )
+            }
             val state = _uiState.value
-            val kategoriId = kategoriItems
-                .firstOrNull { it.name == state.filter.selectedCategory }
-                ?.id
-                ?.takeIf { state.filter.selectedCategory != ALL_CATEGORIES }
-            val filters = JasaListFilters(
-                search = state.query.takeIf { it.isNotBlank() },
-                kategoriId = kategoriId,
-                minPrice = state.filter.minPrice.toDoubleOrNull(),
-                maxPrice = state.filter.maxPrice.toDoubleOrNull(),
-                sort = state.filter.sortBy.toApiSort(),
-                includeRelatedSkills = kategoriId != null
-            )
+            val filters = buildJasaFilters(state)
             when (val result = getJasaListUseCase(filters)) {
                 is Resource.Success -> {
                     _uiState.update {
                         it.copy(
-                            results = result.data.map(::toJasaSearchResultItem),
+                            jasaResults = result.data.map(::toJasaSearchResultItem),
+                            projectResults = emptyList(),
                             isResultsLoading = false,
                             resultsErrorMessage = null,
                             showResults = true
@@ -259,7 +264,8 @@ class SearchViewModel @Inject constructor(
                 is Resource.Error -> {
                     _uiState.update {
                         it.copy(
-                            results = emptyList(),
+                            jasaResults = emptyList(),
+                            projectResults = emptyList(),
                             isResultsLoading = false,
                             resultsErrorMessage = result.message,
                             showResults = true
@@ -270,6 +276,81 @@ class SearchViewModel @Inject constructor(
             }
         }
     }
+
+    private fun loadUnifiedResults() {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            _uiState.update { it.copy(isResultsLoading = true, resultsErrorMessage = null) }
+            val state = _uiState.value
+            val jasaFilters = buildJasaFilters(state)
+            val projectFilters = buildProjectFilters(state)
+
+            val (jasaResult, projectResult) = coroutineScope {
+                val jasaDeferred = async { getJasaListUseCase(jasaFilters) }
+                val projectDeferred = async { getProjectListUseCase(projectFilters) }
+                Pair(jasaDeferred.await(), projectDeferred.await())
+            }
+
+            val jasaItems = (jasaResult as? Resource.Success)?.data.orEmpty().let { items ->
+                if (SearchQueryMatcher.isLongEnough(state.query)) {
+                    SearchQueryMatcher.filterJasa(items, state.query.trim())
+                } else {
+                    items
+                }
+            }
+            val projectItems = (projectResult as? Resource.Success)?.data.orEmpty().let { items ->
+                if (SearchQueryMatcher.isLongEnough(state.query)) {
+                    SearchQueryMatcher.filterProjects(items, state.query.trim())
+                } else {
+                    items
+                }
+            }
+            val jasaError = (jasaResult as? Resource.Error)?.message
+            val projectError = (projectResult as? Resource.Error)?.message
+
+            val errorMessage = when {
+                jasaItems.isEmpty() && projectItems.isEmpty() && jasaError != null && projectError != null ->
+                    jasaError
+                jasaItems.isEmpty() && projectItems.isEmpty() && jasaError != null -> jasaError
+                jasaItems.isEmpty() && projectItems.isEmpty() && projectError != null -> projectError
+                else -> null
+            }
+
+            _uiState.update {
+                it.copy(
+                    jasaResults = jasaItems.map(::toJasaSearchResultItem),
+                    projectResults = projectItems.map(::toProjectSearchResultItem),
+                    isResultsLoading = false,
+                    resultsErrorMessage = errorMessage,
+                    showResults = true,
+                    queryTooShort = false
+                )
+            }
+        }
+    }
+
+    private fun buildJasaFilters(state: SearchUiState) = JasaListFilters(
+        search = state.query.trim().takeIf { SearchQueryMatcher.isLongEnough(it) },
+        kategoriId = resolveKategoriId(state),
+        minPrice = state.filter.minPrice.toDoubleOrNull(),
+        maxPrice = state.filter.maxPrice.toDoubleOrNull(),
+        sort = state.filter.sortBy.toApiSort(),
+        includeRelatedSkills = resolveKategoriId(state) != null
+    )
+
+    private fun buildProjectFilters(state: SearchUiState) = ProjectListFilters(
+        search = state.query.trim().takeIf { SearchQueryMatcher.isLongEnough(it) },
+        kategoriId = resolveKategoriId(state),
+        minBudget = state.filter.minPrice.toDoubleOrNull(),
+        maxBudget = state.filter.maxPrice.toDoubleOrNull(),
+        includeRelatedSkills = resolveKategoriId(state) != null
+    )
+
+    private fun resolveKategoriId(state: SearchUiState): String? =
+        kategoriItems
+            .firstOrNull { it.name == state.filter.selectedCategory }
+            ?.id
+            ?.takeIf { state.filter.selectedCategory != ALL_CATEGORIES }
 
     private fun toJasaSearchResultItem(jasa: Jasa) = SearchResultItem(
         id = jasa.id,
@@ -279,7 +360,8 @@ class SearchViewModel @Inject constructor(
         reviewCount = jasa.reviewCount,
         price = CurrencyFormatter.formatRupiah(jasa.price),
         duration = "-",
-        imageUrl = jasa.imageUrl
+        imageUrl = jasa.imageUrl,
+        type = SearchResultType.JASA
     )
 
     private fun toProjectSearchResultItem(project: Project) = SearchResultItem(
@@ -290,7 +372,8 @@ class SearchViewModel @Inject constructor(
         reviewCount = 0,
         price = CurrencyFormatter.formatRupiah(project.budget),
         duration = formatDeadline(project.deadline),
-        imageUrl = ""
+        imageUrl = "",
+        type = SearchResultType.PROYEK
     )
 
     private fun formatDeadline(deadline: String): String {

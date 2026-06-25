@@ -50,7 +50,7 @@ data class JasaPortofolioPreviewDto(
 data class UpdateJasaRequest(
     val title: String? = null,
     val description: String? = null,
-    val price: Double? = null,
+    val price: String? = null,
     val kategoriId: String? = null,
     val status: String? = null
 )

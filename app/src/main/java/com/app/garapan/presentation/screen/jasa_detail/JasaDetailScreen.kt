@@ -81,44 +81,17 @@ fun JasaDetailScreen(
             JasaDetailTopBar(onBack = { navController.navigateUp() })
         },
         bottomBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(White)
-                    .navigationBarsPadding()
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "Mulai Dari",
-                        style = MaterialTheme.typography.labelSmall.copy(color = SecondaryText)
-                    )
-                    Text(
-                        text = uiState.price,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = PrimaryText
-                        )
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Button(
-                    onClick = { navController.navigate(Routes.chatRoute(uiState.workerId)) },
-                    modifier = Modifier.weight(1f).height(48.dp),
-                    shape = RoundedCornerShape(50.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = BrandNavy,
-                        contentColor = OnPrimary
-                    )
-                ) {
-                    Text(
-                        text = "Chat & Pesan Sekarang",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    )
-                }
+            if (!uiState.isLoading && uiState.errorMessage == null) {
+                JasaDetailBottomBar(
+                    price = uiState.price,
+                    isOwner = uiState.isOwner,
+                    onChatAndOrder = {
+                        navController.navigate(Routes.chatRoute(uiState.workerId))
+                    },
+                    onEditService = {
+                        navController.navigate(Routes.editServiceRoute(uiState.id))
+                    }
+                )
             }
         },
         containerColor = Surface
@@ -417,21 +390,23 @@ fun JasaDetailScreen(
                                 color = PrimaryText
                             )
                         )
-                        Text(
-                            text = "Lihat Semua",
-                            modifier = Modifier.clickable(
-                                enabled = uiState.workerUserId.isNotBlank(),
-                                onClick = {
-                                    navController.navigate(
-                                        Routes.publicProfileRoute(uiState.workerUserId)
-                                    )
-                                }
-                            ),
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = AccentBlue,
-                                fontWeight = FontWeight.SemiBold
+                        if (!uiState.isOwner) {
+                            Text(
+                                text = "Lihat Semua",
+                                modifier = Modifier.clickable(
+                                    enabled = uiState.workerUserId.isNotBlank(),
+                                    onClick = {
+                                        navController.navigate(
+                                            Routes.publicProfileRoute(uiState.workerUserId)
+                                        )
+                                    }
+                                ),
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = AccentBlue,
+                                    fontWeight = FontWeight.SemiBold
+                                )
                             )
-                        )
+                        }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                     LazyRow(
@@ -760,6 +735,77 @@ private fun ReviewCard(review: JasaReviewItem) {
                     lineHeight = MaterialTheme.typography.bodySmall.lineHeight
                 )
             )
+        }
+    }
+}
+
+@Composable
+private fun JasaDetailBottomBar(
+    price: String,
+    isOwner: Boolean,
+    onChatAndOrder: () -> Unit,
+    onEditService: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(White)
+            .navigationBarsPadding()
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(
+                text = if (isOwner) "Harga Layanan" else "Mulai Dari",
+                style = MaterialTheme.typography.labelSmall.copy(color = SecondaryText)
+            )
+            Text(
+                text = price,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = PrimaryText
+                )
+            )
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        if (isOwner) {
+            Button(
+                onClick = onEditService,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(50.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = BrandNavy,
+                    contentColor = OnPrimary
+                )
+            ) {
+                Text(
+                    text = "Edit Layanan",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold
+                    )
+                )
+            }
+        } else {
+            Button(
+                onClick = onChatAndOrder,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(50.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = BrandNavy,
+                    contentColor = OnPrimary
+                )
+            ) {
+                Text(
+                    text = "Chat & Pesan Sekarang",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold
+                    )
+                )
+            }
         }
     }
 }

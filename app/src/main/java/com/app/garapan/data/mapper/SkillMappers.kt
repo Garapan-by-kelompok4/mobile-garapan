@@ -13,7 +13,7 @@ fun SkillDto.toDomain() = Skill(
 )
 
 fun PublicSkillDto.toDomain() = ProfileSkill(
-    id = id,
+    id = id?.takeIf { it.isNotBlank() } ?: "skill-${name.hashCode()}",
     name = name,
     kategoriName = kategori?.name.orEmpty()
 )
