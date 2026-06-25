@@ -5,6 +5,8 @@ import com.app.garapan.data.remote.api.ArtikelApi
 import com.app.garapan.data.remote.api.AuthApi
 import com.app.garapan.data.remote.api.JasaApi
 import com.app.garapan.data.remote.api.KategoriApi
+import com.app.garapan.data.remote.api.PembayaranApi
+import com.app.garapan.data.remote.api.PesananApi
 import com.app.garapan.data.remote.api.PortofolioApi
 import com.app.garapan.data.remote.api.ProjectApi
 import com.app.garapan.data.remote.api.SkillApi
@@ -115,4 +117,14 @@ object NetworkModule {
     @Singleton
     fun provideSkillApi(retrofit: Retrofit): SkillApi =
         retrofit.create(SkillApi::class.java)
+
+    @Provides
+    @Singleton
+    fun providePesananApi(retrofit: Retrofit): PesananApi =
+        retrofit.create(PesananApi::class.java)
+
+    @Provides
+    @Singleton
+    fun providePembayaranApi(retrofit: Retrofit): PembayaranApi =
+        retrofit.create(PembayaranApi::class.java)
 }

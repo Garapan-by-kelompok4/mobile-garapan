@@ -85,8 +85,13 @@ fun JasaDetailScreen(
                 JasaDetailBottomBar(
                     price = uiState.price,
                     isOwner = uiState.isOwner,
+                    isKlien = uiState.isKlien,
                     onChatAndOrder = {
-                        navController.navigate(Routes.chatRoute(uiState.workerId))
+                        if (uiState.isKlien && !uiState.isOwner) {
+                            navController.navigate(Routes.checkoutRoute(uiState.id))
+                        } else {
+                            navController.navigate(Routes.chatRoute(uiState.workerId))
+                        }
                     },
                     onEditService = {
                         navController.navigate(Routes.editServiceRoute(uiState.id))
@@ -743,6 +748,7 @@ private fun ReviewCard(review: JasaReviewItem) {
 private fun JasaDetailBottomBar(
     price: String,
     isOwner: Boolean,
+    isKlien: Boolean,
     onChatAndOrder: () -> Unit,
     onEditService: () -> Unit
 ) {
@@ -800,7 +806,7 @@ private fun JasaDetailBottomBar(
                 )
             ) {
                 Text(
-                    text = "Chat & Pesan Sekarang",
+                    text = if (isKlien) "Pesan Sekarang" else "Chat & Pesan Sekarang",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.SemiBold
                     )
