@@ -160,26 +160,34 @@ fun SearchScreen(
                         }
                     }
                     else -> {
-                        val hasResults = uiState.jasaResults.isNotEmpty() || uiState.projectResults.isNotEmpty()
-                        if (!hasResults) {
-                            SearchNoResultsState(
-                                query = uiState.query,
-                                onOpenFilter = viewModel::onShowFilter
-                            )
-                        } else {
-                            SearchGroupedResultsList(
-                                projectResults = uiState.projectResults,
-                                jasaResults = uiState.jasaResults,
-                                onItemClick = { item ->
-                                    when (item.type) {
-                                        SearchResultType.JASA ->
-                                            navController.navigate(Routes.jasaDetailRoute(item.id))
-                                        SearchResultType.PROYEK ->
-                                            navController.navigate(Routes.projectDetailRoute(item.id))
-                                    }
-                                },
-                                modifier = Modifier.fillMaxSize()
-                            )
+                        when {
+                            uiState.queryTooShort -> {
+                                SearchMinLengthHint(
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                            uiState.jasaResults.isEmpty() && uiState.projectResults.isEmpty() -> {
+                                SearchNoResultsState(
+                                    query = uiState.query,
+                                    onOpenFilter = viewModel::onShowFilter,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                            else -> {
+                                SearchGroupedResultsList(
+                                    projectResults = uiState.projectResults,
+                                    jasaResults = uiState.jasaResults,
+                                    onItemClick = { item ->
+                                        when (item.type) {
+                                            SearchResultType.JASA ->
+                                                navController.navigate(Routes.jasaDetailRoute(item.id))
+                                            SearchResultType.PROYEK ->
+                                                navController.navigate(Routes.projectDetailRoute(item.id))
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
                         }
                     }
                 }
@@ -477,13 +485,37 @@ private fun SearchResultCard(
 }
 
 @Composable
+private fun SearchMinLengthHint(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.padding(horizontal = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Ketik minimal $MIN_SEARCH_QUERY_LENGTH karakter",
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                color = PrimaryText
+            ),
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = "Ketik minimal $MIN_SEARCH_QUERY_LENGTH karakter untuk mencari judul, nama, atau kategori.",
+            style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText),
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
 private fun SearchNoResultsState(
     query: String,
-    onOpenFilter: () -> Unit
+    onOpenFilter: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = modifier
             .padding(horizontal = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center

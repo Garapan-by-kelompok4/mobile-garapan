@@ -18,6 +18,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -69,7 +70,8 @@ data class SearchUiState(
     val jasaResults: List<SearchResultItem> = emptyList(),
     val projectResults: List<SearchResultItem> = emptyList(),
     val isResultsLoading: Boolean = false,
-    val resultsErrorMessage: String? = null
+    val resultsErrorMessage: String? = null,
+    val queryTooShort: Boolean = false
 )
 
 @HiltViewModel
@@ -134,6 +136,7 @@ class SearchViewModel @Inject constructor(
     fun onQueryChanged(query: String) {
         if (query.isBlank()) {
             unifiedSearchMode = false
+            searchJob?.cancel()
             _uiState.update {
                 it.copy(
                     query = query,
@@ -141,7 +144,8 @@ class SearchViewModel @Inject constructor(
                     jasaResults = emptyList(),
                     projectResults = emptyList(),
                     resultsErrorMessage = null,
-                    isResultsLoading = false
+                    isResultsLoading = false,
+                    queryTooShort = false
                 )
             }
             if (searchFocus == Routes.SEARCH_FOCUS_JASA) {
@@ -151,8 +155,24 @@ class SearchViewModel @Inject constructor(
         }
 
         unifiedSearchMode = true
-        _uiState.update { it.copy(query = query, showResults = true) }
-        loadUnifiedResults()
+        _uiState.update {
+            it.copy(
+                query = query,
+                showResults = true,
+                queryTooShort = !SearchQueryMatcher.isLongEnough(query),
+                jasaResults = if (SearchQueryMatcher.isLongEnough(query)) it.jasaResults else emptyList(),
+                projectResults = if (SearchQueryMatcher.isLongEnough(query)) it.projectResults else emptyList(),
+                resultsErrorMessage = null,
+                isResultsLoading = false
+            )
+        }
+
+        if (!SearchQueryMatcher.isLongEnough(query)) {
+            searchJob?.cancel()
+            return
+        }
+
+        scheduleUnifiedSearch()
     }
 
     fun onShowFilter() = _uiState.update { it.copy(showFilterSheet = true) }
@@ -172,7 +192,13 @@ class SearchViewModel @Inject constructor(
 
     fun onApplyFilter() {
         unifiedSearchMode = true
-        _uiState.update { it.copy(showFilterSheet = false, showResults = true) }
+        _uiState.update {
+            it.copy(
+                showFilterSheet = false,
+                showResults = true,
+                queryTooShort = false
+            )
+        }
         refreshResults()
     }
 
@@ -200,6 +226,16 @@ class SearchViewModel @Inject constructor(
         _uiState.value.query.isBlank() &&
             !unifiedSearchMode &&
             searchFocus == Routes.SEARCH_FOCUS_JASA
+
+    private fun scheduleUnifiedSearch() {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            delay(SEARCH_DEBOUNCE_MS)
+            val query = _uiState.value.query
+            if (!SearchQueryMatcher.isLongEnough(query)) return@launch
+            loadUnifiedResults()
+        }
+    }
 
     private fun loadJasaBrowseResults() {
         searchJob?.cancel()
@@ -255,8 +291,20 @@ class SearchViewModel @Inject constructor(
                 Pair(jasaDeferred.await(), projectDeferred.await())
             }
 
-            val jasaItems = (jasaResult as? Resource.Success)?.data.orEmpty()
-            val projectItems = (projectResult as? Resource.Success)?.data.orEmpty()
+            val jasaItems = (jasaResult as? Resource.Success)?.data.orEmpty().let { items ->
+                if (SearchQueryMatcher.isLongEnough(state.query)) {
+                    SearchQueryMatcher.filterJasa(items, state.query.trim())
+                } else {
+                    items
+                }
+            }
+            val projectItems = (projectResult as? Resource.Success)?.data.orEmpty().let { items ->
+                if (SearchQueryMatcher.isLongEnough(state.query)) {
+                    SearchQueryMatcher.filterProjects(items, state.query.trim())
+                } else {
+                    items
+                }
+            }
             val jasaError = (jasaResult as? Resource.Error)?.message
             val projectError = (projectResult as? Resource.Error)?.message
 
@@ -274,14 +322,15 @@ class SearchViewModel @Inject constructor(
                     projectResults = projectItems.map(::toProjectSearchResultItem),
                     isResultsLoading = false,
                     resultsErrorMessage = errorMessage,
-                    showResults = true
+                    showResults = true,
+                    queryTooShort = false
                 )
             }
         }
     }
 
     private fun buildJasaFilters(state: SearchUiState) = JasaListFilters(
-        search = state.query.takeIf { it.isNotBlank() },
+        search = state.query.trim().takeIf { SearchQueryMatcher.isLongEnough(it) },
         kategoriId = resolveKategoriId(state),
         minPrice = state.filter.minPrice.toDoubleOrNull(),
         maxPrice = state.filter.maxPrice.toDoubleOrNull(),
@@ -290,7 +339,7 @@ class SearchViewModel @Inject constructor(
     )
 
     private fun buildProjectFilters(state: SearchUiState) = ProjectListFilters(
-        search = state.query.takeIf { it.isNotBlank() },
+        search = state.query.trim().takeIf { SearchQueryMatcher.isLongEnough(it) },
         kategoriId = resolveKategoriId(state),
         minBudget = state.filter.minPrice.toDoubleOrNull(),
         maxBudget = state.filter.maxPrice.toDoubleOrNull(),
