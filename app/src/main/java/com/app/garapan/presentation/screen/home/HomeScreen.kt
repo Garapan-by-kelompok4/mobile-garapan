@@ -83,7 +83,7 @@ import com.app.garapan.ui.theme.White
 @Composable
 fun HomeScreen(
     navController: NavController,
-    tabNavController: NavController = navController,
+    onNavigateTab: (String) -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -97,7 +97,7 @@ fun HomeScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            HomeTopBar(onSearchClick = { tabNavController.navigate(Routes.SEARCH) })
+            HomeTopBar(onSearchClick = { onNavigateTab(Routes.searchRoute()) })
             Spacer(modifier = Modifier.height(16.dp))
 
             HeroBanner()
@@ -122,17 +122,41 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            SectionHeader(title = "Layanan Jasa", onSeeAll = {})
+            SectionHeader(
+                title = "Layanan Jasa",
+                onSeeAll = { onNavigateTab(Routes.searchRoute(Routes.SEARCH_FOCUS_JASA)) }
+            )
             Spacer(modifier = Modifier.height(12.dp))
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(uiState.services) { service ->
-                    ServiceCard(
-                        service = service,
-                        onClick = { navController.navigate(Routes.jasaDetailRoute(service.id)) }
+            when {
+                uiState.isServicesLoading -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = BrandNavy)
+                    }
+                }
+                uiState.servicesError != null -> {
+                    SectionErrorMessage(
+                        message = uiState.servicesError.orEmpty(),
+                        onRetry = viewModel::retryServices,
+                        modifier = Modifier.padding(horizontal = 16.dp)
                     )
+                }
+                else -> {
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(uiState.services) { service ->
+                            ServiceCard(
+                                service = service,
+                                onClick = { navController.navigate(Routes.jasaDetailRoute(service.id)) }
+                            )
+                        }
+                    }
                 }
             }
 
@@ -498,10 +522,19 @@ private fun ServiceCard(service: ServiceItem, onClick: () -> Unit = {}) {
                     .background(LightGray),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = service.category,
-                    style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
-                )
+                if (service.imageUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = service.imageUrl,
+                        contentDescription = service.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Text(
+                        text = service.category,
+                        style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+                    )
+                }
             }
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(
@@ -729,10 +762,11 @@ fun BlogCard(blog: BlogItem, onClick: () -> Unit = {}) {
 @Composable
 private fun SectionErrorMessage(
     message: String,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(White)

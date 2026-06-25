@@ -42,6 +42,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.runtime.collectAsState
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -111,15 +113,17 @@ fun MainShell(
     val currentRoute = navBackStackEntry?.destination?.route?.let(::leafRoute).orEmpty()
     val tabs = tabsForRole(role)
 
+    val navigateTab: (String) -> Unit = { route ->
+        tabNavController.navigateMainTab(route)
+    }
+
     Scaffold(
         containerColor = Surface,
         bottomBar = {
             MainBottomBar(
                 tabs = tabs,
                 currentRoute = currentRoute,
-                onTabSelected = { route ->
-                    tabNavController.navigateMainTab(route)
-                }
+                onTabSelected = navigateTab
             )
         }
     ) { innerPadding ->
@@ -131,10 +135,18 @@ fun MainShell(
             composable(Routes.HOME) {
                 HomeScreen(
                     navController = rootNavController,
-                    tabNavController = tabNavController
+                    onNavigateTab = navigateTab
                 )
             }
-            composable(Routes.SEARCH) {
+            composable(
+                route = Routes.SEARCH,
+                arguments = listOf(
+                    navArgument("focus") {
+                        type = NavType.StringType
+                        defaultValue = Routes.SEARCH_FOCUS_BROWSE
+                    }
+                )
+            ) {
                 SearchScreen(
                     navController = rootNavController,
                     showBackButton = false
@@ -215,7 +227,7 @@ private fun MainBottomBar(
                     }
                 }
             } else {
-                val selected = currentRoute == leafRoute(tab.route)
+                val selected = isTabSelected(currentRoute, tab.route)
                 NavigationBarItem(
                     selected = selected,
                     onClick = { onTabSelected(tab.route) },
@@ -249,7 +261,7 @@ private fun tabsForRole(role: Role): List<MainTabItem> =
     when (role) {
         Role.KLIEN, Role.ADMIN -> listOf(
             MainTabItem(Routes.HOME, "Home", Icons.Filled.Home, Icons.Outlined.Home),
-            MainTabItem(Routes.SEARCH, "Cari Jasa", Icons.Filled.Search, Icons.Outlined.Search),
+            MainTabItem(Routes.searchRoute(), "Cari Jasa", Icons.Filled.Search, Icons.Outlined.Search),
             MainTabItem(Routes.POST_PROJECT, "New", Icons.Default.Add, Icons.Default.Add, isCenterAction = true),
             MainTabItem(
                 Routes.ORDER_HISTORY,
@@ -288,5 +300,10 @@ private fun NavController.navigateMainTab(route: String) {
     }
 }
 
-private fun leafRoute(route: String?): String =
-    route?.substringAfterLast('/')?.ifBlank { route } ?: ""
+private fun leafRoute(route: String?): String {
+    val base = route?.substringBefore('?').orEmpty()
+    return base.substringAfterLast('/').ifBlank { base }
+}
+
+private fun isTabSelected(currentRoute: String, tabRoute: String): Boolean =
+    leafRoute(currentRoute) == leafRoute(tabRoute)

@@ -20,7 +20,9 @@ data class MahasiswaProfile(
     val skills: List<String>,
     val bio: String,
     val walletBalance: String,
-    val rating: Double
+    val rating: Double,
+    val suggestedKategoriId: String? = null,
+    val suggestedKategoriName: String = ""
 )
 
 data class KlienProfile(

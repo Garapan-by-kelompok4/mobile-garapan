@@ -96,6 +96,10 @@ fun SetupAccountScreen(
         if (role == "student") {
             StudentSetupForm(
                 state = studentState,
+                skillOptions = uiState.skillOptions,
+                isSkillOptionsLoading = uiState.isSkillOptionsLoading,
+                skillOptionsError = uiState.skillOptionsError,
+                onRetrySkillOptions = viewModel::retrySkillOptions,
                 onFullNameChanged = viewModel::onStudentFullNameChanged,
                 onUniversityChanged = viewModel::onUniversityChanged,
                 onMajorChanged = viewModel::onMajorChanged,
@@ -109,6 +113,10 @@ fun SetupAccountScreen(
         } else {
             ClientSetupForm(
                 state = clientState,
+                skillOptions = uiState.skillOptions,
+                isSkillOptionsLoading = uiState.isSkillOptionsLoading,
+                skillOptionsError = uiState.skillOptionsError,
+                onRetrySkillOptions = viewModel::retrySkillOptions,
                 onFullNameChanged = viewModel::onClientFullNameChanged,
                 onStatusSelected = viewModel::onStatusSelected,
                 onStatusDropdownToggle = viewModel::onStatusDropdownToggle,
@@ -160,6 +168,10 @@ private fun SetupHeader(title: String) {
 @Composable
 private fun StudentSetupForm(
     state: StudentSetupState,
+    skillOptions: List<String>,
+    isSkillOptionsLoading: Boolean,
+    skillOptionsError: String?,
+    onRetrySkillOptions: () -> Unit,
     onFullNameChanged: (String) -> Unit,
     onUniversityChanged: (String) -> Unit,
     onMajorChanged: (String) -> Unit,
@@ -228,8 +240,11 @@ private fun StudentSetupForm(
                     style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                ChipGroup(
-                    options = studentExpertiseOptions,
+                SkillOptionsSection(
+                    skillOptions = skillOptions,
+                    isLoading = isSkillOptionsLoading,
+                    errorMessage = skillOptionsError,
+                    onRetry = onRetrySkillOptions,
                     selected = state.selectedExpertise,
                     onToggle = onToggleExpertise
                 )
@@ -290,6 +305,10 @@ private fun StudentSetupForm(
 @Composable
 private fun ClientSetupForm(
     state: ClientSetupState,
+    skillOptions: List<String>,
+    isSkillOptionsLoading: Boolean,
+    skillOptionsError: String?,
+    onRetrySkillOptions: () -> Unit,
     onFullNameChanged: (String) -> Unit,
     onStatusSelected: (String) -> Unit,
     onStatusDropdownToggle: () -> Unit,
@@ -361,8 +380,11 @@ private fun ClientSetupForm(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        ChipGroup(
-            options = clientLookingForOptions,
+        SkillOptionsSection(
+            skillOptions = skillOptions,
+            isLoading = isSkillOptionsLoading,
+            errorMessage = skillOptionsError,
+            onRetry = onRetrySkillOptions,
             selected = state.selectedServices,
             onToggle = onToggleService
         )
@@ -520,6 +542,51 @@ private fun SetupDropdown(
                     onClick = { onSelect(option) }
                 )
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SkillOptionsSection(
+    skillOptions: List<String>,
+    isLoading: Boolean,
+    errorMessage: String?,
+    onRetry: () -> Unit,
+    selected: Set<String>,
+    onToggle: (String) -> Unit
+) {
+    when {
+        isLoading -> {
+            CircularProgressIndicator(
+                modifier = Modifier.height(24.dp),
+                strokeWidth = 2.dp,
+                color = BrandNavy
+            )
+        }
+        errorMessage != null -> {
+            Column {
+                Text(
+                    text = errorMessage,
+                    style = MaterialTheme.typography.bodySmall.copy(color = com.app.garapan.ui.theme.ErrorRed)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Coba lagi",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = AccentBlue,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    modifier = Modifier.clickable(onClick = onRetry)
+                )
+            }
+        }
+        else -> {
+            ChipGroup(
+                options = skillOptions,
+                selected = selected,
+                onToggle = onToggle
+            )
         }
     }
 }

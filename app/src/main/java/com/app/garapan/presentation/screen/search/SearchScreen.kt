@@ -36,6 +36,7 @@ import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,6 +44,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -55,12 +57,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil3.compose.AsyncImage
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
@@ -125,10 +129,64 @@ fun SearchScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             if (uiState.showResults) {
-                SearchResultsList(
-                    results = uiState.results,
-                    modifier = Modifier.fillMaxSize()
-                )
+                when {
+                    uiState.isResultsLoading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = BrandNavy)
+                        }
+                    }
+                    uiState.resultsErrorMessage != null -> {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = uiState.resultsErrorMessage.orEmpty(),
+                                style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText),
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            androidx.compose.material3.Button(
+                                onClick = viewModel::retryResults,
+                                colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = BrandNavy)
+                            ) {
+                                Text(text = "Coba Lagi")
+                            }
+                        }
+                    }
+                    else -> {
+                        if (uiState.results.isEmpty()) {
+                            SearchNoResultsState(
+                                filterType = uiState.filter.selectedType,
+                                query = uiState.query,
+                                onOpenFilter = viewModel::onShowFilter
+                            )
+                        } else {
+                            SearchResultsList(
+                                results = uiState.results,
+                                resultLabel = if (uiState.filter.selectedType == FilterType.JASA) {
+                                    "Layanan"
+                                } else {
+                                    "Proyek"
+                                },
+                                onItemClick = { itemId ->
+                                    if (uiState.filter.selectedType == FilterType.JASA) {
+                                        navController.navigate(Routes.jasaDetailRoute(itemId))
+                                    } else {
+                                        navController.navigate(Routes.projectDetailRoute(itemId))
+                                    }
+                                },
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
+                }
             } else {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -244,6 +302,8 @@ private fun SearchBar(
 @Composable
 private fun SearchResultsList(
     results: List<SearchResultItem>,
+    resultLabel: String,
+    onItemClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -256,7 +316,7 @@ private fun SearchResultsList(
     ) {
         item {
             Text(
-                text = "${results.size} Layanan Ditemukan",
+                text = "${results.size} $resultLabel Ditemukan",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold,
                     color = PrimaryText
@@ -265,15 +325,23 @@ private fun SearchResultsList(
             )
         }
         items(results) { item ->
-            SearchResultCard(item = item)
+            SearchResultCard(
+                item = item,
+                onClick = { onItemClick(item.id) }
+            )
         }
     }
 }
 
 @Composable
-private fun SearchResultCard(item: SearchResultItem) {
+private fun SearchResultCard(
+    item: SearchResultItem,
+    onClick: () -> Unit
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = White),
         border = androidx.compose.foundation.BorderStroke(1.dp, BorderColor),
@@ -284,8 +352,18 @@ private fun SearchResultCard(item: SearchResultItem) {
                 modifier = Modifier
                     .size(90.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(LightGray)
-            )
+                    .background(LightGray),
+                contentAlignment = Alignment.Center
+            ) {
+                if (item.imageUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = item.imageUrl,
+                        contentDescription = item.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -369,6 +447,45 @@ private fun SearchResultCard(item: SearchResultItem) {
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun SearchNoResultsState(
+    filterType: FilterType,
+    query: String,
+    onOpenFilter: () -> Unit
+) {
+    val typeLabel = if (filterType == FilterType.JASA) "jasa" else "proyek"
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Tidak ada $typeLabel ditemukan",
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                color = PrimaryText
+            ),
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = if (query.isBlank()) {
+                "Coba ubah filter atau pilih tipe ${if (filterType == FilterType.JASA) "Proyek" else "Jasa"} di pengaturan filter."
+            } else {
+                "Tidak ada hasil untuk \"$query\". Coba kata kunci lain atau ganti tipe pencarian di filter."
+            },
+            style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText),
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        OutlinedButton(onClick = onOpenFilter) {
+            Text(text = "Buka Filter")
         }
     }
 }

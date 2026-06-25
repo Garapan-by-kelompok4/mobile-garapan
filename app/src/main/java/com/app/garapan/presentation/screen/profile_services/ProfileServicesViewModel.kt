@@ -2,7 +2,13 @@ package com.app.garapan.presentation.screen.profile_services
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.app.garapan.domain.common.Resource
+import com.app.garapan.domain.model.Jasa
+import com.app.garapan.domain.model.JasaStatus
+import com.app.garapan.domain.usecase.DeleteJasaUseCase
+import com.app.garapan.domain.usecase.GetMyJasaListUseCase
 import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
+import com.app.garapan.presentation.util.CurrencyFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,43 +24,26 @@ data class ProfileServiceItem(
     val category: String,
     val deadline: String,
     val teamSize: String,
-    val status: String
+    val status: String,
+    val imageUrl: String = ""
 )
 
 data class ProfileServicesUiState(
     val skills: List<String> = emptyList(),
-    val services: List<ProfileServiceItem> = emptyList()
+    val services: List<ProfileServiceItem> = emptyList(),
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+    val isDeleting: Boolean = false
 )
 
 @HiltViewModel
 class ProfileServicesViewModel @Inject constructor(
+    private val getMyJasaListUseCase: GetMyJasaListUseCase,
+    private val deleteJasaUseCase: DeleteJasaUseCase,
     observeCurrentUserUseCase: ObserveCurrentUserUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(
-        ProfileServicesUiState(
-            services = listOf(
-                ProfileServiceItem(
-                    id = "service-1",
-                    title = "Platform e-Learning Interaktif untuk Bimbingan Belajar",
-                    budget = "Rp 5.000.000 - Rp 8.000.000",
-                    category = "Ed-Tech",
-                    deadline = "20 April 2026",
-                    teamSize = "Tim (2-3 Orang)",
-                    status = "Mencari"
-                ),
-                ProfileServiceItem(
-                    id = "service-2",
-                    title = "Aplikasi Manajemen Inventaris Gudang",
-                    budget = "Rp 3.000.000 - Rp 5.000.000",
-                    category = "Mobile Dev",
-                    deadline = "18 Mei 2026",
-                    teamSize = "Tim (1-2 Orang)",
-                    status = "Selesai"
-                )
-            )
-        )
-    )
+    private val _uiState = MutableStateFlow(ProfileServicesUiState(isLoading = true))
     val uiState: StateFlow<ProfileServicesUiState> = _uiState.asStateFlow()
 
     init {
@@ -65,13 +54,65 @@ class ProfileServicesViewModel @Inject constructor(
                 }
             }
         }
+        loadMyJasa()
+    }
+
+    fun loadMyJasa() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            when (val result = getMyJasaListUseCase()) {
+                is Resource.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            services = result.data.map(::toProfileServiceItem),
+                            errorMessage = null
+                        )
+                    }
+                }
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            services = emptyList(),
+                            errorMessage = result.message
+                        )
+                    }
+                }
+                Resource.Loading -> Unit
+            }
+        }
     }
 
     fun onDeleteService(serviceId: String) {
-        _uiState.update { state ->
-            state.copy(
-                services = state.services.filterNot { service -> service.id == serviceId }
-            )
+        viewModelScope.launch {
+            _uiState.update { it.copy(isDeleting = true, errorMessage = null) }
+            when (val result = deleteJasaUseCase(serviceId)) {
+                is Resource.Success -> {
+                    _uiState.update { it.copy(isDeleting = false) }
+                    loadMyJasa()
+                }
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(isDeleting = false, errorMessage = result.message)
+                    }
+                }
+                Resource.Loading -> Unit
+            }
         }
     }
+
+    private fun toProfileServiceItem(jasa: Jasa) = ProfileServiceItem(
+        id = jasa.id,
+        title = jasa.title,
+        budget = CurrencyFormatter.formatRupiah(jasa.price),
+        category = jasa.kategoriName.ifBlank { "Jasa" },
+        deadline = "-",
+        teamSize = "-",
+        status = when (jasa.status) {
+            JasaStatus.ACTIVE -> "Aktif"
+            JasaStatus.INACTIVE -> "Nonaktif"
+        },
+        imageUrl = jasa.imageUrl
+    )
 }

@@ -129,7 +129,7 @@ fun FilterSortBottomSheet(
             Spacer(modifier = Modifier.height(24.dp))
 
             // KATEGORI
-            SectionLabel(text = "KATEGORI")
+            SectionLabel(text = "KATEGORI JASA / PROYEK")
             Spacer(modifier = Modifier.height(10.dp))
             when {
                 isCategoryLoading -> {

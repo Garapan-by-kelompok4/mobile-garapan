@@ -1,11 +1,11 @@
 package com.app.garapan.data.mapper
 
-import com.app.garapan.data.remote.dto.AuthTokensDto
 import com.app.garapan.data.remote.dto.KlienProfileDto
-import com.app.garapan.data.remote.dto.LoginResponseDto
 import com.app.garapan.data.remote.dto.MahasiswaProfileDto
 import com.app.garapan.data.remote.dto.UpdateProfileRequestDto
 import com.app.garapan.data.remote.dto.UserDto
+import com.app.garapan.data.remote.dto.AuthTokensDto
+import com.app.garapan.data.remote.dto.LoginResponseDto
 import com.app.garapan.domain.model.AuthTokens
 import com.app.garapan.domain.model.KlienProfile
 import com.app.garapan.domain.model.LoginResult
@@ -51,7 +51,9 @@ fun MahasiswaProfileDto.toDomain() = MahasiswaProfile(
     skills = skills,
     bio = bio,
     walletBalance = walletBalance,
-    rating = rating
+    rating = rating,
+    suggestedKategoriId = suggestedKategoriId,
+    suggestedKategoriName = suggestedKategori?.name.orEmpty()
 )
 
 fun KlienProfileDto.toDomain() = KlienProfile(

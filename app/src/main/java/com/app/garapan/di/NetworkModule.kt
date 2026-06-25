@@ -3,8 +3,11 @@ package com.app.garapan.di
 import com.app.garapan.BuildConfig
 import com.app.garapan.data.remote.api.ArtikelApi
 import com.app.garapan.data.remote.api.AuthApi
+import com.app.garapan.data.remote.api.JasaApi
 import com.app.garapan.data.remote.api.KategoriApi
 import com.app.garapan.data.remote.api.PortofolioApi
+import com.app.garapan.data.remote.api.ProjectApi
+import com.app.garapan.data.remote.api.SkillApi
 import com.app.garapan.data.remote.api.TopWorkerApi
 import com.app.garapan.data.remote.api.UsersApi
 import com.app.garapan.data.remote.interceptor.AuthInterceptor
@@ -97,4 +100,19 @@ object NetworkModule {
     @Singleton
     fun provideArtikelApi(retrofit: Retrofit): ArtikelApi =
         retrofit.create(ArtikelApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideJasaApi(retrofit: Retrofit): JasaApi =
+        retrofit.create(JasaApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideProjectApi(retrofit: Retrofit): ProjectApi =
+        retrofit.create(ProjectApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideSkillApi(retrofit: Retrofit): SkillApi =
+        retrofit.create(SkillApi::class.java)
 }

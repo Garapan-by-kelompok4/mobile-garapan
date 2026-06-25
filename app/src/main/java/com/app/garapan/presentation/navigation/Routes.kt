@@ -13,7 +13,9 @@ object Routes {
     const val SETUP = "setup"
     const val MAIN = "main"
     const val HOME = "home"
-    const val SEARCH = "search"
+    const val SEARCH = "search?focus={focus}"
+    const val SEARCH_FOCUS_BROWSE = "browse"
+    const val SEARCH_FOCUS_JASA = "jasa"
     const val PESAN = "pesan"
     const val POST_PROJECT = "post_project"
     const val PROFILE = "profile"
@@ -46,4 +48,5 @@ object Routes {
     fun publicProfileRoute(userId: String) = "public_profile/$userId"
     fun editServiceRoute(serviceId: String) = "edit_service/$serviceId"
     fun editPortfolioRoute(portfolioId: String) = "edit_portfolio/$portfolioId"
+    fun searchRoute(focus: String = SEARCH_FOCUS_BROWSE) = "search?focus=$focus"
 }

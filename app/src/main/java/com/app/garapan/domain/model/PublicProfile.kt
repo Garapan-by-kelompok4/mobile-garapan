@@ -8,7 +8,7 @@ data class PublicProfile(
     val university: String?,
     val companyName: String?,
     val bio: String,
-    val skills: List<String>,
+    val skills: List<ProfileSkill>,
     val rating: Float?,
     val mahasiswaId: String?
 )

@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
@@ -68,7 +69,7 @@ fun SkillsScreen(
             SkillsTopBar(onBack = { navController.navigateUp() })
             Spacer(modifier = Modifier.height(20.dp))
             Text(
-                text = "Pilih Keahlian",
+                text = "Keahlian Profil",
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.ExtraBold,
                     color = PrimaryText
@@ -76,19 +77,43 @@ fun SkillsScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Pilih keahlian utama Anda agar klien dapat menemukan profil Anda dengan mudah.",
+                text = "Pilih keahlian profil Anda. Ini terpisah dari kategori jasa/proyek di marketplace.",
                 style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
             )
             Spacer(modifier = Modifier.height(20.dp))
-            SkillChipGroup(
-                options = uiState.options,
-                selected = uiState.selectedSkills,
-                onToggle = viewModel::onToggleSkill
-            )
-            uiState.errorMessage?.let { message ->
+            when {
+                uiState.isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = BrandNavy)
+                    }
+                }
+                uiState.errorMessage != null && uiState.options.isEmpty() -> {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = uiState.errorMessage.orEmpty(),
+                            style = MaterialTheme.typography.bodySmall.copy(color = ErrorRed)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Button(onClick = viewModel::retry) {
+                            Text("Coba Lagi")
+                        }
+                    }
+                }
+                else -> {
+                    SkillChipGroup(
+                        options = uiState.options,
+                        selected = uiState.selectedSkills,
+                        onToggle = viewModel::onToggleSkill
+                    )
+                }
+            }
+            if (uiState.errorMessage != null && uiState.options.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = message,
+                    text = uiState.errorMessage.orEmpty(),
                     style = MaterialTheme.typography.bodySmall.copy(color = ErrorRed)
                 )
             }

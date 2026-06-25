@@ -1,15 +1,30 @@
 package com.app.garapan.presentation.screen.search
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
+import com.app.garapan.domain.model.Jasa
+import com.app.garapan.domain.model.JasaListFilters
+import com.app.garapan.domain.model.Kategori
+import com.app.garapan.domain.model.Project
+import com.app.garapan.domain.model.ProjectListFilters
+import com.app.garapan.domain.usecase.GetJasaListUseCase
 import com.app.garapan.domain.usecase.GetKategoriListUseCase
+import com.app.garapan.domain.usecase.GetProjectListUseCase
+import com.app.garapan.presentation.navigation.Routes
+import com.app.garapan.presentation.util.CurrencyFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import javax.inject.Inject
 
 enum class FilterType { PROYEK, JASA }
@@ -37,7 +52,8 @@ data class SearchResultItem(
     val rating: Float,
     val reviewCount: Int,
     val price: String,
-    val duration: String
+    val duration: String,
+    val imageUrl: String = ""
 )
 
 data class SearchUiState(
@@ -48,28 +64,38 @@ data class SearchUiState(
     val showFilterSheet: Boolean = false,
     val showResults: Boolean = false,
     val filter: FilterSortState = FilterSortState(),
-    val results: List<SearchResultItem> = emptyList()
-)
-
-private val dummyResults = listOf(
-    SearchResultItem("1", "Pembuatan Website Company Profile Modern", "Andi Pratama", 4.9f, 47, "Rp 2.500.000", "5 hari"),
-    SearchResultItem("2", "Desain UI/UX Mobile App dari Scratch", "Sari Dewi", 4.8f, 63, "Rp 1.800.000", "7 hari"),
-    SearchResultItem("3", "Setup CI/CD Pipeline & Deploy ke VPS", "Rizky Fajar", 5.0f, 29, "Rp 1.200.000", "3 hari"),
-    SearchResultItem("4", "Machine Learning Model untuk Klasifikasi Data", "Budi Santoso", 4.7f, 38, "Rp 3.500.000", "10 hari"),
-    SearchResultItem("5", "REST API Backend dengan Node.js & PostgreSQL", "Andi Pratama", 4.9f, 21, "Rp 2.000.000", "4 hari"),
-    SearchResultItem("6", "Aplikasi Android E-Commerce dengan Jetpack Compose", "Sari Dewi", 4.8f, 15, "Rp 4.500.000", "14 hari"),
+    val results: List<SearchResultItem> = emptyList(),
+    val isResultsLoading: Boolean = false,
+    val resultsErrorMessage: String? = null
 )
 
 @HiltViewModel
 class SearchViewModel @Inject constructor(
-    private val getKategoriListUseCase: GetKategoriListUseCase
+    savedStateHandle: SavedStateHandle,
+    private val getKategoriListUseCase: GetKategoriListUseCase,
+    private val getJasaListUseCase: GetJasaListUseCase,
+    private val getProjectListUseCase: GetProjectListUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(SearchUiState(results = dummyResults))
+    private val searchFocus: String = savedStateHandle["focus"] ?: Routes.SEARCH_FOCUS_BROWSE
+
+    private var kategoriItems: List<Kategori> = emptyList()
+    private var searchJob: Job? = null
+
+    private val _uiState = MutableStateFlow(SearchUiState())
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
     init {
         loadCategories()
+        if (searchFocus == Routes.SEARCH_FOCUS_JASA) {
+            _uiState.update {
+                it.copy(
+                    filter = it.filter.copy(selectedType = FilterType.JASA),
+                    showResults = true
+                )
+            }
+            loadJasaResults()
+        }
     }
 
     private fun loadCategories() {
@@ -77,6 +103,7 @@ class SearchViewModel @Inject constructor(
             _uiState.update { it.copy(isCategoryLoading = true, categoryErrorMessage = null) }
             when (val result = getKategoriListUseCase()) {
                 is Resource.Success -> {
+                    kategoriItems = result.data
                     val categoryNames = result.data.map { it.name }
                     val categories = listOf(ALL_CATEGORIES) + categoryNames
                     _uiState.update { state ->
@@ -105,15 +132,33 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-    fun onQueryChanged(query: String) = _uiState.update {
-        it.copy(query = query, showResults = query.isNotEmpty())
+    fun onQueryChanged(query: String) {
+        if (query.isBlank()) {
+            _uiState.update {
+                it.copy(
+                    query = query,
+                    showResults = searchFocus == Routes.SEARCH_FOCUS_JASA,
+                    results = emptyList(),
+                    resultsErrorMessage = null,
+                    isResultsLoading = false
+                )
+            }
+            if (searchFocus == Routes.SEARCH_FOCUS_JASA) {
+                loadJasaResults()
+            }
+            return
+        }
+
+        _uiState.update { it.copy(query = query, showResults = true) }
+        refreshResultsForCurrentType()
     }
 
     fun onShowFilter() = _uiState.update { it.copy(showFilterSheet = true) }
     fun onDismissFilter() = _uiState.update { it.copy(showFilterSheet = false) }
 
-    fun onFilterTypeSelected(type: FilterType) =
+    fun onFilterTypeSelected(type: FilterType) {
         _uiState.update { it.copy(filter = it.filter.copy(selectedType = type)) }
+    }
 
     fun onCategorySelected(category: String) =
         _uiState.update { it.copy(filter = it.filter.copy(selectedCategory = category)) }
@@ -127,7 +172,138 @@ class SearchViewModel @Inject constructor(
     fun onSortSelected(option: SortOption) =
         _uiState.update { it.copy(filter = it.filter.copy(sortBy = option)) }
 
-    fun onApplyFilter() = _uiState.update {
-        it.copy(showFilterSheet = false, showResults = true)
+    fun onApplyFilter() {
+        _uiState.update { it.copy(showFilterSheet = false, showResults = true) }
+        refreshResultsForCurrentType()
+    }
+
+    fun retryResults() = refreshResultsForCurrentType()
+
+    private fun refreshResultsForCurrentType() {
+        when (_uiState.value.filter.selectedType) {
+            FilterType.JASA -> loadJasaResults()
+            FilterType.PROYEK -> loadProjectResults()
+        }
+    }
+
+    private fun loadProjectResults() {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            _uiState.update { it.copy(isResultsLoading = true, resultsErrorMessage = null) }
+            val state = _uiState.value
+            val kategoriId = kategoriItems
+                .firstOrNull { it.name == state.filter.selectedCategory }
+                ?.id
+                ?.takeIf { state.filter.selectedCategory != ALL_CATEGORIES }
+            val filters = ProjectListFilters(
+                search = state.query.takeIf { it.isNotBlank() },
+                kategoriId = kategoriId,
+                minBudget = state.filter.minPrice.toDoubleOrNull(),
+                maxBudget = state.filter.maxPrice.toDoubleOrNull(),
+                includeRelatedSkills = kategoriId != null
+            )
+            when (val result = getProjectListUseCase(filters)) {
+                is Resource.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            results = result.data.map(::toProjectSearchResultItem),
+                            isResultsLoading = false,
+                            resultsErrorMessage = null,
+                            showResults = true
+                        )
+                    }
+                }
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            results = emptyList(),
+                            isResultsLoading = false,
+                            resultsErrorMessage = result.message,
+                            showResults = true
+                        )
+                    }
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    private fun loadJasaResults() {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            _uiState.update { it.copy(isResultsLoading = true, resultsErrorMessage = null) }
+            val state = _uiState.value
+            val kategoriId = kategoriItems
+                .firstOrNull { it.name == state.filter.selectedCategory }
+                ?.id
+                ?.takeIf { state.filter.selectedCategory != ALL_CATEGORIES }
+            val filters = JasaListFilters(
+                search = state.query.takeIf { it.isNotBlank() },
+                kategoriId = kategoriId,
+                minPrice = state.filter.minPrice.toDoubleOrNull(),
+                maxPrice = state.filter.maxPrice.toDoubleOrNull(),
+                sort = state.filter.sortBy.toApiSort(),
+                includeRelatedSkills = kategoriId != null
+            )
+            when (val result = getJasaListUseCase(filters)) {
+                is Resource.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            results = result.data.map(::toJasaSearchResultItem),
+                            isResultsLoading = false,
+                            resultsErrorMessage = null,
+                            showResults = true
+                        )
+                    }
+                }
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            results = emptyList(),
+                            isResultsLoading = false,
+                            resultsErrorMessage = result.message,
+                            showResults = true
+                        )
+                    }
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    private fun toJasaSearchResultItem(jasa: Jasa) = SearchResultItem(
+        id = jasa.id,
+        title = jasa.title,
+        workerName = jasa.workerName.ifBlank { "Freelancer" },
+        rating = jasa.rating.toFloat().takeIf { it > 0f } ?: jasa.workerRating.toFloat(),
+        reviewCount = jasa.reviewCount,
+        price = CurrencyFormatter.formatRupiah(jasa.price),
+        duration = "-",
+        imageUrl = jasa.imageUrl
+    )
+
+    private fun toProjectSearchResultItem(project: Project) = SearchResultItem(
+        id = project.id,
+        title = project.title,
+        workerName = project.clientName.ifBlank { "Klien" },
+        rating = 0f,
+        reviewCount = 0,
+        price = CurrencyFormatter.formatRupiah(project.budget),
+        duration = formatDeadline(project.deadline),
+        imageUrl = ""
+    )
+
+    private fun formatDeadline(deadline: String): String {
+        if (deadline.isBlank()) return "-"
+        return runCatching {
+            val formatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale("id", "ID"))
+            Instant.parse(deadline).atZone(ZoneId.systemDefault()).format(formatter)
+        }.getOrDefault(deadline.take(10))
+    }
+
+    private fun SortOption.toApiSort(): String? = when (this) {
+        SortOption.PALING_POPULER -> "newest"
+        SortOption.RATING_TERTINGGI -> "rating_desc"
+        SortOption.HARGA_TERENDAH -> "price_asc"
     }
 }

@@ -31,7 +31,7 @@ private fun PublicMahasiswaDto.toPublicProfile(userId: String, role: String) = P
     university = university,
     companyName = null,
     bio = bio,
-    skills = skills,
+    skills = skills.map { it.toDomain() },
     rating = rating.toFloat(),
     mahasiswaId = id
 )

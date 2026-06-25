@@ -13,7 +13,7 @@ data class PublicMahasiswaDto(
     val fullName: String?,
     val avatarUrl: String?,
     val university: String,
-    val skills: List<String>,
+    val skills: List<PublicSkillDto> = emptyList(),
     val bio: String,
     val rating: Double
 )

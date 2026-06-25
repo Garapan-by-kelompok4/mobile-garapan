@@ -6,17 +6,23 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.app.garapan.data.repository.ArtikelRepositoryImpl
 import com.app.garapan.data.repository.AuthRepositoryImpl
+import com.app.garapan.data.repository.JasaRepositoryImpl
 import com.app.garapan.data.repository.KategoriRepositoryImpl
 import com.app.garapan.data.repository.PortofolioRepositoryImpl
+import com.app.garapan.data.repository.ProjectRepositoryImpl
 import com.app.garapan.data.repository.SessionRepositoryImpl
+import com.app.garapan.data.repository.SkillRepositoryImpl
 import com.app.garapan.data.repository.TopWorkerRepositoryImpl
 import com.app.garapan.data.repository.UsersRepositoryImpl
 import com.app.garapan.domain.repository.UsersRepository
 import com.app.garapan.domain.repository.ArtikelRepository
 import com.app.garapan.domain.repository.AuthRepository
+import com.app.garapan.domain.repository.JasaRepository
 import com.app.garapan.domain.repository.KategoriRepository
 import com.app.garapan.domain.repository.PortofolioRepository
+import com.app.garapan.domain.repository.ProjectRepository
 import com.app.garapan.domain.repository.SessionRepository
+import com.app.garapan.domain.repository.SkillRepository
 import com.app.garapan.domain.repository.TopWorkerRepository
 import dagger.Binds
 import dagger.Module
@@ -69,4 +75,16 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindArtikelRepository(impl: ArtikelRepositoryImpl): ArtikelRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindJasaRepository(impl: JasaRepositoryImpl): JasaRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindProjectRepository(impl: ProjectRepositoryImpl): ProjectRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSkillRepository(impl: SkillRepositoryImpl): SkillRepository
 }

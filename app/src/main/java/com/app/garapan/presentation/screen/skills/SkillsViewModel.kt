@@ -3,9 +3,9 @@ package com.app.garapan.presentation.screen.skills
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
+import com.app.garapan.domain.usecase.GetSkillListUseCase
 import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
 import com.app.garapan.domain.usecase.UpdateSkillsUseCase
-import com.app.garapan.presentation.screen.auth.studentExpertiseOptions
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,8 +18,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class SkillsUiState(
-    val options: List<String> = studentExpertiseOptions,
+    val options: List<String> = emptyList(),
     val selectedSkills: Set<String> = emptySet(),
+    val isLoading: Boolean = true,
     val isSaving: Boolean = false,
     val errorMessage: String? = null
 )
@@ -30,6 +31,7 @@ sealed interface SkillsEvent {
 
 @HiltViewModel
 class SkillsViewModel @Inject constructor(
+    private val getSkillListUseCase: GetSkillListUseCase,
     observeCurrentUserUseCase: ObserveCurrentUserUseCase,
     private val updateSkillsUseCase: UpdateSkillsUseCase
 ) : ViewModel() {
@@ -41,14 +43,42 @@ class SkillsViewModel @Inject constructor(
     val events: SharedFlow<SkillsEvent> = _events.asSharedFlow()
 
     init {
+        loadSkillOptions()
         viewModelScope.launch {
             observeCurrentUserUseCase().collect { user ->
                 val skills = user?.mahasiswa?.skills.orEmpty()
                 _uiState.update { state ->
-                    state.copy(
-                        selectedSkills = skills.filter { it in state.options }.toSet()
-                    )
+                    state.copy(selectedSkills = skills.toSet())
                 }
+            }
+        }
+    }
+
+    fun retry() = loadSkillOptions()
+
+    private fun loadSkillOptions() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            when (val result = getSkillListUseCase()) {
+                is Resource.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            options = result.data.map { skill -> skill.name },
+                            isLoading = false,
+                            errorMessage = null
+                        )
+                    }
+                }
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            options = emptyList(),
+                            isLoading = false,
+                            errorMessage = result.message
+                        )
+                    }
+                }
+                Resource.Loading -> Unit
             }
         }
     }
