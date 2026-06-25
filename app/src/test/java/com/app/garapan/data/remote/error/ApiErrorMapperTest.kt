@@ -44,7 +44,7 @@ class ApiErrorMapperTest {
     @Test
     fun `maps network failure to user facing message`() {
         assertEquals(
-            "Unable to connect. Check your internet connection and try again.",
+            "Network error while uploading. Check your connection and try again.",
             ApiErrorMapper.toMessage(IOException("timeout"))
         )
     }

@@ -16,14 +16,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.InsertDriveFile
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -32,21 +30,27 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil3.compose.AsyncImage
+import com.app.garapan.presentation.navigation.NavResults
+import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BrandNavy
 import com.app.garapan.ui.theme.ErrorRed
+import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
@@ -59,6 +63,18 @@ fun PortfolioScreen(
     viewModel: PortfolioViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val backStackEntry = navController.currentBackStackEntry
+
+    LaunchedEffect(backStackEntry) {
+        val savedStateHandle = backStackEntry?.savedStateHandle ?: return@LaunchedEffect
+        savedStateHandle.getStateFlow(NavResults.PORTFOLIO_REFRESH, false)
+            .collect { shouldRefresh ->
+                if (shouldRefresh) {
+                    viewModel.loadPortofolio()
+                    savedStateHandle[NavResults.PORTFOLIO_REFRESH] = false
+                }
+            }
+    }
 
     Scaffold(containerColor = Color(0xFFFAF8FF)) { innerPadding ->
         LazyColumn(
@@ -71,13 +87,33 @@ fun PortfolioScreen(
             item {
                 PortfolioTopBar(onBack = { navController.navigateUp() })
                 Spacer(modifier = Modifier.height(24.dp))
-                PortfolioHero(onAddClick = {})
+                PortfolioHero(onAddClick = { navController.navigate(Routes.ADD_PORTFOLIO) })
+            }
+
+            if (uiState.isLoading) {
+                item {
+                    Text(
+                        text = "Memuat portofolio...",
+                        style = MaterialTheme.typography.bodyMedium.copy(color = MutedText)
+                    )
+                }
+            }
+
+            uiState.errorMessage?.let { message ->
+                item {
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodyMedium.copy(color = ErrorRed)
+                    )
+                }
             }
 
             items(uiState.items) { item ->
                 PortfolioCard(
                     item = item,
-                    onEditClick = {},
+                    onEditClick = {
+                        navController.navigate(Routes.editPortfolioRoute(item.id))
+                    },
                     onDeleteClick = { viewModel.onDeletePortfolio(item.id) }
                 )
             }
@@ -223,7 +259,27 @@ private fun PortfolioCover(item: PortfolioItem) {
         modifier = Modifier
             .fillMaxWidth()
             .height(180.dp)
+            .clip(RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp))
             .background(item.coverColor),
+        contentAlignment = Alignment.Center
+    ) {
+        if (item.imageUrl.isNotBlank()) {
+            AsyncImage(
+                model = item.imageUrl,
+                contentDescription = item.title,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            PortfolioMockupContent(item)
+        }
+    }
+}
+
+@Composable
+private fun PortfolioMockupContent(item: PortfolioItem) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         Box(
@@ -261,30 +317,6 @@ private fun PortfolioCover(item: PortfolioItem) {
                         .height(5.dp)
                         .clip(RoundedCornerShape(50.dp))
                         .background(item.accentColor)
-                )
-            }
-        }
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth(0.72f)
-                .height(5.dp)
-                .clip(RoundedCornerShape(50.dp))
-                .background(PrimaryText.copy(alpha = 0.75f))
-        )
-        if (item.id == "portfolio-3") {
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(item.accentColor.copy(alpha = 0.9f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.InsertDriveFile,
-                    contentDescription = null,
-                    tint = White.copy(alpha = 0.88f),
-                    modifier = Modifier.size(42.dp)
                 )
             }
         }

@@ -96,7 +96,7 @@ fun ProfileServicesScreen(
                 SectionHeader(
                     title = "Keahlian",
                     showEditAction = true,
-                    onEditClick = {}
+                    onEditClick = { navController.navigate(Routes.SKILLS) }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 SkillPanel(skills = uiState.skills)

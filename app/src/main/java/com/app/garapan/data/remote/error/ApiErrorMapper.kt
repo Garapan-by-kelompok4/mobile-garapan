@@ -3,6 +3,8 @@ package com.app.garapan.data.remote.error
 import com.google.gson.JsonParser
 import retrofit2.HttpException
 import java.io.IOException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 object ApiErrorMapper {
     fun toMessage(throwable: Throwable): String =
@@ -16,7 +18,12 @@ object ApiErrorMapper {
                         ?: "Request failed. Please try again."
                 }
             }
-            is IOException -> "Unable to connect. Check your internet connection and try again."
+            is SocketTimeoutException ->
+                "Upload took too long. Try again on a stable connection or use a smaller image."
+            is UnknownHostException ->
+                "Unable to connect. Check your internet connection and try again."
+            is IOException ->
+                "Network error while uploading. Check your connection and try again."
             else -> throwable.message?.takeIf { it.isNotBlank() }
                 ?: "Something went wrong. Please try again."
         }
