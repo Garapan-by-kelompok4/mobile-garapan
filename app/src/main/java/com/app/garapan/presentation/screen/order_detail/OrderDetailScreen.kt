@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -26,8 +27,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import com.app.garapan.presentation.navigation.Routes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -135,7 +138,7 @@ fun OrderDetailScreen(
             }
         },
         bottomBar = {
-            if (uiState.canPay || uiState.canDeliver || uiState.canComplete || uiState.canReview) {
+            if (uiState.canPay || uiState.canDeliver || uiState.canComplete || uiState.canReview || uiState.canDispute) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -200,34 +203,57 @@ fun OrderDetailScreen(
                                 )
                             }
                         } else {
-                            Button(
-                                onClick = {
-                                    if (uiState.canDeliver) viewModel.onDeliverClicked()
-                                    else viewModel.onCompleteClicked()
-                                },
-                                enabled = !uiState.isActionLoading,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(54.dp),
-                                shape = RoundedCornerShape(50.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = BrandNavy,
-                                    contentColor = White
-                                )
-                            ) {
-                                if (uiState.isActionLoading) {
-                                    CircularProgressIndicator(
-                                        color = White,
-                                        strokeWidth = 2.dp,
-                                        modifier = Modifier.height(22.dp)
+                            if (uiState.canDeliver || uiState.canComplete) {
+                                Button(
+                                    onClick = {
+                                        if (uiState.canDeliver) viewModel.onDeliverClicked()
+                                        else viewModel.onCompleteClicked()
+                                    },
+                                    enabled = !uiState.isActionLoading,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(54.dp),
+                                    shape = RoundedCornerShape(50.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = BrandNavy,
+                                        contentColor = White
                                     )
-                                } else {
+                                ) {
+                                    if (uiState.isActionLoading) {
+                                        CircularProgressIndicator(
+                                            color = White,
+                                            strokeWidth = 2.dp,
+                                            modifier = Modifier.height(22.dp)
+                                        )
+                                    } else {
+                                        Text(
+                                            text = if (uiState.canDeliver) {
+                                                "Tandai Sudah Dikirim"
+                                            } else {
+                                                "Terima Pekerjaan"
+                                            },
+                                            style = MaterialTheme.typography.bodyLarge.copy(
+                                                fontWeight = FontWeight.ExtraBold
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                            if (uiState.canDispute) {
+                                OutlinedButton(
+                                    onClick = { navController.navigate(Routes.disputeRoute(uiState.id)) },
+                                    enabled = !uiState.isActionLoading,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(54.dp),
+                                    shape = RoundedCornerShape(50.dp),
+                                    border = BorderStroke(1.dp, Color(0xFFE31B23)),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = Color(0xFFE31B23)
+                                    )
+                                ) {
                                     Text(
-                                        text = if (uiState.canDeliver) {
-                                            "Tandai Sudah Dikirim"
-                                        } else {
-                                            "Terima Pekerjaan"
-                                        },
+                                        text = "Ajukan Dispute / Komplain",
                                         style = MaterialTheme.typography.bodyLarge.copy(
                                             fontWeight = FontWeight.ExtraBold
                                         )
@@ -285,6 +311,9 @@ fun OrderDetailScreen(
                             style = MaterialTheme.typography.bodySmall.copy(color = AccentBlue)
                         )
                     }
+                    if (uiState.showDisputedInfoBanner) {
+                        DisputedInfoBanner()
+                    }
                     DetailCard {
                         PesananStatusBadge(status = uiState.status)
                         Spacer(modifier = Modifier.height(12.dp))
@@ -309,6 +338,30 @@ fun OrderDetailScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DisputedInfoBanner() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFFFFE1E1))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = "Pesanan dalam sengketa",
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFE31B23)
+            )
+        )
+        Text(
+            text = "Klien mengajukan komplain. Menunggu keputusan admin.",
+            style = MaterialTheme.typography.bodySmall.copy(color = PrimaryText)
+        )
     }
 }
 

@@ -44,6 +44,8 @@ data class OrderDetailUiState(
     val existingReviewId: String? = null,
     val reviewButtonLabel: String = "Beri Ulasan",
     val canPay: Boolean = false,
+    val canDispute: Boolean = false,
+    val showDisputedInfoBanner: Boolean = false,
     val isLoading: Boolean = false,
     val isActionLoading: Boolean = false,
     val errorMessage: String? = null,
@@ -95,7 +97,9 @@ class OrderDetailViewModel @Inject constructor(
                                 canDeliver = canDeliver(state.statusRaw),
                                 canComplete = canComplete(state.statusRaw),
                                 canReview = canReview(state.statusRaw, state.jasaId),
-                                canPay = canPay(state.statusRaw)
+                                canPay = canPay(state.statusRaw),
+                                canDispute = canDispute(state.statusRaw),
+                                showDisputedInfoBanner = showDisputedInfoBanner(state.statusRaw)
                             )
                         }
                     }
@@ -337,6 +341,8 @@ class OrderDetailViewModel @Inject constructor(
                 existingReviewId = null,
                 reviewButtonLabel = "Beri Ulasan",
                 canPay = canPay(pesanan.status),
+                canDispute = canDispute(pesanan.status),
+                showDisputedInfoBanner = showDisputedInfoBanner(pesanan.status),
                 isLoading = false,
                 isActionLoading = false,
                 errorMessage = null
@@ -355,4 +361,10 @@ class OrderDetailViewModel @Inject constructor(
 
     private fun canPay(status: PesananStatus): Boolean =
         currentRole == Role.KLIEN && status == PesananStatus.PENDING
+
+    private fun canDispute(status: PesananStatus): Boolean =
+        currentRole == Role.KLIEN && (status == PesananStatus.IN_PROGRESS || status == PesananStatus.DELIVERED)
+
+    private fun showDisputedInfoBanner(status: PesananStatus): Boolean =
+        currentRole == Role.MAHASISWA && status == PesananStatus.DISPUTED
 }

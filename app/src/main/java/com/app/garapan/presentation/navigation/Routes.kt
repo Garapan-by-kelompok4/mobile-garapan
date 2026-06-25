@@ -41,6 +41,7 @@ object Routes {
     const val PUBLIC_PROFILE = "public_profile/{userId}"
     const val TOP_WORKERS = "top_workers"
     const val ARTICLE_LIST = "article_list"
+    const val DISPUTE = "dispute/{pesananId}"
 
     fun setupRoute(role: String) = "$SETUP?role=$role"
     fun verifyEmailRoute(email: String) = "verify_email?email=${Uri.encode(email)}"
@@ -59,4 +60,5 @@ object Routes {
     fun editServiceRoute(serviceId: String) = "edit_service/$serviceId"
     fun editPortfolioRoute(portfolioId: String) = "edit_portfolio/$portfolioId"
     fun searchRoute(focus: String = SEARCH_FOCUS_BROWSE) = "search?focus=$focus"
+    fun disputeRoute(pesananId: String) = "dispute/$pesananId"
 }

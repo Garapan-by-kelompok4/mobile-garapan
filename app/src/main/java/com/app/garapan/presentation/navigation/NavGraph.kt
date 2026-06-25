@@ -24,6 +24,7 @@ import com.app.garapan.presentation.screen.edit_project.EditProjectScreen
 import com.app.garapan.presentation.screen.edit_service.EditServiceScreen
 import com.app.garapan.presentation.screen.forgot_password.ForgotPasswordScreen
 import com.app.garapan.presentation.screen.jasa_detail.JasaDetailScreen
+import com.app.garapan.presentation.screen.dispute.DisputeScreen
 import com.app.garapan.presentation.screen.order_detail.OrderDetailScreen
 import com.app.garapan.presentation.screen.order_history.OrderHistoryScreen
 import com.app.garapan.presentation.screen.portfolio.PortfolioScreen
@@ -277,6 +278,12 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(Routes.ARTICLE_LIST) {
             ArticleListScreen(navController = navController)
+        }
+        composable(
+            route = Routes.DISPUTE,
+            arguments = listOf(navArgument("pesananId") { type = NavType.StringType })
+        ) {
+            DisputeScreen(navController = navController)
         }
     }
 }
