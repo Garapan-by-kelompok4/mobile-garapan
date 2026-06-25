@@ -7,6 +7,7 @@ import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.Jasa
 import com.app.garapan.domain.model.JasaStatus
 import com.app.garapan.domain.usecase.GetJasaDetailUseCase
+import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
 import com.app.garapan.presentation.util.CurrencyFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,6 +56,7 @@ data class JasaDetailUiState(
     val portfolios: List<JasaPortfolioItem> = emptyList(),
     val reviews: List<JasaReviewItem> = emptyList(),
     val ratingBreakdown: Map<Int, Int> = emptyMap(),
+    val isOwner: Boolean = false,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
@@ -62,15 +64,27 @@ data class JasaDetailUiState(
 @HiltViewModel
 class JasaDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val getJasaDetailUseCase: GetJasaDetailUseCase
+    private val getJasaDetailUseCase: GetJasaDetailUseCase,
+    observeCurrentUserUseCase: ObserveCurrentUserUseCase
 ) : ViewModel() {
 
     private val jasaId: String = savedStateHandle["jasaId"] ?: ""
+
+    private var currentUserId: String? = null
+    private var currentMahasiswaId: String? = null
+    private var loadedJasa: Jasa? = null
 
     private val _uiState = MutableStateFlow(JasaDetailUiState(isLoading = true))
     val uiState: StateFlow<JasaDetailUiState> = _uiState.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            observeCurrentUserUseCase().collect { user ->
+                currentUserId = user?.id
+                currentMahasiswaId = user?.mahasiswa?.id
+                loadedJasa?.let { jasa -> _uiState.value = jasa.toUiState(isJasaOwner(jasa)) }
+            }
+        }
         loadJasaDetail()
     }
 
@@ -89,7 +103,8 @@ class JasaDetailViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             when (val result = getJasaDetailUseCase(jasaId)) {
                 is Resource.Success -> {
-                    _uiState.value = result.data.toUiState()
+                    loadedJasa = result.data
+                    _uiState.value = result.data.toUiState(isJasaOwner(result.data))
                 }
                 is Resource.Error -> {
                     _uiState.update {
@@ -101,7 +116,18 @@ class JasaDetailViewModel @Inject constructor(
         }
     }
 
-    private fun Jasa.toUiState(): JasaDetailUiState {
+    private fun isJasaOwner(jasa: Jasa): Boolean {
+        val userId = currentUserId
+        if (!userId.isNullOrBlank() && jasa.workerUserId.isNotBlank() && jasa.workerUserId == userId) {
+            return true
+        }
+        val mahasiswaId = currentMahasiswaId
+        return !mahasiswaId.isNullOrBlank() &&
+            jasa.mahasiswaId.isNotBlank() &&
+            jasa.mahasiswaId == mahasiswaId
+    }
+
+    private fun Jasa.toUiState(isOwner: Boolean): JasaDetailUiState {
         val workerSubtitle = buildList {
             if (kategoriName.isNotBlank()) add(kategoriName)
             if (workerUniversity.isNotBlank()) add(workerUniversity)
@@ -130,6 +156,7 @@ class JasaDetailViewModel @Inject constructor(
                     imageUrl = item.imageUrl
                 )
             },
+            isOwner = isOwner,
             isLoading = false,
             errorMessage = null
         )
