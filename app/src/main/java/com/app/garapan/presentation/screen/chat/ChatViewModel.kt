@@ -2,13 +2,22 @@ package com.app.garapan.presentation.screen.chat
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.app.garapan.domain.common.Resource
+import com.app.garapan.domain.model.SupportMessage
+import com.app.garapan.domain.usecase.GetSupportThreadUseCase
+import com.app.garapan.domain.usecase.SendSupportMessageUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.time.Instant
 import java.time.LocalTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 import javax.inject.Inject
 
 sealed class ChatMessage {
@@ -49,15 +58,21 @@ data class ChatUiState(
     val supportLabel: String? = null,
     val dateSeparator: String = "Hari ini",
     val messages: List<ChatMessage> = emptyList(),
-    val inputText: String = ""
+    val inputText: String = "",
+    val isLoading: Boolean = false,
+    val isSending: Boolean = false,
+    val errorMessage: String? = null
 )
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    private val getSupportThreadUseCase: GetSupportThreadUseCase,
+    private val sendSupportMessageUseCase: SendSupportMessageUseCase
 ) : ViewModel() {
 
     private val workerId: String = savedStateHandle["workerId"] ?: "1"
+    private val isSupportThread = workerId == SUPPORT_WORKER_ID
 
     private val dummyData = mapOf(
         "1" to ChatUiState(
@@ -133,11 +148,21 @@ class ChatViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(dummyData[workerId] ?: dummyData["1"]!!)
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 
+    init {
+        if (isSupportThread) {
+            loadSupportThread()
+        }
+    }
+
     fun onInputChanged(text: String) = _uiState.update { it.copy(inputText = text) }
 
     fun onSend() {
         val text = _uiState.value.inputText.trim()
         if (text.isEmpty()) return
+        if (isSupportThread) {
+            sendSupportMessage(text)
+            return
+        }
         val sentTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
         _uiState.update {
             it.copy(
@@ -145,5 +170,90 @@ class ChatViewModel @Inject constructor(
                 inputText = ""
             )
         }
+    }
+
+    fun retry() {
+        if (isSupportThread) loadSupportThread()
+    }
+
+    private fun loadSupportThread() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            when (val result = getSupportThreadUseCase()) {
+                is Resource.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = null,
+                            messages = result.data.map { message -> message.toChatMessage() }
+                        )
+                    }
+                }
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = result.message
+                        )
+                    }
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    private fun sendSupportMessage(text: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSending = true, errorMessage = null) }
+            when (val result = sendSupportMessageUseCase(text)) {
+                is Resource.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            isSending = false,
+                            inputText = "",
+                            messages = it.messages + result.data.toChatMessage()
+                        )
+                    }
+                }
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isSending = false,
+                            errorMessage = result.message
+                        )
+                    }
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    private fun SupportMessage.toChatMessage(): ChatMessage =
+        if (isFromUser) {
+            ChatMessage.Sent(
+                text = message,
+                time = formatMessageTime(createdAt)
+            )
+        } else {
+            ChatMessage.Received(
+                text = message,
+                time = formatMessageTime(createdAt),
+                senderInitials = "LS"
+            )
+        }
+
+    private fun formatMessageTime(createdAt: String?): String {
+        if (createdAt.isNullOrBlank()) {
+            return LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
+        }
+        return runCatching {
+            Instant.parse(createdAt)
+                .atZone(ZoneId.systemDefault())
+                .format(DateTimeFormatter.ofPattern("HH:mm", Locale("id", "ID")))
+        }.getOrDefault(createdAt.take(5))
+    }
+
+    private companion object {
+        const val SUPPORT_WORKER_ID = "admin-1"
     }
 }

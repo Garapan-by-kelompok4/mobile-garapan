@@ -14,6 +14,7 @@ import com.app.garapan.data.repository.PortofolioRepositoryImpl
 import com.app.garapan.data.repository.ProjectRepositoryImpl
 import com.app.garapan.data.repository.SessionRepositoryImpl
 import com.app.garapan.data.repository.SkillRepositoryImpl
+import com.app.garapan.data.repository.SupportChatRepositoryImpl
 import com.app.garapan.data.repository.TopWorkerRepositoryImpl
 import com.app.garapan.data.repository.UsersRepositoryImpl
 import com.app.garapan.domain.repository.UsersRepository
@@ -27,6 +28,7 @@ import com.app.garapan.domain.repository.PortofolioRepository
 import com.app.garapan.domain.repository.ProjectRepository
 import com.app.garapan.domain.repository.SessionRepository
 import com.app.garapan.domain.repository.SkillRepository
+import com.app.garapan.domain.repository.SupportChatRepository
 import com.app.garapan.domain.repository.TopWorkerRepository
 import dagger.Binds
 import dagger.Module
@@ -91,6 +93,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSkillRepository(impl: SkillRepositoryImpl): SkillRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSupportChatRepository(impl: SupportChatRepositoryImpl): SupportChatRepository
 
     @Binds
     @Singleton
