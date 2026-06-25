@@ -1,8 +1,9 @@
 package com.app.garapan.presentation.screen.checkout
 
+import android.app.Activity
+import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,31 +17,42 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavController
+import coil3.compose.AsyncImage
+import com.app.garapan.presentation.navigation.Routes
+import com.app.garapan.presentation.payment.SnapPaymentLauncher
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
@@ -57,6 +69,46 @@ fun CheckoutScreen(
     viewModel: CheckoutViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val activity = context as? Activity
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var paymentLaunched by remember { mutableStateOf(false) }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME && paymentLaunched) {
+                paymentLaunched = false
+                viewModel.onReturnedFromPayment()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is CheckoutEvent.LaunchSnapPayment -> {
+                    if (activity == null) {
+                        Toast.makeText(context, "Tidak dapat membuka pembayaran.", Toast.LENGTH_SHORT).show()
+                        return@collect
+                    }
+                    paymentLaunched = true
+                    SnapPaymentLauncher.open(activity, event.snapToken)
+                }
+                is CheckoutEvent.NavigateToOrderDetail -> {
+                    navController.navigate(Routes.orderDetailRoute(event.pesananId)) {
+                        navController.currentBackStackEntry?.destination?.route?.let { route ->
+                            popUpTo(route) { inclusive = true }
+                        }
+                    }
+                }
+                is CheckoutEvent.ShowMessage -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     Scaffold(
         containerColor = Surface,
@@ -64,169 +116,183 @@ fun CheckoutScreen(
             CheckoutTopBar(onBack = { navController.navigateUp() })
         },
         bottomBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(White)
-                    .navigationBarsPadding()
-                    .padding(horizontal = 20.dp, vertical = 12.dp)
-            ) {
-                Button(
-                    onClick = {},
+            if (!uiState.isLoading && uiState.errorMessage == null) {
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(54.dp),
-                    shape = RoundedCornerShape(50.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = BrandNavy,
-                        contentColor = White
-                    ),
-                    enabled = uiState.selectedMethod != null
+                        .background(White)
+                        .navigationBarsPadding()
+                        .padding(horizontal = 20.dp, vertical = 12.dp)
                 ) {
-                    Text(
-                        text = "Bayar Sekarang",
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                    )
+                    Button(
+                        onClick = viewModel::onPayNowClicked,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp),
+                        shape = RoundedCornerShape(50.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = BrandNavy,
+                            contentColor = White
+                        ),
+                        enabled = !uiState.isProcessingPayment
+                    ) {
+                        if (uiState.isProcessingPayment) {
+                            CircularProgressIndicator(
+                                color = White,
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.height(22.dp)
+                            )
+                        } else {
+                            Text(
+                                text = "Bayar Sekarang",
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                            )
+                        }
+                    }
                 }
             }
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp)
-        ) {
-            // Order summary card
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(White)
-                    .padding(20.dp)
-            ) {
-                Text(
-                    text = "Ringkasan Pesanan",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryText
+        when {
+            uiState.isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = BrandNavy)
+                }
+            }
+            uiState.errorMessage != null -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = uiState.errorMessage.orEmpty(),
+                        style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
                     )
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(LightGray),
-                        contentAlignment = Alignment.Center
-                    ) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = viewModel::retry) {
+                        Text("Coba Lagi")
+                    }
+                }
+            }
+            else -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 16.dp)
+                ) {
+                    uiState.statusMessage?.let { message ->
                         Text(
-                            text = "//",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                color = MutedText,
-                                fontWeight = FontWeight.Bold
-                            )
+                            text = message,
+                            style = MaterialTheme.typography.bodySmall.copy(color = AccentBlue),
+                            modifier = Modifier.padding(bottom = 12.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(White)
+                            .padding(20.dp)
+                    ) {
                         Text(
-                            text = uiState.serviceName,
-                            style = MaterialTheme.typography.bodyMedium.copy(
+                            text = "Ringkasan Pesanan",
+                            style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = PrimaryText
                             )
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "Oleh ",
-                            style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
-                        )
-                        Text(
-                            text = uiState.workerName,
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = AccentBlue,
-                                fontWeight = FontWeight.SemiBold
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (uiState.imageUrl.isNotBlank()) {
+                                AsyncImage(
+                                    model = uiState.imageUrl,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(56.dp)
+                                        .clip(RoundedCornerShape(8.dp)),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .size(56.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(LightGray),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "//",
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            color = MutedText,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = uiState.serviceName,
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = PrimaryText
+                                    )
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Oleh ${uiState.workerName}",
+                                    style = MaterialTheme.typography.bodySmall.copy(color = AccentBlue)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        HorizontalDivider(color = BorderColor)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        PriceRow(label = "Harga Layanan", value = uiState.servicePrice)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        HorizontalDivider(color = BorderColor)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Total Pembayaran",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = PrimaryText
+                                ),
+                                modifier = Modifier.weight(1f)
                             )
-                        )
+                            Text(
+                                text = uiState.total,
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = AccentBlue
+                                )
+                            )
+                        }
                     }
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider(color = BorderColor)
-                Spacer(modifier = Modifier.height(16.dp))
-                PriceRow(label = "Harga Layanan", value = uiState.servicePrice)
-                Spacer(modifier = Modifier.height(8.dp))
-                PriceRow(label = "Biaya Platform (5%)", value = uiState.platformFee)
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider(color = BorderColor)
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+
+                    Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "Total Pembayaran",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = PrimaryText
-                        ),
-                        modifier = Modifier.weight(1f)
-                    )
-                    Text(
-                        text = uiState.total,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            color = AccentBlue
-                        )
+                        text = "Metode pembayaran dipilih di halaman Midtrans setelah Anda mengetuk Bayar Sekarang.",
+                        style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
                     )
                 }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Payment method card
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(White)
-                    .padding(20.dp)
-            ) {
-                Text(
-                    text = "Metode Pembayaran",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryText
-                    )
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                PaymentMethodOption(
-                    label = "GoPay",
-                    badgeText = "G",
-                    badgeColor = androidx.compose.ui.graphics.Color(0xFF00AED6),
-                    selected = uiState.selectedMethod == PaymentMethod.GOPAY,
-                    onClick = { viewModel.onPaymentMethodSelected(PaymentMethod.GOPAY) }
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                PaymentMethodOption(
-                    label = "OVO",
-                    badgeText = "O",
-                    badgeColor = androidx.compose.ui.graphics.Color(0xFF4C3494),
-                    selected = uiState.selectedMethod == PaymentMethod.OVO,
-                    onClick = { viewModel.onPaymentMethodSelected(PaymentMethod.OVO) }
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                PaymentMethodOption(
-                    label = "QRIS",
-                    badgeText = "Q",
-                    badgeColor = androidx.compose.ui.graphics.Color(0xFF1A1A1A),
-                    selected = uiState.selectedMethod == PaymentMethod.QRIS,
-                    onClick = { viewModel.onPaymentMethodSelected(PaymentMethod.QRIS) }
-                )
             }
         }
     }
@@ -274,58 +340,5 @@ private fun PriceRow(label: String, value: String) {
                 color = PrimaryText
             )
         )
-    }
-}
-
-@Composable
-private fun PaymentMethodOption(
-    label: String,
-    badgeText: String,
-    badgeColor: androidx.compose.ui.graphics.Color,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .border(1.dp, if (selected) AccentBlue else BorderColor, RoundedCornerShape(10.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        RadioButton(
-            selected = selected,
-            onClick = onClick,
-            colors = RadioButtonDefaults.colors(
-                selectedColor = AccentBlue,
-                unselectedColor = BorderColor
-            ),
-            modifier = Modifier.size(20.dp)
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = FontWeight.SemiBold,
-                color = PrimaryText
-            ),
-            modifier = Modifier.weight(1f)
-        )
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(badgeColor),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = badgeText,
-                style = MaterialTheme.typography.labelMedium.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    color = White
-                )
-            )
-        }
     }
 }

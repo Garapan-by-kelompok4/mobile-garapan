@@ -23,6 +23,8 @@ android {
 
         // Emulator fallback: "http://10.0.2.2:3000/"
         buildConfigField("String", "BASE_URL", "\"https://api-garapan.up.railway.app/\"")
+        buildConfigField("String", "MIDTRANS_CLIENT_KEY", "\"Mid-client-y2bz5f9k8mDJK5b2\"")
+        buildConfigField("boolean", "MIDTRANS_IS_SANDBOX", "true")
     }
 
     signingConfigs {
@@ -133,8 +135,8 @@ dependencies {
     // implementation(libs.firebase.messaging.ktx)
     // implementation(libs.firebase.analytics.ktx)
 
-    // Midtrans (in-app payment UI)
-    implementation(libs.midtrans.uikit)
+    // Snap payment page (Custom Tabs — avoids native Midtrans SDK theme crashes)
+    implementation(libs.androidx.browser)
 
     // Tests
     testImplementation(libs.junit)
