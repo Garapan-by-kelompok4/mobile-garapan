@@ -139,8 +139,24 @@ fun PostProjectScreen(
                             )
                         )
                         Spacer(modifier = Modifier.height(10.dp))
+                        when {
+                            uiState.isCategoryLoading -> {
+                                Text(
+                                    text = "Memuat kategori...",
+                                    style = MaterialTheme.typography.bodySmall.copy(color = MutedText)
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                            }
+                            uiState.categoryErrorMessage != null -> {
+                                Text(
+                                    text = "Gagal memuat kategori. Menampilkan kategori bawaan.",
+                                    style = MaterialTheme.typography.bodySmall.copy(color = MutedText)
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                            }
+                        }
                         CategoryChips(
-                            categories = viewModel.categories,
+                            categories = uiState.categories,
                             selectedCategory = uiState.selectedCategory,
                             onCategorySelected = viewModel::onCategorySelected
                         )
