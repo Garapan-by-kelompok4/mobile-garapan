@@ -57,7 +57,7 @@ class AddPortfolioViewModel @Inject constructor(
     fun onDescriptionChanged(value: String) = _uiState.update { it.copy(description = value) }
     fun onProjectUrlChanged(value: String) = _uiState.update { it.copy(projectUrl = value) }
 
-    fun onImageSelected(uri: Uri, rawBytes: ByteArray?, readContext: Context = context) {
+    fun onImageSelected(uri: Uri, readContext: Context = context) {
         _uiState.update {
             it.copy(
                 imageUri = uri,
@@ -68,16 +68,7 @@ class AddPortfolioViewModel @Inject constructor(
         }
         viewModelScope.launch {
             val result = withContext(Dispatchers.Default) {
-                if (rawBytes != null) {
-                    PortfolioImageReader.readCompressedFromBytes(
-                        bytes = rawBytes,
-                        fileName = fileNameFromUri(uri),
-                        context = readContext,
-                        uri = uri
-                    )
-                } else {
-                    PortfolioImageReader.readCompressedWithResult(readContext, uri)
-                }
+                PortfolioImageReader.readCompressedWithResult(readContext, uri)
             }
             _uiState.update { state ->
                 when (result) {
@@ -151,13 +142,5 @@ class AddPortfolioViewModel @Inject constructor(
                 Resource.Loading -> Unit
             }
         }
-    }
-
-    private fun fileNameFromUri(uri: Uri): String {
-        return uri.lastPathSegment
-            ?.substringAfterLast('/')
-            ?.takeIf { it.isNotBlank() }
-            ?.let { if (it.contains('.')) it.substringBeforeLast('.') + ".jpg" else "$it.jpg" }
-            ?: "portfolio.jpg"
     }
 }

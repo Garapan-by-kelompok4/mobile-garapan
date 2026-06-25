@@ -15,8 +15,9 @@ import kotlin.math.roundToInt
 
 object PortfolioImageReader {
     const val MAX_BYTES = 5_000_000
-    private const val MAX_DIMENSION = 1920
-    private const val JPEG_QUALITY = 82
+    private const val MAX_DIMENSION = 1280
+    private const val JPEG_QUALITY = 76
+    private const val UPLOAD_TARGET_BYTES = 300_000
 
     fun readUriBytes(context: Context, uri: Uri): ByteArray? {
         runCatching {
@@ -38,23 +39,20 @@ object PortfolioImageReader {
 
     fun readCompressedWithResult(context: Context, uri: Uri): PortfolioImageReadResult {
         val fileName = resolveFileName(uri)
-        val rawBytes = readUriBytes(context, uri)
-        if (rawBytes != null) {
-            val fromBytes = readCompressedFromBytes(rawBytes, fileName, context, uri)
-            if (fromBytes is PortfolioImageReadResult.Success) return fromBytes
-        }
 
         val decoded = readWithBitmapFactory(context, uri)
             ?: decodeWithImageDecoder(context, uri)
-        if (decoded == null) {
-            return PortfolioImageReadResult.Failure(
-                stage = "decode",
-                detail = if (rawBytes == null) "uri_unreadable" else "all_decode_failed"
-            )
+        if (decoded != null) {
+            return compressBitmap(decoded, fileName)?.let { PortfolioImageReadResult.Success(it) }
+                ?: PortfolioImageReadResult.Failure(stage = "compress", detail = "output_invalid")
         }
 
-        return compressBitmap(decoded, fileName)?.let { PortfolioImageReadResult.Success(it) }
-            ?: PortfolioImageReadResult.Failure(stage = "compress", detail = "output_invalid")
+        val rawBytes = readUriBytes(context, uri)
+            ?: return PortfolioImageReadResult.Failure(
+                stage = "decode",
+                detail = "uri_unreadable"
+            )
+        return readCompressedFromBytes(rawBytes, fileName, context, uri)
     }
 
     fun readCompressedFromBytes(
@@ -175,7 +173,7 @@ object PortfolioImageReader {
                 output = stream.toByteArray()
             }
             if (!compressSucceeded) break
-            if (output.size <= MAX_BYTES) break
+            if (output.size <= UPLOAD_TARGET_BYTES) break
             quality -= 10
         }
 

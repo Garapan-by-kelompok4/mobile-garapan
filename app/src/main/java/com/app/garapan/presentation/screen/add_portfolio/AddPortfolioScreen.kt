@@ -47,7 +47,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
-import com.app.garapan.data.util.PortfolioImageReader
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
@@ -69,8 +68,7 @@ fun AddPortfolioScreen(
         contract = PickVisualMedia()
     ) { uri ->
         uri?.let { pickedUri ->
-            val rawBytes = PortfolioImageReader.readUriBytes(context, pickedUri)
-            viewModel.onImageSelected(pickedUri, rawBytes, context)
+            viewModel.onImageSelected(pickedUri, context)
         }
     }
 

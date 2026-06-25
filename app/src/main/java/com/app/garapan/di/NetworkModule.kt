@@ -7,6 +7,7 @@ import com.app.garapan.data.remote.api.PortofolioApi
 import com.app.garapan.data.remote.api.UsersApi
 import com.app.garapan.data.remote.interceptor.AuthInterceptor
 import com.app.garapan.data.remote.interceptor.AuthTokenAuthenticator
+import com.app.garapan.data.remote.interceptor.MultipartUploadBufferInterceptor
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
@@ -38,6 +39,7 @@ object NetworkModule {
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(90, TimeUnit.SECONDS)
             .writeTimeout(120, TimeUnit.SECONDS)
+            .addInterceptor(MultipartUploadBufferInterceptor())
             .addInterceptor(authInterceptor)
             .authenticator(authenticator)
 
