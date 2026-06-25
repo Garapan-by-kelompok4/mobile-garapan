@@ -11,6 +11,7 @@ import com.app.garapan.domain.usecase.CompletePesananUseCase
 import com.app.garapan.domain.usecase.CreatePaymentTokenUseCase
 import com.app.garapan.domain.usecase.DeliverPesananUseCase
 import com.app.garapan.domain.usecase.GetPesananDetailUseCase
+import com.app.garapan.domain.usecase.GetReviewsUseCase
 import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
 import com.app.garapan.domain.usecase.WaitForPesananPaymentUseCase
 import com.app.garapan.presentation.util.CurrencyFormatter
@@ -29,6 +30,7 @@ import javax.inject.Inject
 
 data class OrderDetailUiState(
     val id: String = "",
+    val jasaId: String? = null,
     val title: String = "",
     val counterpartyName: String = "",
     val counterpartyLabel: String = "",
@@ -38,6 +40,9 @@ data class OrderDetailUiState(
     val createdAt: String = "",
     val canDeliver: Boolean = false,
     val canComplete: Boolean = false,
+    val canReview: Boolean = false,
+    val existingReviewId: String? = null,
+    val reviewButtonLabel: String = "Beri Ulasan",
     val canPay: Boolean = false,
     val isLoading: Boolean = false,
     val isActionLoading: Boolean = false,
@@ -47,6 +52,7 @@ data class OrderDetailUiState(
 
 sealed interface OrderDetailEvent {
     data class LaunchSnapPayment(val snapToken: String) : OrderDetailEvent
+    data class NavigateToReview(val pesananId: String) : OrderDetailEvent
     data class ShowMessage(val message: String) : OrderDetailEvent
 }
 
@@ -58,11 +64,15 @@ class OrderDetailViewModel @Inject constructor(
     private val completePesananUseCase: CompletePesananUseCase,
     private val createPaymentTokenUseCase: CreatePaymentTokenUseCase,
     private val waitForPesananPaymentUseCase: WaitForPesananPaymentUseCase,
+    private val getReviewsUseCase: GetReviewsUseCase,
     observeCurrentUserUseCase: ObserveCurrentUserUseCase
 ) : ViewModel() {
 
     private val pesananId: String = savedStateHandle["pesananId"] ?: ""
     private var currentRole: Role? = null
+    private var currentUserId: String? = null
+    private var currentUserEmail: String? = null
+    private var currentClientName: String? = null
     private var awaitingPaymentReturn: Boolean = false
 
     private val _uiState = MutableStateFlow(OrderDetailUiState(isLoading = true))
@@ -75,12 +85,16 @@ class OrderDetailViewModel @Inject constructor(
         viewModelScope.launch {
             observeCurrentUserUseCase().collect { user ->
                 currentRole = user?.role
+                currentUserId = user?.id
+                currentUserEmail = user?.email
+                currentClientName = user?.klien?.companyName
                 _uiState.value.let { state ->
                     if (state.id.isNotBlank()) {
                         _uiState.update {
                             it.copy(
                                 canDeliver = canDeliver(state.statusRaw),
                                 canComplete = canComplete(state.statusRaw),
+                                canReview = canReview(state.statusRaw, state.jasaId),
                                 canPay = canPay(state.statusRaw)
                             )
                         }
@@ -226,6 +240,9 @@ class OrderDetailViewModel @Inject constructor(
                 is Resource.Success -> {
                     applyPesanan(result.data)
                     _events.emit(OrderDetailEvent.ShowMessage("Pesanan selesai. Dana telah dilepas."))
+                    if (!result.data.jasaId.isNullOrBlank()) {
+                        _events.emit(OrderDetailEvent.NavigateToReview(result.data.id))
+                    }
                 }
                 is Resource.Error -> {
                     _uiState.update {
@@ -237,6 +254,13 @@ class OrderDetailViewModel @Inject constructor(
                 }
                 Resource.Loading -> Unit
             }
+        }
+    }
+
+    fun onReviewClicked() {
+        if (pesananId.isBlank()) return
+        viewModelScope.launch {
+            _events.emit(OrderDetailEvent.NavigateToReview(pesananId))
         }
     }
 
@@ -252,7 +276,10 @@ class OrderDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             when (val result = getPesananDetailUseCase(pesananId)) {
-                is Resource.Success -> applyPesanan(result.data)
+                is Resource.Success -> {
+                    applyPesanan(result.data)
+                    loadExistingReview(result.data.jasaId, result.data.id, result.data.status)
+                }
                 is Resource.Error -> {
                     _uiState.update {
                         it.copy(
@@ -266,12 +293,37 @@ class OrderDetailViewModel @Inject constructor(
         }
     }
 
+    private suspend fun loadExistingReview(jasaId: String?, pesananId: String, status: PesananStatus) {
+        if (!canReview(status, jasaId)) return
+        when (val result = getReviewsUseCase(jasaId.orEmpty())) {
+            is Resource.Success -> {
+                val userId = currentUserId
+                val reviewerLabels = listOfNotNull(currentUserEmail, currentClientName)
+                    .filter { it.isNotBlank() }
+                val existingReview = result.data.firstOrNull { review ->
+                    review.pesananId == pesananId ||
+                        (!userId.isNullOrBlank() && review.reviewerId == userId) ||
+                        reviewerLabels.any { it == review.reviewerName }
+                }
+                _uiState.update {
+                    it.copy(
+                        existingReviewId = existingReview?.id,
+                        reviewButtonLabel = if (existingReview != null) "Edit Ulasan" else "Beri Ulasan"
+                    )
+                }
+            }
+            is Resource.Error -> Unit
+            Resource.Loading -> Unit
+        }
+    }
+
     private fun applyPesanan(pesanan: com.app.garapan.domain.model.Pesanan) {
         val role = currentRole
         val isMahasiswa = role == Role.MAHASISWA
         _uiState.update {
             it.copy(
                 id = pesanan.id,
+                jasaId = pesanan.jasaId,
                 title = PesananDisplayMapper.orderTitle(pesanan.jasaTitle, pesanan.projectId),
                 counterpartyName = if (isMahasiswa) pesanan.clientLabel else pesanan.workerName,
                 counterpartyLabel = if (isMahasiswa) "Klien" else "Freelancer",
@@ -281,6 +333,9 @@ class OrderDetailViewModel @Inject constructor(
                 createdAt = PesananDisplayMapper.formatOrderDate(pesanan.createdAt),
                 canDeliver = canDeliver(pesanan.status),
                 canComplete = canComplete(pesanan.status),
+                canReview = canReview(pesanan.status, pesanan.jasaId),
+                existingReviewId = null,
+                reviewButtonLabel = "Beri Ulasan",
                 canPay = canPay(pesanan.status),
                 isLoading = false,
                 isActionLoading = false,
@@ -294,6 +349,9 @@ class OrderDetailViewModel @Inject constructor(
 
     private fun canComplete(status: PesananStatus): Boolean =
         currentRole == Role.KLIEN && status == PesananStatus.DELIVERED
+
+    private fun canReview(status: PesananStatus, jasaId: String?): Boolean =
+        currentRole == Role.KLIEN && status == PesananStatus.COMPLETED && !jasaId.isNullOrBlank()
 
     private fun canPay(status: PesananStatus): Boolean =
         currentRole == Role.KLIEN && status == PesananStatus.PENDING

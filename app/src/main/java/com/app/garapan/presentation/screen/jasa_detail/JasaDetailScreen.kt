@@ -427,7 +427,7 @@ fun JasaDetailScreen(
             }
 
             // Ulasan Pelanggan section
-            if (uiState.reviews.isNotEmpty()) {
+            if (uiState.reviews.isNotEmpty() || uiState.reviewsErrorMessage != null) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -442,30 +442,37 @@ fun JasaDetailScreen(
                         )
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    RatingSummary(
-                        rating = uiState.rating,
-                        reviewCount = uiState.reviewCount,
-                        breakdown = uiState.ratingBreakdown
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    uiState.reviews.forEach { review ->
-                        ReviewCard(review = review)
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    OutlinedButton(
-                        onClick = {},
-                        modifier = Modifier.fillMaxWidth().height(48.dp),
-                        shape = RoundedCornerShape(50.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, BorderColor)
-                    ) {
+                    uiState.reviewsErrorMessage?.let { message ->
                         Text(
-                            text = "Lihat Semua Ulasan",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                color = PrimaryText
-                            )
+                            text = message,
+                            style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
                         )
+                    } ?: run {
+                        RatingSummary(
+                            rating = uiState.rating,
+                            reviewCount = uiState.reviewCount,
+                            breakdown = uiState.ratingBreakdown
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        uiState.reviews.forEach { review ->
+                            ReviewCard(review = review)
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedButton(
+                            onClick = { navController.navigate(Routes.allReviewsRoute(uiState.id)) },
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                            shape = RoundedCornerShape(50.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, BorderColor)
+                        ) {
+                            Text(
+                                text = "Lihat Semua Ulasan",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = PrimaryText
+                                )
+                            )
+                        }
                     }
                 }
                 Spacer(modifier = Modifier.height(12.dp))
