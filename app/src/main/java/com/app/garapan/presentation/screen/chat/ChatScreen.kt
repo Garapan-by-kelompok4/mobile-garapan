@@ -37,9 +37,11 @@ import androidx.compose.material.icons.outlined.RemoveRedEye
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -88,33 +90,85 @@ fun ChatScreen(
             ChatInputBar(
                 value = uiState.inputText,
                 onValueChange = viewModel::onInputChanged,
-                onSend = viewModel::onSend
+                onSend = viewModel::onSend,
+                enabled = !uiState.isLoading && !uiState.isSending,
+                isSending = uiState.isSending
             )
         }
     ) { innerPadding ->
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 16.dp)
-        ) {
-            item {
-                DateSeparator(label = uiState.dateSeparator)
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = BrandNavy)
             }
-            items(uiState.messages) { message ->
-                when (message) {
-                    is ChatMessage.JasaCard -> JasaContextCard(message = message)
-                    is ChatMessage.Sent -> SentBubble(message = message)
-                    is ChatMessage.Received -> ReceivedBubble(
-                        message = message,
-                        isAdminSupport = uiState.isAdminSupport
-                    )
-                    is ChatMessage.FileAndOrderConfirmation -> FileAndOrderConfirmationBubble(message = message, onCheckout = onCheckout)
+        } else {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 16.dp)
+            ) {
+                uiState.errorMessage?.let { message ->
+                    item {
+                        ErrorBanner(
+                            message = message,
+                            onRetry = viewModel::retry
+                        )
+                    }
+                }
+                item {
+                    DateSeparator(label = uiState.dateSeparator)
+                }
+                items(uiState.messages) { message ->
+                    when (message) {
+                        is ChatMessage.JasaCard -> JasaContextCard(message = message)
+                        is ChatMessage.Sent -> SentBubble(message = message)
+                        is ChatMessage.Received -> ReceivedBubble(
+                            message = message,
+                            isAdminSupport = uiState.isAdminSupport
+                        )
+                        is ChatMessage.FileAndOrderConfirmation -> FileAndOrderConfirmationBubble(message = message, onCheckout = onCheckout)
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ErrorBanner(
+    message: String,
+    onRetry: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFFEF4444).copy(alpha = 0.1f))
+            .border(1.dp, Color(0xFFEF4444).copy(alpha = 0.18f), RoundedCornerShape(12.dp))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = message,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodySmall.copy(color = PrimaryText)
+        )
+        TextButton(onClick = onRetry) {
+            Text(
+                text = "Coba lagi",
+                style = MaterialTheme.typography.labelMedium.copy(
+                    color = AccentBlue,
+                    fontWeight = FontWeight.Bold
+                )
+            )
         }
     }
 }
@@ -624,7 +678,9 @@ private fun FileAndOrderConfirmationBubble(message: ChatMessage.FileAndOrderConf
 private fun ChatInputBar(
     value: String,
     onValueChange: (String) -> Unit,
-    onSend: () -> Unit
+    onSend: () -> Unit,
+    enabled: Boolean,
+    isSending: Boolean
 ) {
     Row(
         modifier = Modifier
@@ -669,7 +725,8 @@ private fun ChatInputBar(
                 onValueChange = onValueChange,
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = MaterialTheme.typography.bodyMedium.copy(color = PrimaryText),
-                cursorBrush = SolidColor(BrandNavy)
+                cursorBrush = SolidColor(BrandNavy),
+                enabled = enabled
             )
         }
         Spacer(modifier = Modifier.width(10.dp))
@@ -677,16 +734,27 @@ private fun ChatInputBar(
             modifier = Modifier
                 .size(44.dp)
                 .clip(CircleShape)
-                .background(BrandNavy),
+                .background(if (enabled) BrandNavy else MutedText),
             contentAlignment = Alignment.Center
         ) {
-            IconButton(onClick = onSend) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Send,
-                    contentDescription = "Send",
-                    tint = White,
-                    modifier = Modifier.size(20.dp)
-                )
+            IconButton(
+                onClick = onSend,
+                enabled = enabled
+            ) {
+                if (isSending) {
+                    CircularProgressIndicator(
+                        color = White,
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(18.dp)
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Send,
+                        contentDescription = "Send",
+                        tint = White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }
