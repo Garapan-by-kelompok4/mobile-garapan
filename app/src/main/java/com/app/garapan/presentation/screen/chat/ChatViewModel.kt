@@ -8,10 +8,13 @@ import com.app.garapan.domain.model.SupportMessage
 import com.app.garapan.domain.usecase.GetSupportThreadUseCase
 import com.app.garapan.domain.usecase.SendSupportMessageUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalTime
@@ -148,6 +151,8 @@ class ChatViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(dummyData[workerId] ?: dummyData["1"]!!)
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 
+    private var pollJob: Job? = null
+
     init {
         if (isSupportThread) {
             loadSupportThread()
@@ -176,29 +181,54 @@ class ChatViewModel @Inject constructor(
         if (isSupportThread) loadSupportThread()
     }
 
-    private fun loadSupportThread() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = getSupportThreadUseCase()) {
-                is Resource.Success -> {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = null,
-                            messages = result.data.map { message -> message.toChatMessage() }
-                        )
-                    }
+    /** Starts silently polling the thread so admin replies appear without leaving the screen. */
+    fun startPolling() {
+        if (!isSupportThread) return
+        if (pollJob?.isActive == true) return
+        pollJob = viewModelScope.launch {
+            while (isActive) {
+                delay(POLL_INTERVAL_MS)
+                if (!_uiState.value.isSending) {
+                    fetchThread(showLoading = false, surfaceError = false)
                 }
-                is Resource.Error -> {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = result.message
-                        )
-                    }
-                }
-                Resource.Loading -> Unit
             }
+        }
+    }
+
+    fun stopPolling() {
+        pollJob?.cancel()
+        pollJob = null
+    }
+
+    private fun loadSupportThread() {
+        viewModelScope.launch { fetchThread(showLoading = true, surfaceError = true) }
+    }
+
+    private suspend fun fetchThread(showLoading: Boolean, surfaceError: Boolean) {
+        if (showLoading) {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+        }
+        when (val result = getSupportThreadUseCase()) {
+            is Resource.Success -> {
+                val mapped = result.data.map { message -> message.toChatMessage() }
+                _uiState.update { state ->
+                    // Avoid needless recomposition when a poll returns the same thread.
+                    if (!showLoading && state.messages == mapped && state.errorMessage == null) {
+                        state.copy(isLoading = false)
+                    } else {
+                        state.copy(isLoading = false, errorMessage = null, messages = mapped)
+                    }
+                }
+            }
+            is Resource.Error -> {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = if (surfaceError) result.message else it.errorMessage
+                    )
+                }
+            }
+            Resource.Loading -> Unit
         }
     }
 
@@ -207,13 +237,9 @@ class ChatViewModel @Inject constructor(
             _uiState.update { it.copy(isSending = true, errorMessage = null) }
             when (val result = sendSupportMessageUseCase(text)) {
                 is Resource.Success -> {
-                    _uiState.update {
-                        it.copy(
-                            isSending = false,
-                            inputText = "",
-                            messages = it.messages + result.data.toChatMessage()
-                        )
-                    }
+                    // Re-fetch the canonical thread so our message (and any reply) ordering matches the server.
+                    fetchThread(showLoading = false, surfaceError = false)
+                    _uiState.update { it.copy(isSending = false, inputText = "") }
                 }
                 is Resource.Error -> {
                     _uiState.update {
@@ -255,5 +281,6 @@ class ChatViewModel @Inject constructor(
 
     private companion object {
         const val SUPPORT_WORKER_ID = "admin-1"
+        const val POLL_INTERVAL_MS = 4_000L
     }
 }
