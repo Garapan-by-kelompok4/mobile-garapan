@@ -1,7 +1,12 @@
 package com.app.garapan.presentation.screen.edit_profile
 
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,10 +24,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -31,18 +40,23 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil3.compose.AsyncImage
+import com.app.garapan.domain.model.ProfileStatus
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BrandNavy
 import com.app.garapan.ui.theme.MutedText
@@ -57,6 +71,24 @@ fun EditProfileScreen(
     viewModel: EditProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    val avatarPicker = rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
+        if (uri != null) viewModel.onAvatarSelected(uri)
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is EditProfileEvent.ShowMessage ->
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                EditProfileEvent.Saved -> {
+                    Toast.makeText(context, "Profil berhasil disimpan.", Toast.LENGTH_SHORT).show()
+                    navController.navigateUp()
+                }
+            }
+        }
+    }
 
     Scaffold(containerColor = Surface) { innerPadding ->
         Column(
@@ -72,7 +104,16 @@ fun EditProfileScreen(
                     .padding(horizontal = 16.dp)
             ) {
                 Spacer(modifier = Modifier.height(8.dp))
-                EditProfileAvatar()
+                EditProfileAvatar(
+                    avatarUrl = uiState.avatarUrl,
+                    initials = uiState.initials,
+                    isUploading = uiState.isUploadingAvatar,
+                    onPickImage = {
+                        avatarPicker.launch(
+                            PickVisualMediaRequest(PickVisualMedia.ImageOnly)
+                        )
+                    }
+                )
                 Spacer(modifier = Modifier.height(28.dp))
 
                 Text(
@@ -110,25 +151,28 @@ fun EditProfileScreen(
                             keyboardType = KeyboardType.Phone
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        EditProfileField(
-                            label = "Status",
-                            value = uiState.status,
-                            placeholder = "Individu",
-                            onValueChange = viewModel::onStatusChanged
+                        EditProfileStatusField(
+                            status = uiState.status,
+                            expanded = uiState.isStatusDropdownExpanded,
+                            onToggle = viewModel::onStatusDropdownToggle,
+                            onDismiss = viewModel::onStatusDropdownDismiss,
+                            onSelect = viewModel::onStatusSelected
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        EditProfileField(
-                            label = "Perusahaan / Organisasi / Proyek",
-                            value = uiState.organization,
-                            placeholder = "Nama PT / Nama Org / Nama Proyek",
-                            onValueChange = viewModel::onOrganizationChanged
-                        )
+                        if (uiState.isKlien) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            EditProfileField(
+                                label = "Perusahaan / Organisasi / Proyek",
+                                value = uiState.organization,
+                                placeholder = "Nama PT / Nama Org / Nama Proyek",
+                                onValueChange = viewModel::onOrganizationChanged
+                            )
+                        }
                         Spacer(modifier = Modifier.height(16.dp))
                         EditProfileField(
                             label = "Social accounts",
-                            value = uiState.socialAccount,
+                            value = uiState.linkedinUrl,
                             placeholder = "Link LinkedIn",
-                            onValueChange = viewModel::onSocialAccountChanged,
+                            onValueChange = viewModel::onLinkedinUrlChanged,
                             keyboardType = KeyboardType.Uri
                         )
                     }
@@ -137,7 +181,8 @@ fun EditProfileScreen(
             }
 
             Button(
-                onClick = {},
+                onClick = viewModel::onSave,
+                enabled = !uiState.isSaving && !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
@@ -149,10 +194,18 @@ fun EditProfileScreen(
                 ),
                 shape = RoundedCornerShape(50.dp)
             ) {
-                Text(
-                    text = "Simpan",
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
-                )
+                if (uiState.isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(22.dp),
+                        color = White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = "Simpan",
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                }
             }
         }
     }
@@ -185,7 +238,12 @@ private fun EditProfileTopBar(onBack: () -> Unit) {
 }
 
 @Composable
-private fun EditProfileAvatar() {
+private fun EditProfileAvatar(
+    avatarUrl: String?,
+    initials: String,
+    isUploading: Boolean,
+    onPickImage: () -> Unit
+) {
     Box(
         modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
@@ -198,13 +256,35 @@ private fun EditProfileAvatar() {
                 .border(2.dp, BrandNavy, CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "ML",
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    color = BrandNavy
+            if (avatarUrl != null) {
+                AsyncImage(
+                    model = avatarUrl,
+                    contentDescription = "Profile photo",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(112.dp)
+                        .clip(CircleShape)
                 )
-            )
+            } else {
+                Text(
+                    text = initials,
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = BrandNavy
+                    )
+                )
+            }
+            if (isUploading) {
+                Box(
+                    modifier = Modifier
+                        .size(112.dp)
+                        .clip(CircleShape)
+                        .background(BrandNavy.copy(alpha = 0.35f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = White, strokeWidth = 2.dp)
+                }
+            }
         }
         Box(
             modifier = Modifier
@@ -212,7 +292,8 @@ private fun EditProfileAvatar() {
                 .size(30.dp)
                 .clip(CircleShape)
                 .background(BrandNavy)
-                .border(2.dp, White, CircleShape),
+                .border(2.dp, White, CircleShape)
+                .clickable(enabled = !isUploading, onClick = onPickImage),
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -269,5 +350,59 @@ private fun EditProfileField(
             shape = RoundedCornerShape(8.dp),
             textStyle = MaterialTheme.typography.bodyMedium
         )
+    }
+}
+
+@Composable
+private fun EditProfileStatusField(
+    status: ProfileStatus?,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    onDismiss: () -> Unit,
+    onSelect: (ProfileStatus) -> Unit
+) {
+    Column {
+        Text(
+            text = "Status",
+            style = MaterialTheme.typography.labelMedium.copy(
+                fontWeight = FontWeight.Medium,
+                color = PrimaryText
+            )
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Box {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Surface)
+                    .clickable(onClick = onToggle)
+                    .padding(horizontal = 16.dp, vertical = 18.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = status?.label ?: "Individu",
+                    color = if (status != null) PrimaryText else MutedText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    imageVector = Icons.Filled.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = MutedText
+                )
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = onDismiss
+            ) {
+                profileStatusOptions.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option.label) },
+                        onClick = { onSelect(option) }
+                    )
+                }
+            }
+        }
     }
 }
