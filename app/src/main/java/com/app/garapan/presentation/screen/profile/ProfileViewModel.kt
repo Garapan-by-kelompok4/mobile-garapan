@@ -21,7 +21,8 @@ import javax.inject.Inject
 data class ProfileUiState(
     val name: String = "",
     val email: String = "",
-    val role: Role? = null
+    val role: Role? = null,
+    val avatarUrl: String? = null
 )
 
 sealed interface ProfileEvent {
@@ -47,7 +48,8 @@ class ProfileViewModel @Inject constructor(
                     it.copy(
                         name = user.resolveDisplayName().ifBlank { it.name },
                         email = user?.email.orEmpty().ifBlank { it.email },
-                        role = user?.role
+                        role = user?.role,
+                        avatarUrl = user?.avatarUrl
                     )
                 }
             }
