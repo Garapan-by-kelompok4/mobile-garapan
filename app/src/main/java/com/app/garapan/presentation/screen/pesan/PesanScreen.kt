@@ -41,7 +41,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,7 +72,7 @@ fun PesanScreen(
     navController: NavController,
     viewModel: PesanViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
         containerColor = Surface
@@ -99,7 +99,7 @@ fun PesanScreen(
                 Spacer(modifier = Modifier.height(10.dp))
             }
 
-            items(uiState.adminChats) { chat ->
+            items(uiState.adminChats, key = { it.id }) { chat ->
                 ChatPreviewCard(
                     chat = chat,
                     modifier = Modifier.padding(horizontal = 16.dp),
@@ -116,7 +116,7 @@ fun PesanScreen(
                 Spacer(modifier = Modifier.height(10.dp))
             }
 
-            items(uiState.peopleChats) { chat ->
+            items(uiState.peopleChats, key = { it.id }) { chat ->
                 ChatPreviewCard(
                     chat = chat,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 5.dp)

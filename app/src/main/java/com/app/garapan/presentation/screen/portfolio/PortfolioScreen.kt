@@ -31,7 +31,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,7 +62,7 @@ fun PortfolioScreen(
     navController: NavController,
     viewModel: PortfolioViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val backStackEntry = navController.currentBackStackEntry
 
     LaunchedEffect(backStackEntry) {
@@ -108,7 +108,7 @@ fun PortfolioScreen(
                 }
             }
 
-            items(uiState.items) { item ->
+            items(uiState.items, key = { it.id }) { item ->
                 PortfolioCard(
                     item = item,
                     onEditClick = {
