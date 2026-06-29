@@ -23,6 +23,7 @@ interface AuthRepository {
     suspend fun resendVerification(email: String): Resource<Boolean>
     suspend fun forgotPassword(email: String): Resource<Boolean>
     suspend fun resetPassword(token: String, newPassword: String): Resource<Boolean>
+    suspend fun changePassword(currentPassword: String, newPassword: String): Resource<Boolean>
     suspend fun refresh(): Resource<AuthTokens>
     suspend fun logout(): Resource<Boolean>
     suspend fun getMe(): Resource<User>
