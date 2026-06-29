@@ -252,6 +252,7 @@ private fun EditProfileAvatar(
             modifier = Modifier
                 .size(112.dp)
                 .clip(CircleShape)
+                .clickable(enabled = !isUploading, onClick = onPickImage)
                 .background(BrandNavy.copy(alpha = 0.12f))
                 .border(2.dp, BrandNavy, CircleShape),
             contentAlignment = Alignment.Center
