@@ -13,6 +13,7 @@ import com.app.garapan.data.remote.dto.RefreshRequestDto
 import com.app.garapan.data.remote.dto.RegisterRequestDto
 import com.app.garapan.data.remote.dto.ResendTwoFactorRequestDto
 import com.app.garapan.data.remote.dto.ResendVerificationRequestDto
+import com.app.garapan.data.remote.dto.ChangePasswordRequestDto
 import com.app.garapan.data.remote.dto.ResetPasswordRequestDto
 import com.app.garapan.data.remote.dto.TwoFactorVerifyRequestDto
 import com.app.garapan.data.remote.dto.VerifyEmailRequestDto
@@ -105,6 +106,13 @@ class AuthRepositoryImpl @Inject constructor(
             authApi.resetPassword(
                 ResetPasswordRequestDto(token = token, newPassword = newPassword)
             ).reset
+        }
+
+    override suspend fun changePassword(currentPassword: String, newPassword: String): Resource<Boolean> =
+        safeApiCall {
+            authApi.changePassword(
+                ChangePasswordRequestDto(currentPassword = currentPassword, newPassword = newPassword)
+            ).changed
         }
 
     override suspend fun refresh(): Resource<AuthTokens> =
