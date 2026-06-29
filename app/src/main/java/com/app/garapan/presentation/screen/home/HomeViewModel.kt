@@ -116,6 +116,8 @@ class HomeViewModel @Inject constructor(
 
     fun refreshProjects() = loadFeaturedProjects()
 
+    fun refreshServices() = loadFeaturedServices(refresh = true)
+
     fun refreshNotificationBadge() = loadUnreadNotificationCount()
 
     private fun loadUnreadNotificationCount() {
@@ -167,9 +169,17 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun loadFeaturedServices() {
+    private fun loadFeaturedServices(refresh: Boolean = false) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isServicesLoading = true, servicesError = null) }
+            val hasCachedServices = _uiState.value.services.isNotEmpty()
+            val showFullScreenLoading = !refresh && !hasCachedServices
+
+            _uiState.update {
+                it.copy(
+                    isServicesLoading = showFullScreenLoading,
+                    servicesError = if (refresh) null else it.servicesError
+                )
+            }
             when (val result = getJasaListUseCase(JasaListFilters(limit = 4))) {
                 is Resource.Success -> {
                     _uiState.update {
