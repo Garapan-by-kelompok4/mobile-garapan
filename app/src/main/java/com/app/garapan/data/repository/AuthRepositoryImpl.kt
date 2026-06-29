@@ -20,11 +20,15 @@ import com.app.garapan.data.remote.error.ApiErrorMapper
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.AuthTokens
 import com.app.garapan.domain.model.LoginResult
+import com.app.garapan.domain.model.PortofolioImage
 import com.app.garapan.domain.model.Role
 import com.app.garapan.domain.model.UpdateProfileParams
 import com.app.garapan.domain.model.User
 import com.app.garapan.domain.repository.AuthRepository
 import kotlinx.coroutines.CancellationException
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
 
 class AuthRepositoryImpl @Inject constructor(
@@ -137,6 +141,13 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun updateProfile(params: UpdateProfileParams): Resource<User> =
         safeApiCall { usersApi.updateMe(params.toDto()).toDomain() }
+
+    override suspend fun uploadAvatar(image: PortofolioImage): Resource<User> =
+        safeApiCall {
+            val imageBody = image.bytes.toRequestBody(image.mimeType.toMediaType())
+            val part = MultipartBody.Part.createFormData("image", image.fileName, imageBody)
+            usersApi.uploadAvatar(part).toDomain()
+        }
 
     private suspend fun <T> safeApiCall(block: suspend () -> T): Resource<T> =
         try {

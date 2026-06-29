@@ -2,6 +2,7 @@ package com.app.garapan.data.mapper
 
 import com.app.garapan.data.remote.dto.KlienProfileDto
 import com.app.garapan.data.remote.dto.MahasiswaProfileDto
+import com.app.garapan.data.remote.dto.SocialAccountsDto
 import com.app.garapan.data.remote.dto.UpdateProfileRequestDto
 import com.app.garapan.data.remote.dto.UserDto
 import com.app.garapan.data.remote.dto.AuthTokensDto
@@ -10,7 +11,9 @@ import com.app.garapan.domain.model.AuthTokens
 import com.app.garapan.domain.model.KlienProfile
 import com.app.garapan.domain.model.LoginResult
 import com.app.garapan.domain.model.MahasiswaProfile
+import com.app.garapan.domain.model.ProfileStatus
 import com.app.garapan.domain.model.Role
+import com.app.garapan.domain.model.SocialAccounts
 import com.app.garapan.domain.model.UpdateProfileParams
 import com.app.garapan.domain.model.User
 
@@ -41,7 +44,11 @@ fun UserDto.toDomain() = User(
     createdAt = createdAt,
     updatedAt = updatedAt,
     mahasiswa = mahasiswa?.toDomain(),
-    klien = klien?.toDomain()
+    klien = klien?.toDomain(),
+    displayName = displayName,
+    phoneNumber = phoneNumber,
+    status = ProfileStatus.fromApiValue(status),
+    socialAccounts = socialAccounts?.toDomain() ?: SocialAccounts()
 )
 
 fun MahasiswaProfileDto.toDomain() = MahasiswaProfile(
@@ -53,7 +60,9 @@ fun MahasiswaProfileDto.toDomain() = MahasiswaProfile(
     walletBalance = walletBalance,
     rating = rating,
     suggestedKategoriId = suggestedKategoriId,
-    suggestedKategoriName = suggestedKategori?.name.orEmpty()
+    suggestedKategoriName = suggestedKategori?.name.orEmpty(),
+    fullName = fullName,
+    avatarUrl = avatarUrl
 )
 
 fun KlienProfileDto.toDomain() = KlienProfile(
@@ -61,13 +70,22 @@ fun KlienProfileDto.toDomain() = KlienProfile(
     userId = userId,
     companyName = companyName,
     bio = bio,
-    walletBalance = walletBalance
+    walletBalance = walletBalance,
+    avatarUrl = avatarUrl
+)
+
+fun SocialAccountsDto.toDomain() = SocialAccounts(
+    linkedinUrl = linkedinUrl
 )
 
 fun UpdateProfileParams.toDto() = UpdateProfileRequestDto(
+    displayName = displayName,
     university = university,
     skills = skills,
     bio = bio,
     companyName = companyName,
+    phoneNumber = phoneNumber,
+    status = status?.apiValue,
+    socialAccounts = linkedinUrl?.let { SocialAccountsDto(linkedinUrl = it) },
     deviceToken = deviceToken
 )

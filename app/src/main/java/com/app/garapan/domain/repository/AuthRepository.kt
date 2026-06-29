@@ -3,6 +3,7 @@ package com.app.garapan.domain.repository
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.AuthTokens
 import com.app.garapan.domain.model.LoginResult
+import com.app.garapan.domain.model.PortofolioImage
 import com.app.garapan.domain.model.Role
 import com.app.garapan.domain.model.UpdateProfileParams
 import com.app.garapan.domain.model.User
@@ -26,4 +27,5 @@ interface AuthRepository {
     suspend fun logout(): Resource<Boolean>
     suspend fun getMe(): Resource<User>
     suspend fun updateProfile(params: UpdateProfileParams): Resource<User>
+    suspend fun uploadAvatar(image: PortofolioImage): Resource<User>
 }

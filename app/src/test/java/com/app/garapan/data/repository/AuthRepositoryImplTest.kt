@@ -174,6 +174,12 @@ class AuthRepositoryImplTest {
 
         override suspend fun updateMe(body: UpdateProfileRequestDto): UserDto =
             error("Unused")
+
+        override suspend fun uploadAvatar(image: okhttp3.MultipartBody.Part): UserDto =
+            error("Unused")
+
+        override suspend fun getPublicProfile(id: String): com.app.garapan.data.remote.dto.PublicUserDto =
+            error("Unused")
     }
 
     private fun newTokenStore(): AuthTokenStore {

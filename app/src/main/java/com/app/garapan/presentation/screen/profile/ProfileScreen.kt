@@ -47,6 +47,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -120,6 +122,7 @@ fun ProfileScreen(
                     name = uiState.name,
                     email = uiState.email,
                     initials = initials,
+                    avatarUrl = uiState.avatarUrl,
                     onClick = { navController.navigate(Routes.EDIT_PROFILE) },
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
@@ -263,6 +266,7 @@ private fun ProfileHeaderCard(
     name: String,
     email: String,
     initials: String,
+    avatarUrl: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -279,7 +283,7 @@ private fun ProfileHeaderCard(
                 .padding(horizontal = 16.dp, vertical = 18.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ProfileAvatar(initials = initials)
+            ProfileAvatar(initials = initials, avatarUrl = avatarUrl)
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -311,7 +315,7 @@ private fun ProfileHeaderCard(
 }
 
 @Composable
-private fun ProfileAvatar(initials: String) {
+private fun ProfileAvatar(initials: String, avatarUrl: String?) {
     Box(
         modifier = Modifier
             .size(52.dp)
@@ -319,13 +323,24 @@ private fun ProfileAvatar(initials: String) {
             .background(BrandNavy.copy(alpha = 0.1f)),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = initials,
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.Bold,
-                color = BrandNavy
+        if (avatarUrl != null) {
+            AsyncImage(
+                model = avatarUrl,
+                contentDescription = "Profile photo",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(CircleShape)
             )
-        )
+        } else {
+            Text(
+                text = initials,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = BrandNavy
+                )
+            )
+        }
     }
 }
 

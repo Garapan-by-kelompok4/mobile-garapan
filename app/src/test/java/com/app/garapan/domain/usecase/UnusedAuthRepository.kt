@@ -3,6 +3,7 @@ package com.app.garapan.domain.usecase
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.AuthTokens
 import com.app.garapan.domain.model.LoginResult
+import com.app.garapan.domain.model.PortofolioImage
 import com.app.garapan.domain.model.Role
 import com.app.garapan.domain.model.UpdateProfileParams
 import com.app.garapan.domain.model.User
@@ -26,6 +27,7 @@ internal class UnusedAuthRepository : AuthRepository {
     override suspend fun logout(): Resource<Boolean> = unused()
     override suspend fun getMe(): Resource<User> = unused()
     override suspend fun updateProfile(params: UpdateProfileParams): Resource<User> = unused()
+    override suspend fun uploadAvatar(image: PortofolioImage): Resource<User> = unused()
 
     private fun unused(): Nothing = error("unused")
 }
