@@ -24,7 +24,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
@@ -71,6 +70,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.app.garapan.presentation.components.NotificationBellButton
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
@@ -147,7 +147,8 @@ fun SearchScreen(
         ) {
             SearchTopBar(
                 onBack = { navController.navigateUp() },
-                showBackButton = showBackButton
+                showBackButton = showBackButton,
+                onNotificationsClick = { navController.navigate(Routes.NOTIFICATIONS) }
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -240,7 +241,8 @@ fun SearchScreen(
 @Composable
 private fun SearchTopBar(
     onBack: () -> Unit,
-    showBackButton: Boolean = true
+    showBackButton: Boolean = true,
+    onNotificationsClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -268,13 +270,10 @@ private fun SearchTopBar(
             ),
             modifier = Modifier.weight(1f)
         )
-        IconButton(onClick = {}) {
-            Icon(
-                imageVector = Icons.Default.Notifications,
-                contentDescription = "Notifications",
-                tint = PrimaryText
-            )
-        }
+        NotificationBellButton(
+            unreadCount = 0,
+            onClick = onNotificationsClick
+        )
     }
 }
 

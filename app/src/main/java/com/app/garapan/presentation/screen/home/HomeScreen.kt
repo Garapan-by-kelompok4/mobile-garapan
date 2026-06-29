@@ -25,7 +25,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
@@ -73,6 +72,7 @@ import androidx.compose.ui.unit.sp
 import com.app.garapan.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.app.garapan.presentation.components.NotificationBellButton
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.util.RatingFormatter
@@ -113,6 +113,7 @@ fun HomeScreen(
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 viewModel.refreshProjects()
+                viewModel.refreshNotificationBadge()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -128,7 +129,11 @@ fun HomeScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            HomeTopBar(onSearchClick = { onNavigateTab(Routes.searchRoute()) })
+            HomeTopBar(
+                unreadNotificationCount = uiState.unreadNotificationCount,
+                onSearchClick = { onNavigateTab(Routes.searchRoute()) },
+                onNotificationsClick = { navController.navigate(Routes.NOTIFICATIONS) }
+            )
             Spacer(modifier = Modifier.height(16.dp))
 
             HeroBanner(onGetStarted = { onNavigateTab(Routes.searchRoute()) })
@@ -305,7 +310,11 @@ fun HomeScreen(
 }
 
 @Composable
-private fun HomeTopBar(onSearchClick: () -> Unit) {
+private fun HomeTopBar(
+    unreadNotificationCount: Int,
+    onSearchClick: () -> Unit,
+    onNotificationsClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -335,13 +344,10 @@ private fun HomeTopBar(onSearchClick: () -> Unit) {
                 tint = PrimaryText
             )
         }
-        IconButton(onClick = {}) {
-            Icon(
-                imageVector = Icons.Default.Notifications,
-                contentDescription = "Notifications",
-                tint = PrimaryText
-            )
-        }
+        NotificationBellButton(
+            unreadCount = unreadNotificationCount,
+            onClick = onNotificationsClick
+        )
     }
 }
 
