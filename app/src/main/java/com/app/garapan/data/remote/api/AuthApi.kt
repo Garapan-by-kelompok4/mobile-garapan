@@ -1,6 +1,8 @@
 package com.app.garapan.data.remote.api
 
 import com.app.garapan.data.remote.dto.AuthTokensDto
+import com.app.garapan.data.remote.dto.ChangePasswordRequestDto
+import com.app.garapan.data.remote.dto.ChangePasswordResponseDto
 import com.app.garapan.data.remote.dto.ForgotPasswordRequestDto
 import com.app.garapan.data.remote.dto.ForgotPasswordResponseDto
 import com.app.garapan.data.remote.dto.GoogleSignInRequestDto
@@ -44,6 +46,9 @@ interface AuthApi {
 
     @POST("auth/reset-password")
     suspend fun resetPassword(@Body body: ResetPasswordRequestDto): ResetPasswordResponseDto
+
+    @POST("auth/change-password")
+    suspend fun changePassword(@Body body: ChangePasswordRequestDto): ChangePasswordResponseDto
 
     @POST("auth/refresh")
     suspend fun refresh(@Body body: RefreshRequestDto): AuthTokensDto

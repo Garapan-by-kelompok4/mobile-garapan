@@ -23,6 +23,7 @@ internal class UnusedAuthRepository : AuthRepository {
     override suspend fun resendVerification(email: String): Resource<Boolean> = unused()
     override suspend fun forgotPassword(email: String): Resource<Boolean> = unused()
     override suspend fun resetPassword(token: String, newPassword: String): Resource<Boolean> = unused()
+    override suspend fun changePassword(currentPassword: String, newPassword: String): Resource<Boolean> = unused()
     override suspend fun refresh(): Resource<AuthTokens> = unused()
     override suspend fun logout(): Resource<Boolean> = unused()
     override suspend fun getMe(): Resource<User> = unused()

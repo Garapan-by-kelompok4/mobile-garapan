@@ -38,6 +38,12 @@ data class ResetPasswordRequestDto(
 )
 data class ResetPasswordResponseDto(val reset: Boolean)
 
+data class ChangePasswordRequestDto(
+    val currentPassword: String,
+    val newPassword: String
+)
+data class ChangePasswordResponseDto(val changed: Boolean)
+
 data class RefreshRequestDto(val refreshToken: String)
 
 data class AuthTokensDto(

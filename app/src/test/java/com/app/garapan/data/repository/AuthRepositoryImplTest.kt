@@ -155,6 +155,11 @@ class AuthRepositoryImplTest {
         override suspend fun resetPassword(body: ResetPasswordRequestDto): ResetPasswordResponseDto =
             error("Unused")
 
+        override suspend fun changePassword(
+            body: com.app.garapan.data.remote.dto.ChangePasswordRequestDto
+        ): com.app.garapan.data.remote.dto.ChangePasswordResponseDto =
+            error("Unused")
+
         override suspend fun refresh(body: RefreshRequestDto): AuthTokensDto =
             error("Unused")
 

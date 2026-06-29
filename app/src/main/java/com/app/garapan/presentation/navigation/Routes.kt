@@ -32,6 +32,7 @@ object Routes {
     const val REVIEW = "review/{pesananId}"
     const val ALL_REVIEWS = "all_reviews/{jasaId}"
     const val SECURITY = "security"
+    const val CHANGE_PASSWORD = "change_password"
     const val EDIT_PROJECT = "edit_project/{projectId}"
     const val PROJECT_DETAIL = "project_detail/{projectId}"
     const val JASA_DETAIL = "jasa_detail/{jasaId}"

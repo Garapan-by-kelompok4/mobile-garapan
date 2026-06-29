@@ -8,6 +8,8 @@ object UserMessageLocalizer {
                 "Proyek tidak ditemukan."
             normalized.contains("cannot be deleted because orders reference", ignoreCase = true) ->
                 "Layanan tidak dapat dihapus karena sudah ada pesanan yang terhubung."
+            normalized.equals("Current password is incorrect", ignoreCase = true) ->
+                "Kata sandi saat ini salah."
             normalized.equals("Request failed. Please try again.", ignoreCase = true) ->
                 "Permintaan gagal. Silakan coba lagi."
             normalized.equals("Something went wrong. Please try again.", ignoreCase = true) ->
