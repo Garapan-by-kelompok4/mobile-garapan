@@ -10,7 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.app.garapan.domain.model.Role
 import com.app.garapan.ui.theme.BrandNavy
@@ -25,7 +25,7 @@ fun RoleGuard(
     viewModel: RoleGuardViewModel = hiltViewModel(),
     content: @Composable () -> Unit
 ) {
-    val currentUser by viewModel.currentUser.collectAsState()
+    val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
     val role = currentUser?.role
 
     LaunchedEffect(Unit) {

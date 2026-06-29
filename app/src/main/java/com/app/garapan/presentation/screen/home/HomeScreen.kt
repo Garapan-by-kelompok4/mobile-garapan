@@ -50,9 +50,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -94,7 +93,7 @@ fun HomeScreen(
     onNavigateTab: (String) -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val refreshStateHandle = remember(navController) {
         runCatching { navController.getBackStackEntry(Routes.MAIN).savedStateHandle }.getOrNull()
@@ -174,7 +173,7 @@ fun HomeScreen(
                         contentPadding = PaddingValues(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(uiState.projects) { project ->
+                        items(uiState.projects, key = { it.id }) { project ->
                             ProjectCard(
                                 project = project,
                                 onClick = { navController.navigate(Routes.projectDetailRoute(project.id)) }
@@ -214,7 +213,7 @@ fun HomeScreen(
                         contentPadding = PaddingValues(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(uiState.services) { service ->
+                        items(uiState.services, key = { it.id }) { service ->
                             ServiceCard(
                                 service = service,
                                 onClick = { navController.navigate(Routes.jasaDetailRoute(service.id)) }
