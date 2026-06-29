@@ -46,6 +46,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.app.garapan.domain.model.ProfileSkill
+import com.app.garapan.presentation.util.RatingFormatter
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BrandNavy
 import com.app.garapan.ui.theme.LinkText
@@ -262,7 +263,7 @@ private fun PublicProfileHeader(profile: com.app.garapan.domain.model.PublicProf
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = rating.toString(),
+                        text = RatingFormatter.format(rating),
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontWeight = FontWeight.SemiBold,
                             color = PrimaryText

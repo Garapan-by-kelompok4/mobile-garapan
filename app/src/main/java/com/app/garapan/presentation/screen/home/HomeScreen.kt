@@ -585,7 +585,7 @@ private fun ServiceCard(service: ServiceItem, onClick: () -> Unit = {}) {
                     )
                     Spacer(modifier = Modifier.width(2.dp))
                     Text(
-                        text = service.rating.toString(),
+                        text = RatingFormatter.format(service.rating),
                         style = MaterialTheme.typography.labelSmall.copy(color = SecondaryText)
                     )
                 }
