@@ -311,7 +311,7 @@ fun JasaDetailScreen(
                             )
                             Spacer(modifier = Modifier.width(2.dp))
                             Text(
-                                text = uiState.workerRating.toString(),
+                                text = RatingFormatter.format(uiState.workerRating),
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     fontWeight = FontWeight.SemiBold,
                                     color = PrimaryText
