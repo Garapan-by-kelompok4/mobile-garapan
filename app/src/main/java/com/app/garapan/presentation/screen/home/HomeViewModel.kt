@@ -182,7 +182,9 @@ class HomeViewModel @Inject constructor(
                 is Resource.Success -> {
                     _uiState.update {
                         it.copy(
-                            topWorkers = result.data.map(::toTopWorkerItem),
+                            topWorkers = result.data
+                                .filter { it.rating > 0f }
+                                .map(::toTopWorkerItem),
                             isTopWorkersLoading = false,
                             topWorkersError = null
                         )

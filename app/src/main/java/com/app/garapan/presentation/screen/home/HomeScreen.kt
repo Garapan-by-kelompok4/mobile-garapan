@@ -75,6 +75,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
+import com.app.garapan.presentation.util.RatingFormatter
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
@@ -650,7 +651,7 @@ fun TopWorkerCard(worker: TopWorkerItem, onClick: () -> Unit = {}) {
                     )
                     Spacer(modifier = Modifier.width(2.dp))
                     Text(
-                        text = worker.rating.toString(),
+                        text = RatingFormatter.format(worker.rating),
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontWeight = FontWeight.SemiBold,
                             color = PrimaryText

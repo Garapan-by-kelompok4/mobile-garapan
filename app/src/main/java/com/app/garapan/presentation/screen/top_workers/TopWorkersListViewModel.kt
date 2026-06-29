@@ -43,7 +43,9 @@ class TopWorkersListViewModel @Inject constructor(
                         it.copy(
                             isLoading = false,
                             errorMessage = null,
-                            workers = result.data.map(::toTopWorkerItem)
+                            workers = result.data
+                                .filter { it.rating > 0f }
+                                .map(::toTopWorkerItem)
                         )
                     }
                 }
