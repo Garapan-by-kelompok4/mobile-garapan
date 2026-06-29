@@ -105,6 +105,7 @@ fun HomeScreen(
             if (!shouldRefresh) return@collect
             NavResults.clearProjectRefresh(handle)
             viewModel.refreshProjects()
+            viewModel.refreshServices()
         }
     }
 
@@ -112,6 +113,7 @@ fun HomeScreen(
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 viewModel.refreshProjects()
+                viewModel.refreshServices()
                 viewModel.refreshNotificationBadge()
             }
         }
