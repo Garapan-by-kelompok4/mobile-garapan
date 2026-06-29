@@ -31,6 +31,7 @@ import com.app.garapan.presentation.screen.portfolio.PortfolioScreen
 import com.app.garapan.presentation.screen.profile_services.ProfileServicesScreen
 import com.app.garapan.presentation.screen.public_profile.PublicProfileScreen
 import com.app.garapan.presentation.screen.my_projects.MyProjectsScreen
+import com.app.garapan.presentation.screen.notifications.NotificationsScreen
 import com.app.garapan.presentation.screen.project_detail.ProjectDetailScreen
 import com.app.garapan.presentation.screen.review.ReviewScreen
 import com.app.garapan.presentation.screen.top_workers.TopWorkersListScreen
@@ -284,6 +285,9 @@ fun NavGraph(navController: NavHostController) {
             arguments = listOf(navArgument("pesananId") { type = NavType.StringType })
         ) {
             DisputeScreen(navController = navController)
+        }
+        composable(Routes.NOTIFICATIONS) {
+            NotificationsScreen(navController = navController)
         }
     }
 }

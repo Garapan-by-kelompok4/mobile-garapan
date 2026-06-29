@@ -42,6 +42,7 @@ object Routes {
     const val TOP_WORKERS = "top_workers"
     const val ARTICLE_LIST = "article_list"
     const val DISPUTE = "dispute/{pesananId}"
+    const val NOTIFICATIONS = "notifications"
 
     fun setupRoute(role: String) = "$SETUP?role=$role"
     fun verifyEmailRoute(email: String) = "verify_email?email=${Uri.encode(email)}"

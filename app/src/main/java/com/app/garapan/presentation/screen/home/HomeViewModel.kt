@@ -11,6 +11,7 @@ import com.app.garapan.domain.model.ProjectListFilters
 import com.app.garapan.domain.model.TopWorker
 import com.app.garapan.domain.usecase.GetArtikelListUseCase
 import com.app.garapan.domain.usecase.GetJasaListUseCase
+import com.app.garapan.domain.usecase.GetNotificationsUseCase
 import com.app.garapan.domain.usecase.GetProjectListUseCase
 import com.app.garapan.domain.usecase.GetTopWorkersUseCase
 import com.app.garapan.presentation.util.CurrencyFormatter
@@ -77,7 +78,8 @@ data class HomeUiState(
     val topWorkersError: String? = null,
     val blogs: List<BlogItem> = emptyList(),
     val isBlogsLoading: Boolean = false,
-    val blogsError: String? = null
+    val blogsError: String? = null,
+    val unreadNotificationCount: Int = 0
 )
 
 @HiltViewModel
@@ -85,7 +87,8 @@ class HomeViewModel @Inject constructor(
     private val getTopWorkersUseCase: GetTopWorkersUseCase,
     private val getArtikelListUseCase: GetArtikelListUseCase,
     private val getJasaListUseCase: GetJasaListUseCase,
-    private val getProjectListUseCase: GetProjectListUseCase
+    private val getProjectListUseCase: GetProjectListUseCase,
+    private val getNotificationsUseCase: GetNotificationsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -96,6 +99,7 @@ class HomeViewModel @Inject constructor(
         loadTopWorkers()
         loadBlogs()
         loadFeaturedServices()
+        loadUnreadNotificationCount()
     }
 
     fun onNavItemSelected(index: Int) = _uiState.value.let {
@@ -111,6 +115,21 @@ class HomeViewModel @Inject constructor(
     fun retryProjects() = loadFeaturedProjects()
 
     fun refreshProjects() = loadFeaturedProjects()
+
+    fun refreshNotificationBadge() = loadUnreadNotificationCount()
+
+    private fun loadUnreadNotificationCount() {
+        viewModelScope.launch {
+            when (val result = getNotificationsUseCase(limit = 50)) {
+                is Resource.Success -> {
+                    _uiState.update {
+                        it.copy(unreadNotificationCount = result.data.count { notification -> !notification.read })
+                    }
+                }
+                is Resource.Error, Resource.Loading -> Unit
+            }
+        }
+    }
 
     private fun loadFeaturedProjects(refresh: Boolean = false) {
         viewModelScope.launch {
