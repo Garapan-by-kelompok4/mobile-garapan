@@ -36,6 +36,7 @@ import com.app.garapan.presentation.screen.project_detail.ProjectDetailScreen
 import com.app.garapan.presentation.screen.review.ReviewScreen
 import com.app.garapan.presentation.screen.top_workers.TopWorkersListScreen
 import com.app.garapan.presentation.screen.reset_password.ResetPasswordScreen
+import com.app.garapan.presentation.screen.change_password.ChangePasswordScreen
 import com.app.garapan.presentation.screen.security.SecurityScreen
 import com.app.garapan.presentation.screen.skills.SkillsScreen
 import com.app.garapan.presentation.screen.two_factor.TwoFactorScreen
@@ -213,6 +214,9 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(Routes.SECURITY) {
             SecurityScreen(navController = navController)
+        }
+        composable(Routes.CHANGE_PASSWORD) {
+            ChangePasswordScreen(navController = navController)
         }
         composable(
             route = Routes.EDIT_PROJECT,
