@@ -64,7 +64,9 @@ class ProfileViewModel @Inject constructor(
 
 private fun User?.resolveDisplayName(): String {
     if (this == null) return ""
-    return klien?.companyName?.takeIf { it.isNotBlank() }
+    return displayName?.takeIf { it.isNotBlank() }
+        ?: mahasiswa?.fullName?.takeIf { it.isNotBlank() }
+        ?: klien?.companyName?.takeIf { it.isNotBlank() }
         ?: mahasiswa?.university?.takeIf { it.isNotBlank() }
         ?: email.substringBefore("@")
 }
