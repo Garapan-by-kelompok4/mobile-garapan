@@ -57,6 +57,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.app.garapan.presentation.navigation.Routes
+import com.app.garapan.presentation.util.RatingFormatter
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
@@ -188,7 +189,7 @@ fun JasaDetailScreen(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "${uiState.rating} (${uiState.reviewCount} Ulasan)",
+                        text = "${RatingFormatter.format(uiState.rating)} (${uiState.reviewCount} Ulasan)",
                         style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
                     )
                     if (uiState.isVerified) {
@@ -632,7 +633,7 @@ private fun RatingSummary(rating: Float, reviewCount: Int, breakdown: Map<Int, I
                 modifier = Modifier.width(80.dp)
             ) {
                 Text(
-                    text = rating.toString(),
+                    text = RatingFormatter.format(rating),
                     fontSize = 36.sp,
                     fontWeight = FontWeight.Bold,
                     color = PrimaryText

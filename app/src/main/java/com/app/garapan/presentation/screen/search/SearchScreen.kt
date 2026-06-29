@@ -73,6 +73,7 @@ import coil3.compose.AsyncImage
 import com.app.garapan.presentation.components.NotificationBellButton
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
+import com.app.garapan.presentation.util.RatingFormatter
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
@@ -476,7 +477,7 @@ private fun SearchResultCard(
                     )
                     Spacer(modifier = Modifier.width(2.dp))
                     Text(
-                        text = "${item.rating}",
+                        text = RatingFormatter.format(item.rating),
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = PrimaryText,
                             fontWeight = FontWeight.SemiBold
