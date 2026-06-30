@@ -256,7 +256,16 @@ class ChatViewModel @Inject constructor(
                 val page = result.data
                 liveMessages = page.messages
                 totalMessages = maxOf(page.total, olderMessages.size + liveMessages.size)
-                _uiState.update { it.copy(isLoading = false, errorMessage = null) }
+                // Drive the header from the live tail (page 1): real agent name and
+                // a connection status that reflects whether support is reachable.
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = null,
+                        workerName = page.agentName ?: it.workerName,
+                        isOnline = page.supportOnline
+                    )
+                }
                 rebuildThread(emitPrependCount = false)
             }
             is Resource.Error -> {

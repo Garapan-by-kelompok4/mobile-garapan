@@ -59,11 +59,16 @@ fun JsonElement.toSupportThreadPage(
 ): SupportThreadPage {
     val messages = toSupportMessages(gson)
     val root = asJsonObjectOrNull()
+    val agent = root?.get("agent")?.takeUnless { it.isJsonNull }?.asJsonObjectOrNull()
     return SupportThreadPage(
         messages = messages,
         total = root?.intOrNull("total") ?: messages.size,
         page = root?.intOrNull("page") ?: requestedPage,
-        limit = root?.intOrNull("limit") ?: requestedLimit
+        limit = root?.intOrNull("limit") ?: requestedLimit,
+        agentName = agent?.stringOrNull("displayName"),
+        agentOnline = agent?.booleanOrNull("online") ?: false,
+        supportOnline = root?.booleanOrNull("supportOnline") ?: false,
+        unreadCount = root?.intOrNull("unreadCount") ?: 0
     )
 }
 
@@ -71,6 +76,19 @@ private fun JsonObject.intOrNull(key: String): Int? =
     get(key)?.takeUnless { it.isJsonNull }
         ?.takeIf { it.isJsonPrimitive }
         ?.runCatching { asInt }
+        ?.getOrNull()
+
+private fun JsonObject.stringOrNull(key: String): String? =
+    get(key)?.takeUnless { it.isJsonNull }
+        ?.takeIf { it.isJsonPrimitive }
+        ?.runCatching { asString }
+        ?.getOrNull()
+        ?.takeUnless { it.isBlank() }
+
+private fun JsonObject.booleanOrNull(key: String): Boolean? =
+    get(key)?.takeUnless { it.isJsonNull }
+        ?.takeIf { it.isJsonPrimitive }
+        ?.runCatching { asBoolean }
         ?.getOrNull()
 
 private fun JsonElement.findMessageElement(): JsonElement {
