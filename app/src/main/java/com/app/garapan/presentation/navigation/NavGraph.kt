@@ -250,7 +250,17 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(
             route = Routes.CHAT,
-            arguments = listOf(navArgument("workerId") { type = NavType.StringType })
+            arguments = listOf(
+                navArgument("workerId") { type = NavType.StringType },
+                navArgument("source") {
+                    type = NavType.StringType
+                    defaultValue = Routes.CHAT_SOURCE_WORKER
+                },
+                navArgument("peerName") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                }
+            )
         ) {
             ChatScreen(navController = navController)
         }

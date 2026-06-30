@@ -4,10 +4,17 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
+import com.app.garapan.domain.model.OrderChatMessage
+import com.app.garapan.domain.model.OrderChatPage
 import com.app.garapan.domain.model.SupportMessage
+import com.app.garapan.domain.repository.SessionRepository
+import com.app.garapan.domain.usecase.GetOrderMessagesUseCase
 import com.app.garapan.domain.usecase.GetSupportThreadUseCase
+import com.app.garapan.domain.usecase.MarkOrderChatReadUseCase
 import com.app.garapan.domain.usecase.MarkSupportThreadReadUseCase
+import com.app.garapan.domain.usecase.SendOrderMessageUseCase
 import com.app.garapan.domain.usecase.SendSupportMessageUseCase
+import com.app.garapan.presentation.navigation.Routes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -63,6 +70,7 @@ data class ChatUiState(
     val isOnline: Boolean = true,
     val isAdminSupport: Boolean = false,
     val supportLabel: String? = null,
+    val showStatus: Boolean = true,
     val dateSeparator: String = "Hari ini",
     val messages: List<ChatMessage> = emptyList(),
     val inputText: String = "",
@@ -78,11 +86,20 @@ class ChatViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getSupportThreadUseCase: GetSupportThreadUseCase,
     private val sendSupportMessageUseCase: SendSupportMessageUseCase,
-    private val markSupportThreadReadUseCase: MarkSupportThreadReadUseCase
+    private val markSupportThreadReadUseCase: MarkSupportThreadReadUseCase,
+    private val getOrderMessagesUseCase: GetOrderMessagesUseCase,
+    private val sendOrderMessageUseCase: SendOrderMessageUseCase,
+    private val markOrderChatReadUseCase: MarkOrderChatReadUseCase,
+    sessionRepository: SessionRepository
 ) : ViewModel() {
 
     private val workerId: String = savedStateHandle["workerId"] ?: "1"
+    private val source: String = savedStateHandle["source"] ?: Routes.CHAT_SOURCE_WORKER
+    private val peerName: String = savedStateHandle["peerName"] ?: ""
     private val isSupportThread = workerId == SUPPORT_WORKER_ID
+    // An order (pesanan) chat is opened from the inbox; workerId is the pesananId.
+    private val isOrderChat = !isSupportThread && source == Routes.CHAT_SOURCE_ORDER
+    private val currentUserId: String? = sessionRepository.peekCurrentUser()?.id
 
     private val dummyData = mapOf(
         "1" to ChatUiState(
@@ -155,7 +172,18 @@ class ChatViewModel @Inject constructor(
         )
     )
 
-    private val _uiState = MutableStateFlow(dummyData[workerId] ?: dummyData["1"]!!)
+    private val initialState: ChatUiState = when {
+        isOrderChat -> ChatUiState(
+            workerName = peerName.ifBlank { "Percakapan" },
+            workerInitials = initialsOf(peerName),
+            isOnline = true,
+            showStatus = false,
+            isLoading = true
+        )
+        else -> dummyData[workerId] ?: dummyData["1"]!!
+    }
+
+    private val _uiState = MutableStateFlow(initialState)
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 
     // Number of items prepended to the top of the thread on the last load-older.
@@ -172,11 +200,18 @@ class ChatViewModel @Inject constructor(
     private var oldestPageLoaded: Int = 1
     private var totalMessages: Int = 0
 
+    // Newest page of an order thread, kept fresh by polling.
+    private var orderMessages: List<OrderChatMessage> = emptyList()
+    // Last message id we've reconciled, so we only send a read receipt when a
+    // genuinely new incoming message arrives (not on every 4s poll).
+    private var lastSeenOrderMessageId: String? = null
+
     private var pollJob: Job? = null
 
     init {
-        if (isSupportThread) {
-            loadSupportThread()
+        when {
+            isSupportThread -> loadSupportThread()
+            isOrderChat -> loadOrderThread()
         }
     }
 
@@ -189,6 +224,10 @@ class ChatViewModel @Inject constructor(
             sendSupportMessage(text)
             return
         }
+        if (isOrderChat) {
+            sendOrderMessage(text)
+            return
+        }
         val sentTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
         _uiState.update {
             it.copy(
@@ -199,18 +238,25 @@ class ChatViewModel @Inject constructor(
     }
 
     fun retry() {
-        if (isSupportThread) loadSupportThread()
+        when {
+            isSupportThread -> loadSupportThread()
+            isOrderChat -> loadOrderThread()
+        }
     }
 
-    /** Starts silently polling the thread so admin replies appear without leaving the screen. */
+    /** Starts silently polling the thread so new replies appear without leaving the screen. */
     fun startPolling() {
-        if (!isSupportThread) return
+        if (!isSupportThread && !isOrderChat) return
         if (pollJob?.isActive == true) return
         pollJob = viewModelScope.launch {
             while (isActive) {
                 delay(POLL_INTERVAL_MS)
                 if (!_uiState.value.isSending) {
-                    fetchThread(showLoading = false, surfaceError = false)
+                    if (isSupportThread) {
+                        fetchThread(showLoading = false, surfaceError = false)
+                    } else {
+                        fetchOrderThread(showLoading = false, surfaceError = false)
+                    }
                 }
             }
         }
@@ -342,6 +388,101 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    private fun loadOrderThread() {
+        viewModelScope.launch { fetchOrderThread(showLoading = true, surfaceError = true) }
+    }
+
+    private suspend fun fetchOrderThread(showLoading: Boolean, surfaceError: Boolean) {
+        if (showLoading) {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+        }
+        when (val result = fetchNewestOrderPage()) {
+            is Resource.Success -> {
+                orderMessages = result.data.messages
+                _uiState.update { it.copy(isLoading = false, errorMessage = null) }
+                rebuildOrderThread()
+                reconcileOrderRead()
+            }
+            is Resource.Error -> {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = if (surfaceError) result.message else it.errorMessage
+                    )
+                }
+            }
+            Resource.Loading -> Unit
+        }
+    }
+
+    /**
+     * The history endpoint paginates oldest-first, so the latest messages live on
+     * the last page. Read [total] from page 1, then fetch the last page to show the
+     * newest tail.
+     */
+    private suspend fun fetchNewestOrderPage(): Resource<OrderChatPage> {
+        val first = getOrderMessagesUseCase(pesananId = workerId, page = 1, limit = ORDER_PAGE_SIZE)
+        if (first !is Resource.Success) return first
+        val total = first.data.total
+        if (total <= ORDER_PAGE_SIZE) return first
+        val lastPage = (total + ORDER_PAGE_SIZE - 1) / ORDER_PAGE_SIZE
+        return getOrderMessagesUseCase(pesananId = workerId, page = lastPage, limit = ORDER_PAGE_SIZE)
+    }
+
+    private fun rebuildOrderThread() {
+        val mapped = orderMessages.map { it.toChatMessage() }
+        _uiState.update { it.copy(messages = mapped, hasMore = false) }
+    }
+
+    /** Send a read receipt only when a new incoming (counterparty) message appears. */
+    private fun reconcileOrderRead() {
+        val last = orderMessages.lastOrNull() ?: return
+        if (last.id == lastSeenOrderMessageId) return
+        lastSeenOrderMessageId = last.id
+        if (last.senderId != currentUserId) {
+            viewModelScope.launch { markOrderChatReadUseCase(workerId) }
+        }
+    }
+
+    private fun sendOrderMessage(text: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSending = true, errorMessage = null) }
+            when (val result = sendOrderMessageUseCase(workerId, text)) {
+                is Resource.Success -> {
+                    fetchOrderThread(showLoading = false, surfaceError = false)
+                    _uiState.update { it.copy(isSending = false, inputText = "") }
+                }
+                is Resource.Error -> {
+                    _uiState.update { it.copy(isSending = false, errorMessage = result.message) }
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    private fun OrderChatMessage.toChatMessage(): ChatMessage {
+        val text = if (isFile) "📎 " + (fileName ?: "Lampiran") else message
+        val time = formatMessageTime(createdAt)
+        return if (currentUserId != null && senderId == currentUserId) {
+            ChatMessage.Sent(text = text, time = time)
+        } else {
+            ChatMessage.Received(
+                text = text,
+                time = time,
+                senderInitials = _uiState.value.workerInitials.ifBlank { initialsOf(peerName) }
+            )
+        }
+    }
+
+    private fun initialsOf(name: String): String {
+        val parts = name.trim().split(" ").filter { it.isNotBlank() }
+        return when {
+            parts.isEmpty() -> "?"
+            parts.size == 1 -> parts[0].take(2).uppercase()
+            else -> (parts[0].take(1) + parts[1].take(1)).uppercase()
+        }
+    }
+
     private fun SupportMessage.toChatMessage(): ChatMessage =
         if (isFromUser) {
             ChatMessage.Sent(
@@ -371,5 +512,6 @@ class ChatViewModel @Inject constructor(
         const val SUPPORT_WORKER_ID = "admin-1"
         const val POLL_INTERVAL_MS = 4_000L
         const val PAGE_SIZE = 20
+        const val ORDER_PAGE_SIZE = 30
     }
 }
