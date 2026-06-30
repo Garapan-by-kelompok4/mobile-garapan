@@ -2,6 +2,7 @@ package com.app.garapan.data.mapper
 
 import com.app.garapan.data.remote.dto.SupportMessageDto
 import com.app.garapan.domain.model.SupportMessage
+import com.app.garapan.domain.model.SupportThreadPage
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
@@ -50,6 +51,27 @@ fun JsonElement.toSupportMessages(gson: Gson): List<SupportMessage> {
     val listType = object : TypeToken<List<SupportMessageDto>>() {}.type
     return gson.fromJson<List<SupportMessageDto>>(messageArray, listType).map { it.toDomain() }
 }
+
+fun JsonElement.toSupportThreadPage(
+    gson: Gson,
+    requestedPage: Int,
+    requestedLimit: Int
+): SupportThreadPage {
+    val messages = toSupportMessages(gson)
+    val root = asJsonObjectOrNull()
+    return SupportThreadPage(
+        messages = messages,
+        total = root?.intOrNull("total") ?: messages.size,
+        page = root?.intOrNull("page") ?: requestedPage,
+        limit = root?.intOrNull("limit") ?: requestedLimit
+    )
+}
+
+private fun JsonObject.intOrNull(key: String): Int? =
+    get(key)?.takeUnless { it.isJsonNull }
+        ?.takeIf { it.isJsonPrimitive }
+        ?.runCatching { asInt }
+        ?.getOrNull()
 
 private fun JsonElement.findMessageElement(): JsonElement {
     if (isJsonArray) return asJsonArray.lastOrNull() ?: JsonObject()
