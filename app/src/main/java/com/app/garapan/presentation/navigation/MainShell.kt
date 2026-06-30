@@ -262,7 +262,24 @@ private fun MainBottomBar(
 
 private fun tabsForRole(role: Role): List<MainTabItem> =
     when (role) {
-        Role.KLIEN, Role.ADMIN -> listOf(
+        Role.KLIEN -> listOf(
+            MainTabItem(Routes.HOME, "Home", Icons.Filled.Home, Icons.Outlined.Home),
+            MainTabItem(
+                Routes.ORDER_HISTORY,
+                "Pesanan",
+                Icons.Outlined.ReceiptLong,
+                Icons.Outlined.ReceiptLong
+            ),
+            MainTabItem(Routes.POST_PROJECT, "New", Icons.Default.Add, Icons.Default.Add, isCenterAction = true),
+            MainTabItem(
+                Routes.PESAN,
+                "Chat",
+                Icons.Outlined.ChatBubbleOutline,
+                Icons.Outlined.ChatBubbleOutline
+            ),
+            MainTabItem(Routes.PROFILE, "Profile", Icons.Filled.Person, Icons.Outlined.Person)
+        )
+        Role.ADMIN -> listOf(
             MainTabItem(Routes.HOME, "Home", Icons.Filled.Home, Icons.Outlined.Home),
             MainTabItem(Routes.searchRoute(), "Cari Jasa", Icons.Filled.Search, Icons.Outlined.Search),
             MainTabItem(Routes.POST_PROJECT, "New", Icons.Default.Add, Icons.Default.Add, isCenterAction = true),
@@ -292,6 +309,9 @@ private fun tabsForRole(role: Role): List<MainTabItem> =
             MainTabItem(Routes.PROFILE, "Profile", Icons.Filled.Person, Icons.Outlined.Person)
         )
     }
+
+internal fun mainTabLabelsForRole(role: Role): List<String> =
+    tabsForRole(role).map { it.label }
 
 private fun NavController.navigateMainTab(route: String) {
     navigate(route) {
