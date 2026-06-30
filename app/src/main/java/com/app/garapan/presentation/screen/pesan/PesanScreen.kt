@@ -79,11 +79,11 @@ fun PesanScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // Refresh the support unread badge whenever the inbox returns to the
-    // foreground, so it clears after the user reads the thread elsewhere.
+    // Refresh conversations + the support unread badge whenever the inbox
+    // returns to the foreground, so previews and badges stay current.
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) viewModel.refreshSupportUnread()
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.refresh()
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
@@ -134,7 +134,16 @@ fun PesanScreen(
             items(uiState.peopleChats, key = { it.id }) { chat ->
                 ChatPreviewCard(
                     chat = chat,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 5.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 5.dp),
+                    onClick = {
+                        navController.navigate(
+                            Routes.chatRoute(
+                                workerId = chat.id,
+                                source = Routes.CHAT_SOURCE_ORDER,
+                                peerName = chat.name
+                            )
+                        )
+                    }
                 )
             }
         }
