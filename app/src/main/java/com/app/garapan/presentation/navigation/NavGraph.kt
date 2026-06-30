@@ -294,7 +294,7 @@ fun NavGraph(
             arguments = listOf(navArgument("jasaId") { type = NavType.StringType })
         ) {
             RoleGuard(
-                allowedRoles = setOf(Role.KLIEN, Role.ADMIN),
+                allowedRoles = setOf(Role.MAHASISWA, Role.KLIEN, Role.ADMIN),
                 navController = navController,
                 fallbackRoute = Routes.MAIN
             ) {
