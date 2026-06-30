@@ -5,7 +5,11 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
-    // alias(libs.plugins.google.services)  // Requires google-services.json (Firebase project setup)
+    alias(libs.plugins.google.services) apply false
+}
+
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
 }
 
 android {
@@ -131,10 +135,10 @@ dependencies {
         exclude(group = "org.json", module = "json")
     }
 
-    // Firebase (BOM manages all firebase lib versions) — requires google-services.json
-    // implementation(platform(libs.firebase.bom))
-    // implementation(libs.firebase.messaging.ktx)
-    // implementation(libs.firebase.analytics.ktx)
+    // Firebase (BOM manages all firebase lib versions). The google-services
+    // plugin still requires app/google-services.json before it can be enabled.
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging.ktx)
 
     // Snap payment page (Custom Tabs — avoids native Midtrans SDK theme crashes)
     implementation(libs.androidx.browser)

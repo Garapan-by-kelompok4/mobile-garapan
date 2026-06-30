@@ -76,12 +76,12 @@ Build and install directly from Android Studio, or via terminal:
 
 ### Firebase Setup (not required yet)
 
-`google-services.json` is not committed to this repo. Firebase is currently disabled. When integration begins:
+`google-services.json` is not committed to this repo. Firebase token registration is skipped until the file exists. To enable real push notifications:
 
 1. Ask the team lead to add you to the Firebase project
 2. Go to [Firebase Console](https://console.firebase.google.com) → Project Settings → Your apps → Android app
 3. Download `google-services.json` and place it in the `app/` folder
-4. Uncomment the Firebase lines in `app/build.gradle.kts` and root `build.gradle.kts`
+4. Sync/rebuild the project. The Google Services plugin is applied automatically when `app/google-services.json` exists.
 
 ### Backend URL
 

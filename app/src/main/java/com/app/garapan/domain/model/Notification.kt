@@ -21,7 +21,8 @@ enum class NotificationType {
     ORDER_DELIVERED,
     ORDER_COMPLETED,
     PROJECT_CLAIMED,
-    REVIEW_RECEIVED;
+    REVIEW_RECEIVED,
+    CHAT_MESSAGE;
 
     companion object {
         fun fromApiValue(value: String): NotificationType =

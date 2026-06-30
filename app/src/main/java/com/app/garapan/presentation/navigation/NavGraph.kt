@@ -2,6 +2,7 @@ package com.app.garapan.presentation.navigation
 
 import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -42,9 +43,33 @@ import com.app.garapan.presentation.screen.skills.SkillsScreen
 import com.app.garapan.presentation.screen.two_factor.TwoFactorScreen
 import com.app.garapan.presentation.screen.verify_email.VerifyEmailScreen
 import com.app.garapan.domain.model.Role
+import kotlinx.coroutines.flow.first
 
 @Composable
-fun NavGraph(navController: NavHostController) {
+fun NavGraph(
+    navController: NavHostController,
+    notificationRoute: String? = null,
+    onNotificationRouteConsumed: () -> Unit = {}
+) {
+    LaunchedEffect(notificationRoute) {
+        val route = notificationRoute ?: return@LaunchedEffect
+        val currentRoute = navController.currentBackStackEntry
+            ?.destination
+            ?.route
+            ?.takeIf { it != Routes.SPLASH }
+            ?: navController.currentBackStackEntryFlow
+                .first { entry -> entry.destination.route != Routes.SPLASH }
+                .destination
+                .route
+
+        if (currentRoute != Routes.LOGIN && currentRoute != Routes.REGISTER) {
+            navController.navigate(route) {
+                launchSingleTop = true
+            }
+        }
+        onNotificationRouteConsumed()
+    }
+
     NavHost(
         navController = navController,
         startDestination = Routes.SPLASH

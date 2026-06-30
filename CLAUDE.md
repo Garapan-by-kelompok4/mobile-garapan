@@ -133,7 +133,7 @@ Scope: the screen or layer being changed (e.g. `auth`, `home`, `domain`, `data`)
 - Follow the commit message format above exactly
 - If a task requires changes in multiple layers (data + domain + presentation), do them all in one branch but commit layer by layer
 - Never add dependencies without checking if an alias already exists in `gradle/libs.versions.toml`
-- Firebase is currently commented out in `app/build.gradle.kts` — do not uncomment until `google-services.json` is added
+- Firebase Messaging dependencies are enabled, but the Google Services plugin is applied only when `app/google-services.json` exists
 - `BASE_URL` for development (emulator): `http://10.0.2.2:3000/` — already set in `BuildConfig`
 - Color palette is documented in `.docs/color-schema.md` — always refer to it before picking any color value
 - All screens are UI-only (frontend-first) until API integration is explicitly requested — ViewModels hold UI state only, no UseCase or repository wiring
