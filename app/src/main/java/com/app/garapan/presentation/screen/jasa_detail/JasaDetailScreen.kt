@@ -88,11 +88,7 @@ fun JasaDetailScreen(
                     isOwner = uiState.isOwner,
                     isKlien = uiState.isKlien,
                     onChatAndOrder = {
-                        if (uiState.isKlien && !uiState.isOwner) {
-                            navController.navigate(Routes.checkoutRoute(uiState.id))
-                        } else {
-                            navController.navigate(Routes.chatRoute(uiState.workerId))
-                        }
+                        navController.navigate(Routes.checkoutRoute(uiState.id))
                     },
                     onEditService = {
                         navController.navigate(Routes.editServiceRoute(uiState.id))
@@ -814,7 +810,7 @@ private fun JasaDetailBottomBar(
                 )
             ) {
                 Text(
-                    text = if (isKlien) "Pesan Sekarang" else "Chat & Pesan Sekarang",
+                    text = "Pesan Sekarang",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.SemiBold
                     )
