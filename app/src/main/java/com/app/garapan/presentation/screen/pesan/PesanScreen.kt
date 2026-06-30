@@ -125,7 +125,11 @@ fun PesanScreen(
                 ChatPreviewCard(
                     chat = chat,
                     modifier = Modifier.padding(horizontal = 16.dp),
-                    onClick = { navController.navigate(Routes.chatRoute(chat.id)) }
+                    onClick = {
+                        navController.navigate(Routes.supportChatRoute()) {
+                            launchSingleTop = true
+                        }
+                    }
                 )
             }
 

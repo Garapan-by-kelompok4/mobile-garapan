@@ -7,6 +7,7 @@ import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.OrderChatMessage
 import com.app.garapan.domain.model.OrderChatPage
 import com.app.garapan.domain.model.SupportMessage
+import com.app.garapan.domain.model.User
 import com.app.garapan.domain.repository.SessionRepository
 import com.app.garapan.domain.usecase.GetOrderMessagesUseCase
 import com.app.garapan.domain.usecase.GetSupportThreadUseCase
@@ -67,6 +68,7 @@ sealed class ChatMessage {
 data class ChatUiState(
     val workerName: String = "",
     val workerInitials: String = "",
+    val currentUserProfile: ChatCurrentUserProfile = ChatCurrentUserProfile(),
     val isOnline: Boolean = true,
     val isAdminSupport: Boolean = false,
     val supportLabel: String? = null,
@@ -80,6 +82,39 @@ data class ChatUiState(
     val hasMore: Boolean = false,
     val errorMessage: String? = null
 )
+
+data class ChatCurrentUserProfile(
+    val initials: String = "?",
+    val avatarUrl: String? = null
+)
+
+object ChatCurrentUserPresenter {
+    fun from(user: User?): ChatCurrentUserProfile {
+        val displayName = user.resolveDisplayName()
+        return ChatCurrentUserProfile(
+            initials = initialsOf(displayName),
+            avatarUrl = user?.avatarUrl?.takeIf { it.isNotBlank() }
+        )
+    }
+
+    private fun User?.resolveDisplayName(): String {
+        if (this == null) return ""
+        return displayName?.takeIf { it.isNotBlank() }
+            ?: mahasiswa?.fullName?.takeIf { it.isNotBlank() }
+            ?: klien?.companyName?.takeIf { it.isNotBlank() }
+            ?: mahasiswa?.university?.takeIf { it.isNotBlank() }
+            ?: email.substringBefore("@")
+    }
+
+    private fun initialsOf(name: String): String {
+        val parts = name.trim().split(" ").filter { it.isNotBlank() }
+        return when {
+            parts.isEmpty() -> "?"
+            parts.size == 1 -> parts[0].take(2).uppercase()
+            else -> (parts[0].take(1) + parts[1].take(1)).uppercase()
+        }
+    }
+}
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
@@ -99,7 +134,9 @@ class ChatViewModel @Inject constructor(
     private val isSupportThread = workerId == Routes.SUPPORT_WORKER_ID
     // An order (pesanan) chat is opened from the inbox; workerId is the pesananId.
     private val isOrderChat = !isSupportThread && source == Routes.CHAT_SOURCE_ORDER
-    private val currentUserId: String? = sessionRepository.peekCurrentUser()?.id
+    private val currentUser: User? = sessionRepository.peekCurrentUser()
+    private val currentUserId: String? = currentUser?.id
+    private val currentUserProfile: ChatCurrentUserProfile = ChatCurrentUserPresenter.from(currentUser)
 
     private val dummyData = mapOf(
         "1" to ChatUiState(
@@ -142,37 +179,18 @@ class ChatViewModel @Inject constructor(
                 )
             )
         ),
-        "admin-1" to ChatUiState(
+    )
+
+    private val initialState: ChatUiState = when {
+        isSupportThread -> ChatUiState(
             workerName = "Bantuan Admin",
             workerInitials = "LS",
             isOnline = true,
             isAdminSupport = true,
             supportLabel = "Live Support",
-            dateSeparator = "Hari ini, 08:30",
-            messages = listOf(
-                ChatMessage.Received(
-                    text = "Halo! Selamat datang di layanan bantuan GARAPAN. Ada yang bisa saya bantu terkait kendala teknis atau transaksi Anda hari ini?",
-                    time = "08:30",
-                    senderInitials = "LS"
-                ),
-                ChatMessage.Sent(
-                    text = "Halo min, saya mengalami kendala saat mencoba mengunggah portofolio proyek saya. Muncul error terus dari tadi pagi.",
-                    time = "08:45"
-                ),
-                ChatMessage.Received(
-                    text = "Mohon maaf atas ketidaknyamanannya. Boleh tolong kirimkan screenshot pesan error yang muncul, atau beri tahu format dan ukuran file yang Anda coba unggah?",
-                    time = "08:46",
-                    senderInitials = "LS"
-                ),
-                ChatMessage.Sent(
-                    text = "Baik, saya kirim screenshot-nya sekarang. File saya format PNG ukuran sekitar 3 MB.",
-                    time = "08:48"
-                )
-            )
+            dateSeparator = "Hari ini",
+            isLoading = true
         )
-    )
-
-    private val initialState: ChatUiState = when {
         isOrderChat -> ChatUiState(
             workerName = peerName.ifBlank { "Percakapan" },
             workerInitials = initialsOf(peerName),
@@ -183,7 +201,7 @@ class ChatViewModel @Inject constructor(
         else -> dummyData[workerId] ?: dummyData["1"]!!
     }
 
-    private val _uiState = MutableStateFlow(initialState)
+    private val _uiState = MutableStateFlow(initialState.copy(currentUserProfile = currentUserProfile))
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 
     // Number of items prepended to the top of the thread on the last load-older.
@@ -296,8 +314,11 @@ class ChatViewModel @Inject constructor(
     }
 
     private suspend fun fetchThread(showLoading: Boolean, surfaceError: Boolean) {
-        if (showLoading) {
+        val hasRenderableMessages = _uiState.value.messages.isNotEmpty()
+        if (showLoading && !hasRenderableMessages) {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+        } else if (surfaceError) {
+            _uiState.update { it.copy(errorMessage = null) }
         }
         when (val result = getSupportThreadUseCase(page = 1, limit = PAGE_SIZE)) {
             is Resource.Success -> {
