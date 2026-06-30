@@ -55,6 +55,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -156,6 +157,15 @@ fun PesanScreen(
                         )
                     }
                 )
+            }
+
+            if (!uiState.isLoading && uiState.peopleChats.isEmpty()) {
+                item {
+                    ConversationEmptyState(
+                        isSearching = uiState.query.isNotBlank(),
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
             }
         }
     }
@@ -310,6 +320,63 @@ private fun ChatPreviewCard(
                     Spacer(modifier = Modifier.size(24.dp))
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ConversationEmptyState(
+    isSearching: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(CircleShape)
+                    .background(AccentBlue.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.ChatBubbleOutline,
+                    contentDescription = null,
+                    tint = AccentBlue,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(14.dp))
+            Text(
+                text = if (isSearching) {
+                    "Tidak ada percakapan yang cocok."
+                } else {
+                    "Belum ada percakapan."
+                },
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.ExtraBold,
+                    color = PrimaryText
+                )
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = if (isSearching) {
+                    "Coba kata kunci lain."
+                } else {
+                    "Percakapan dengan freelancer atau klien akan muncul setelah ada pesanan."
+                },
+                style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText),
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
