@@ -36,7 +36,9 @@ object Routes {
     const val EDIT_PROJECT = "edit_project/{projectId}"
     const val PROJECT_DETAIL = "project_detail/{projectId}"
     const val JASA_DETAIL = "jasa_detail/{jasaId}"
-    const val CHAT = "chat/{workerId}"
+    const val CHAT = "chat/{workerId}?source={source}&peerName={peerName}"
+    const val CHAT_SOURCE_WORKER = "worker"
+    const val CHAT_SOURCE_ORDER = "order"
     const val CHECKOUT = "checkout/{jasaId}"
     const val BLOG_DETAIL = "blog_detail/{blogId}"
     const val PUBLIC_PROFILE = "public_profile/{userId}"
@@ -52,7 +54,11 @@ object Routes {
     fun projectDetailRoute(projectId: String) = "project_detail/$projectId"
     fun editProjectRoute(projectId: String) = "edit_project/$projectId"
     fun jasaDetailRoute(jasaId: String) = "jasa_detail/$jasaId"
-    fun chatRoute(workerId: String) = "chat/$workerId"
+    fun chatRoute(
+        workerId: String,
+        source: String = CHAT_SOURCE_WORKER,
+        peerName: String = ""
+    ) = "chat/$workerId?source=$source&peerName=${Uri.encode(peerName)}"
     fun checkoutRoute(jasaId: String) = "checkout/$jasaId"
     fun orderDetailRoute(pesananId: String) = "order_detail/$pesananId"
     fun reviewRoute(pesananId: String) = "review/$pesananId"

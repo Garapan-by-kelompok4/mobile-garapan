@@ -127,6 +127,7 @@ fun ChatScreen(
                 isOnline = uiState.isOnline,
                 isAdminSupport = uiState.isAdminSupport,
                 supportLabel = uiState.supportLabel,
+                showStatus = uiState.showStatus,
                 onBack = { navController.navigateUp() }
             )
         },
@@ -229,6 +230,7 @@ private fun ChatTopBar(
     isOnline: Boolean,
     isAdminSupport: Boolean,
     supportLabel: String?,
+    showStatus: Boolean,
     onBack: () -> Unit
 ) {
     val statusColor = if (isOnline) Color(0xFF16A34A) else Color(0xFFDC2626)
@@ -284,21 +286,23 @@ private fun ChatTopBar(
                     color = PrimaryText
                 )
             )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(statusColor)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = statusColor,
-                        fontWeight = FontWeight.SemiBold
+            if (showStatus) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(statusColor)
                     )
-                )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = statusColor,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
             }
         }
     }
