@@ -8,10 +8,13 @@ import com.app.garapan.domain.model.PesananStatus
 import com.app.garapan.domain.usecase.GetConversationsUseCase
 import com.app.garapan.domain.usecase.GetSupportThreadUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.Duration
 import java.time.Instant
@@ -69,13 +72,34 @@ class PesanViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(PesanUiState(adminChats = listOf(adminChat)))
     val uiState: StateFlow<PesanUiState> = _uiState.asStateFlow()
 
-    init {
-        refresh()
+    private var pollJob: Job? = null
+
+    /**
+     * Poll the inbox while the Chat tab is in the foreground so new messages,
+     * previews and unread badges appear live without leaving the screen. The
+     * first pass shows the loading spinner; later passes refresh silently.
+     */
+    fun startPolling() {
+        if (pollJob?.isActive == true) return
+        pollJob = viewModelScope.launch {
+            var first = true
+            while (isActive) {
+                refreshSupportThread()
+                loadConversations(showLoading = first && peopleChats.isEmpty())
+                first = false
+                delay(POLL_INTERVAL_MS)
+            }
+        }
+    }
+
+    fun stopPolling() {
+        pollJob?.cancel()
+        pollJob = null
     }
 
     fun refresh() {
         refreshSupportThread()
-        loadConversations()
+        viewModelScope.launch { loadConversations() }
     }
 
     fun onQueryChanged(query: String) {
@@ -101,20 +125,27 @@ class PesanViewModel @Inject constructor(
         }
     }
 
-    private fun loadConversations() {
-        viewModelScope.launch {
+    private suspend fun loadConversations(showLoading: Boolean = true) {
+        if (showLoading) {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = getConversationsUseCase()) {
-                is Resource.Success -> {
-                    peopleChats = result.data.map { it.toPreviewItem() }
-                    _uiState.update { it.copy(isLoading = false, errorMessage = null) }
-                    publish()
-                }
-                is Resource.Error -> {
-                    _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
-                }
-                Resource.Loading -> Unit
+        }
+        when (val result = getConversationsUseCase()) {
+            is Resource.Success -> {
+                peopleChats = result.data.map { it.toPreviewItem() }
+                _uiState.update { it.copy(isLoading = false, errorMessage = null) }
+                publish()
             }
+            is Resource.Error -> {
+                // Keep the last good list on a silent poll failure; only surface
+                // the error when we were explicitly (re)loading.
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = if (showLoading) result.message else it.errorMessage
+                    )
+                }
+            }
+            Resource.Loading -> Unit
         }
     }
 
@@ -188,5 +219,6 @@ class PesanViewModel @Inject constructor(
 
     private companion object {
         const val SUPPORT_CHAT_ID = "admin-1"
+        const val POLL_INTERVAL_MS = 5_000L
     }
 }
