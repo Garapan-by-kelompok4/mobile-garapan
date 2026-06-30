@@ -1,11 +1,15 @@
 package com.app.garapan.presentation.screen.pesan
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.app.garapan.domain.common.Resource
+import com.app.garapan.domain.usecase.GetSupportThreadUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class ChatPreviewItem(
@@ -33,7 +37,9 @@ data class PesanUiState(
 )
 
 @HiltViewModel
-class PesanViewModel @Inject constructor() : ViewModel() {
+class PesanViewModel @Inject constructor(
+    private val getSupportThreadUseCase: GetSupportThreadUseCase
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
         PesanUiState(
@@ -79,5 +85,30 @@ class PesanViewModel @Inject constructor() : ViewModel() {
     )
     val uiState: StateFlow<PesanUiState> = _uiState.asStateFlow()
 
+    init {
+        refreshSupportUnread()
+    }
+
     fun onQueryChanged(query: String) = _uiState.update { it.copy(query = query) }
+
+    /** Pull the real unread count for the support thread so its inbox badge is accurate. */
+    fun refreshSupportUnread() {
+        viewModelScope.launch {
+            val result = getSupportThreadUseCase()
+            if (result is Resource.Success) {
+                val unread = result.data.unreadCount
+                _uiState.update { state ->
+                    state.copy(
+                        adminChats = state.adminChats.map { chat ->
+                            if (chat.id == SUPPORT_CHAT_ID) chat.copy(unreadCount = unread) else chat
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    private companion object {
+        const val SUPPORT_CHAT_ID = "admin-1"
+    }
 }

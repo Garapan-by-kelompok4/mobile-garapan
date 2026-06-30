@@ -29,6 +29,12 @@ class SupportChatRepositoryImpl @Inject constructor(
                 .toSupportMessage(gson, fallbackMessage = message)
         }
 
+    override suspend fun markMyThreadRead(): Resource<Unit> =
+        safeApiCall {
+            supportChatApi.markMyThreadRead()
+            Unit
+        }
+
     private suspend fun <T> safeApiCall(block: suspend () -> T): Resource<T> =
         try {
             Resource.Success(block())
