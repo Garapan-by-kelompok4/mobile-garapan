@@ -9,6 +9,7 @@ import com.app.garapan.domain.model.NotificationType
 import com.app.garapan.domain.usecase.GetNotificationsUseCase
 import com.app.garapan.domain.usecase.MarkAllNotificationsReadUseCase
 import com.app.garapan.domain.usecase.MarkNotificationReadUseCase
+import com.app.garapan.presentation.navigation.Routes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,6 +48,7 @@ data class NotificationsUiState(
 sealed interface NotificationsEvent {
     data class NavigateToOrderDetail(val pesananId: String) : NotificationsEvent
     data class NavigateToAllReviews(val jasaId: String) : NotificationsEvent
+    data class NavigateToChat(val route: String) : NotificationsEvent
     data class ShowMessage(val message: String) : NotificationsEvent
     data object NavigateToOrderHistory : NotificationsEvent
 }
@@ -127,6 +129,18 @@ class NotificationsViewModel @Inject constructor(
             return NotificationsEvent.NavigateToAllReviews(jasaId)
         }
         val pesananId = meta?.pesananId
+        if (item.type == NotificationType.CHAT_MESSAGE) {
+            return if (pesananId.isNullOrBlank()) {
+                NotificationsEvent.NavigateToChat(Routes.supportChatRoute())
+            } else {
+                NotificationsEvent.NavigateToChat(
+                    Routes.chatRoute(
+                        workerId = pesananId,
+                        source = Routes.CHAT_SOURCE_ORDER
+                    )
+                )
+            }
+        }
         if (!pesananId.isNullOrBlank()) {
             return NotificationsEvent.NavigateToOrderDetail(pesananId)
         }

@@ -7,6 +7,7 @@ import com.app.garapan.domain.model.Conversation
 import com.app.garapan.domain.model.PesananStatus
 import com.app.garapan.domain.usecase.GetConversationsUseCase
 import com.app.garapan.domain.usecase.GetSupportThreadUseCase
+import com.app.garapan.presentation.navigation.Routes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -59,7 +60,7 @@ class PesanViewModel @Inject constructor(
     // The admin (support) entry is always present; its live fields are filled by
     // the support-thread fetch. People chats come from GET /chat.
     private var adminChat: ChatPreviewItem = ChatPreviewItem(
-        id = SUPPORT_CHAT_ID,
+        id = Routes.SUPPORT_WORKER_ID,
         name = "Bantuan Admin",
         preview = "Ada yang bisa kami bantu hari ini?",
         time = "",
@@ -218,7 +219,6 @@ class PesanViewModel @Inject constructor(
     }
 
     private companion object {
-        const val SUPPORT_CHAT_ID = "admin-1"
         const val POLL_INTERVAL_MS = 5_000L
     }
 }

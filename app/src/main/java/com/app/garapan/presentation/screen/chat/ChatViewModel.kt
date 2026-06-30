@@ -96,7 +96,7 @@ class ChatViewModel @Inject constructor(
     private val workerId: String = savedStateHandle["workerId"] ?: "1"
     private val source: String = savedStateHandle["source"] ?: Routes.CHAT_SOURCE_WORKER
     private val peerName: String = savedStateHandle["peerName"] ?: ""
-    private val isSupportThread = workerId == SUPPORT_WORKER_ID
+    private val isSupportThread = workerId == Routes.SUPPORT_WORKER_ID
     // An order (pesanan) chat is opened from the inbox; workerId is the pesananId.
     private val isOrderChat = !isSupportThread && source == Routes.CHAT_SOURCE_ORDER
     private val currentUserId: String? = sessionRepository.peekCurrentUser()?.id
@@ -509,7 +509,6 @@ class ChatViewModel @Inject constructor(
     }
 
     private companion object {
-        const val SUPPORT_WORKER_ID = "admin-1"
         const val POLL_INTERVAL_MS = 4_000L
         const val PAGE_SIZE = 20
         const val ORDER_PAGE_SIZE = 30

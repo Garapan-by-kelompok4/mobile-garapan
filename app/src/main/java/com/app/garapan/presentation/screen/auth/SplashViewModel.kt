@@ -7,6 +7,7 @@ import com.app.garapan.domain.usecase.CheckAuthTokenUseCase
 import com.app.garapan.domain.usecase.LoadSessionUseCase
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.navigation.authDestination
+import com.app.garapan.presentation.notification.FcmTokenRegistrar
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -30,7 +31,8 @@ sealed interface SplashEvent {
 @HiltViewModel
 class SplashViewModel @Inject constructor(
     private val checkAuthTokenUseCase: CheckAuthTokenUseCase,
-    private val loadSessionUseCase: LoadSessionUseCase
+    private val loadSessionUseCase: LoadSessionUseCase,
+    private val fcmTokenRegistrar: FcmTokenRegistrar
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SplashUiState())
@@ -53,6 +55,7 @@ class SplashViewModel @Inject constructor(
                 return@launch
             }
 
+            fcmTokenRegistrar.registerCurrentToken(viewModelScope)
             when (val result = loadSessionUseCase()) {
                 is Resource.Success -> {
                     _uiState.value = SplashUiState(isLoading = false)

@@ -37,6 +37,7 @@ object Routes {
     const val PROJECT_DETAIL = "project_detail/{projectId}"
     const val JASA_DETAIL = "jasa_detail/{jasaId}"
     const val CHAT = "chat/{workerId}?source={source}&peerName={peerName}"
+    const val SUPPORT_WORKER_ID = "admin-1"
     const val CHAT_SOURCE_WORKER = "worker"
     const val CHAT_SOURCE_ORDER = "order"
     const val CHECKOUT = "checkout/{jasaId}"
@@ -58,7 +59,14 @@ object Routes {
         workerId: String,
         source: String = CHAT_SOURCE_WORKER,
         peerName: String = ""
-    ) = "chat/$workerId?source=$source&peerName=${Uri.encode(peerName)}"
+    ): String {
+        val encodedPeerName = if (peerName.isBlank()) "" else Uri.encode(peerName)
+        return "chat/$workerId?source=$source&peerName=$encodedPeerName"
+    }
+    fun supportChatRoute() = chatRoute(
+        workerId = SUPPORT_WORKER_ID,
+        source = CHAT_SOURCE_WORKER
+    )
     fun checkoutRoute(jasaId: String) = "checkout/$jasaId"
     fun orderDetailRoute(pesananId: String) = "order_detail/$pesananId"
     fun reviewRoute(pesananId: String) = "review/$pesananId"

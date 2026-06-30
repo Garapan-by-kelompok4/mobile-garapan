@@ -9,6 +9,7 @@ import com.app.garapan.domain.usecase.LoadSessionUseCase
 import com.app.garapan.domain.usecase.GoogleSignInUseCase
 import com.app.garapan.domain.usecase.LoginUseCase
 import com.app.garapan.domain.usecase.ResendVerificationUseCase
+import com.app.garapan.presentation.notification.FcmTokenRegistrar
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.navigation.authDestination
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -43,7 +44,8 @@ class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
     private val googleSignInUseCase: GoogleSignInUseCase,
     private val loadSessionUseCase: LoadSessionUseCase,
-    private val resendVerificationUseCase: ResendVerificationUseCase
+    private val resendVerificationUseCase: ResendVerificationUseCase,
+    private val fcmTokenRegistrar: FcmTokenRegistrar
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
@@ -77,7 +79,10 @@ class LoginViewModel @Inject constructor(
                 )
             }
             when (val result = googleSignInUseCase(idToken, role)) {
-                is Resource.Success -> routeAfterAuthenticatedLogin()
+                is Resource.Success -> {
+                    fcmTokenRegistrar.registerCurrentToken(viewModelScope)
+                    routeAfterAuthenticatedLogin()
+                }
                 is Resource.Error -> _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -158,6 +163,7 @@ class LoginViewModel @Inject constructor(
     private suspend fun handleLoginSuccess(result: LoginResult) {
         when (result) {
             is LoginResult.Authenticated -> {
+                fcmTokenRegistrar.registerCurrentToken(viewModelScope)
                 routeAfterAuthenticatedLogin()
             }
             is LoginResult.RequiresTwoFactor -> {

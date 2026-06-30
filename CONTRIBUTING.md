@@ -21,9 +21,9 @@ This file is **not committed to the repo** (it's in `.gitignore`). You must get 
 2. Open the project → Project Settings → Your apps → Android app
 3. Download `google-services.json`
 4. Place it in the `app/` folder: `mobile-garapan/app/google-services.json`
-5. Then uncomment the Firebase lines in `app/build.gradle.kts` and root `build.gradle.kts`
+5. Sync/rebuild the project. The Google Services plugin is applied automatically when the file exists.
 
-> Until you do this, the app still builds and runs — Firebase is currently commented out and everything else works fine.
+> Until you do this, the app still builds and runs — Firebase Messaging compiles, but push token registration is skipped because Firebase cannot initialize without the config file.
 
 ### Required reading before writing any code:
 - `.docs/requirements/mobile-requirements.md`

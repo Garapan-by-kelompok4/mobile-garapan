@@ -70,6 +70,9 @@ fun NotificationsScreen(
                 is NotificationsEvent.NavigateToAllReviews -> {
                     navController.navigate(Routes.allReviewsRoute(event.jasaId))
                 }
+                is NotificationsEvent.NavigateToChat -> {
+                    navController.navigate(event.route)
+                }
                 is NotificationsEvent.ShowMessage -> {
                     snackbarHostState.showSnackbar(event.message)
                 }
