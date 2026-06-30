@@ -26,6 +26,8 @@ fun PesananDto.toDomain(): Pesanan = Pesanan(
     jasaTitle = jasa?.title.orEmpty(),
     workerName = mahasiswa.resolveDisplayName(),
     clientLabel = klien.resolveDisplayName(),
+    workerUserId = mahasiswa?.user?.id,
+    clientUserId = klien?.user?.id,
     payment = pembayaran?.toSummary()
 )
 
