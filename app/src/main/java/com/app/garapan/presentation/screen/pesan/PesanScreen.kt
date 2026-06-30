@@ -79,14 +79,21 @@ fun PesanScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // Refresh conversations + the support unread badge whenever the inbox
-    // returns to the foreground, so previews and badges stay current.
+    // Poll the inbox while the Chat tab is in the foreground so previews,
+    // unread badges and new conversations appear live; stop when it leaves.
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) viewModel.refresh()
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> viewModel.startPolling()
+                Lifecycle.Event.ON_PAUSE -> viewModel.stopPolling()
+                else -> Unit
+            }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            viewModel.stopPolling()
+        }
     }
 
     Scaffold(
