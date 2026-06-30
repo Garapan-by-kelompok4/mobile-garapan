@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -31,6 +32,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Paid
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.ImageNotSupported
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Search
@@ -56,6 +58,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -320,7 +324,7 @@ private fun HomeTopBar(
         modifier = Modifier
             .fillMaxWidth()
             .background(White)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
@@ -358,11 +362,33 @@ private fun HeroBanner(onGetStarted: () -> Unit) {
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(BrandNavy)
-            .padding(24.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(BrandNavy, AccentBlue),
+                    start = Offset(0f, 0f),
+                    end = Offset.Infinite
+                )
+            )
     ) {
-        Column {
+        // Decorative circles add depth and atmosphere instead of a flat block.
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .offset(x = 48.dp, y = (-48).dp)
+                .size(150.dp)
+                .clip(CircleShape)
+                .background(White.copy(alpha = 0.08f))
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .offset(x = 28.dp, y = 36.dp)
+                .size(104.dp)
+                .clip(CircleShape)
+                .background(White.copy(alpha = 0.06f))
+        )
+        Column(modifier = Modifier.padding(24.dp)) {
             Text(
                 text = "Temukan Freelancer\nIT Terbaik",
                 style = MaterialTheme.typography.headlineSmall.copy(
@@ -451,6 +477,40 @@ private fun ProjectCard(project: ProjectItem, onClick: () -> Unit = {}) {
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
+                    // Subtle scrim so the image always reads cleanly regardless of user content.
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        Color.Black.copy(alpha = 0.22f)
+                                    )
+                                )
+                            )
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        AccentBlue.copy(alpha = 0.10f),
+                                        BrandNavy.copy(alpha = 0.06f)
+                                    )
+                                )
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.ImageNotSupported,
+                            contentDescription = null,
+                            tint = MutedText,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
                 }
             }
             Column(modifier = Modifier.padding(12.dp)) {
