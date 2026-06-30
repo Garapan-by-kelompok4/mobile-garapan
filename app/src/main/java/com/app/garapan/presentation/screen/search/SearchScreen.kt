@@ -70,7 +70,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
-import com.app.garapan.presentation.components.NotificationBellButton
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.util.RatingFormatter
@@ -148,8 +147,7 @@ fun SearchScreen(
         ) {
             SearchTopBar(
                 onBack = { navController.navigateUp() },
-                showBackButton = showBackButton,
-                onNotificationsClick = { navController.navigate(Routes.NOTIFICATIONS) }
+                showBackButton = showBackButton
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -242,8 +240,7 @@ fun SearchScreen(
 @Composable
 private fun SearchTopBar(
     onBack: () -> Unit,
-    showBackButton: Boolean = true,
-    onNotificationsClick: () -> Unit
+    showBackButton: Boolean = true
 ) {
     Row(
         modifier = Modifier
@@ -270,10 +267,6 @@ private fun SearchTopBar(
                 color = PrimaryText
             ),
             modifier = Modifier.weight(1f)
-        )
-        NotificationBellButton(
-            unreadCount = 0,
-            onClick = onNotificationsClick
         )
     }
 }
