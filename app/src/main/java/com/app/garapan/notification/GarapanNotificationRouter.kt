@@ -6,23 +6,26 @@ import com.app.garapan.presentation.navigation.Routes
 object GarapanNotificationRouter {
     fun routeFromIntent(intent: Intent?): String? {
         val type = intent?.getStringExtra(KEY_TYPE)
+        val conversationId = intent?.getStringExtra(KEY_CONVERSATION_ID)
         val pesananId = intent?.getStringExtra(KEY_PESANAN_ID)
 
-        return routeFromData(type = type, pesananId = pesananId)
+        return routeFromData(
+            type = type,
+            conversationId = conversationId,
+            pesananId = pesananId
+        )
     }
 
-    internal fun routeFromData(type: String?, pesananId: String?): String? {
+    internal fun routeFromData(
+        type: String?,
+        conversationId: String? = null,
+        pesananId: String? = null
+    ): String? {
         if (type.isNullOrBlank()) return null
         return when (type) {
             TYPE_CHAT_MESSAGE -> {
-                if (pesananId.isNullOrBlank()) {
-                    Routes.supportChatRoute()
-                } else {
-                    Routes.chatRoute(
-                        workerId = pesananId,
-                        source = Routes.CHAT_SOURCE_ORDER
-                    )
-                }
+                conversationId?.takeIf { it.isNotBlank() }?.let { Routes.chatRoute(it) }
+                    ?: Routes.supportChatRoute()
             }
             TYPE_ORDER_PAID,
             TYPE_ORDER_DELIVERED,
@@ -36,6 +39,7 @@ object GarapanNotificationRouter {
     }
 
     private const val KEY_TYPE = "type"
+    private const val KEY_CONVERSATION_ID = "conversationId"
     private const val KEY_PESANAN_ID = "pesananId"
 
     private const val TYPE_CHAT_MESSAGE = "CHAT_MESSAGE"

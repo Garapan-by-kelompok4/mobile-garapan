@@ -31,10 +31,15 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.app.garapan.presentation.navigation.Routes
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,6 +68,20 @@ fun PublicProfileScreen(
     viewModel: PublicProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is PublicProfileEvent.NavigateToChat -> {
+                    navController.navigate(event.route) { launchSingleTop = true }
+                }
+                is PublicProfileEvent.ShowMessage -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -111,6 +130,35 @@ fun PublicProfileScreen(
                 ) {
                     Spacer(modifier = Modifier.height(16.dp))
                     PublicProfileHeader(profile = profile)
+
+                    if (uiState.showHubungi) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        OutlinedButton(
+                            onClick = viewModel::onHubungiClicked,
+                            enabled = !uiState.isOpeningChat,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp),
+                            shape = RoundedCornerShape(50.dp)
+                        ) {
+                            if (uiState.isOpeningChat) {
+                                CircularProgressIndicator(
+                                    color = BrandNavy,
+                                    strokeWidth = 2.dp,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            } else {
+                                Text(
+                                    text = "Hubungi",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = BrandNavy
+                                    )
+                                )
+                            }
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(20.dp))
 
                     if (profile.bio.isNotBlank()) {

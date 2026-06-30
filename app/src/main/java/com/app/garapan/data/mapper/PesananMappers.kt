@@ -15,6 +15,7 @@ import com.app.garapan.domain.model.PesananStatus
 
 fun PesananDto.toDomain(): Pesanan = Pesanan(
     id = id,
+    conversationId = conversationId,
     klienId = klienId,
     mahasiswaId = mahasiswaId,
     jasaId = jasaId,

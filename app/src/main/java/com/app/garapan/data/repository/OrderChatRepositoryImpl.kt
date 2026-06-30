@@ -2,10 +2,12 @@ package com.app.garapan.data.repository
 
 import com.app.garapan.data.mapper.toDomain
 import com.app.garapan.data.remote.api.ChatApi
+import com.app.garapan.data.remote.dto.OpenConversationRequestDto
 import com.app.garapan.data.remote.dto.SendOrderMessageRequestDto
 import com.app.garapan.data.remote.error.ApiErrorMapper
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.Conversation
+import com.app.garapan.domain.model.OpenConversationResult
 import com.app.garapan.domain.model.OrderChatMessage
 import com.app.garapan.domain.model.OrderChatPage
 import com.app.garapan.domain.repository.OrderChatRepository
@@ -19,21 +21,33 @@ class OrderChatRepositoryImpl @Inject constructor(
     override suspend fun getConversations(): Resource<List<Conversation>> =
         safeApiCall { chatApi.getConversations().map { it.toDomain() } }
 
+    override suspend fun openConversation(counterpartyId: String): Resource<OpenConversationResult> =
+        safeApiCall {
+            chatApi.openConversation(OpenConversationRequestDto(counterpartyId)).toDomain()
+        }
+
     override suspend fun getMessages(
-        pesananId: String,
+        conversationId: String,
         page: Int,
         limit: Int
     ): Resource<OrderChatPage> =
-        safeApiCall { chatApi.getMessages(pesananId, page, limit).toDomain(page, limit) }
+        safeApiCall { chatApi.getMessages(conversationId, page, limit).toDomain(page, limit) }
 
-    override suspend fun sendMessage(pesananId: String, message: String): Resource<OrderChatMessage> =
+    override suspend fun sendMessage(
+        conversationId: String,
+        message: String,
+        pesananId: String?
+    ): Resource<OrderChatMessage> =
         safeApiCall {
-            chatApi.sendMessage(pesananId, SendOrderMessageRequestDto(message)).toDomain()
+            chatApi.sendMessage(
+                conversationId,
+                SendOrderMessageRequestDto(message = message, pesananId = pesananId)
+            ).toDomain()
         }
 
-    override suspend fun markRead(pesananId: String): Resource<Unit> =
+    override suspend fun markRead(conversationId: String): Resource<Unit> =
         safeApiCall {
-            chatApi.markRead(pesananId)
+            chatApi.markRead(conversationId)
             Unit
         }
 

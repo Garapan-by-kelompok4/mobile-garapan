@@ -2,6 +2,7 @@ package com.app.garapan.domain.model
 
 data class Pesanan(
     val id: String,
+    val conversationId: String?,
     val klienId: String,
     val mahasiswaId: String,
     val jasaId: String?,

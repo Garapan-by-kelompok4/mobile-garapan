@@ -1,6 +1,7 @@
 package com.app.garapan.presentation.screen.jasa_detail
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -44,8 +45,11 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -76,6 +80,20 @@ fun JasaDetailScreen(
     viewModel: JasaDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is JasaDetailEvent.NavigateToChat -> {
+                    navController.navigate(event.route) { launchSingleTop = true }
+                }
+                is JasaDetailEvent.ShowMessage -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -86,7 +104,8 @@ fun JasaDetailScreen(
                 JasaDetailBottomBar(
                     price = uiState.price,
                     isOwner = uiState.isOwner,
-                    isKlien = uiState.isKlien,
+                    isOpeningChat = uiState.isOpeningChat,
+                    onHubungi = viewModel::onHubungiClicked,
                     onChatAndOrder = {
                         navController.navigate(Routes.checkoutRoute(uiState.id))
                     },
@@ -752,7 +771,8 @@ private fun ReviewCard(review: JasaReviewItem) {
 private fun JasaDetailBottomBar(
     price: String,
     isOwner: Boolean,
-    isKlien: Boolean,
+    isOpeningChat: Boolean,
+    onHubungi: () -> Unit,
     onChatAndOrder: () -> Unit,
     onEditService: () -> Unit
 ) {
@@ -798,6 +818,32 @@ private fun JasaDetailBottomBar(
                 )
             }
         } else {
+            OutlinedButton(
+                onClick = onHubungi,
+                enabled = !isOpeningChat,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(50.dp),
+                border = BorderStroke(1.dp, BrandNavy)
+            ) {
+                if (isOpeningChat) {
+                    CircularProgressIndicator(
+                        color = BrandNavy,
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(20.dp)
+                    )
+                } else {
+                    Text(
+                        text = "Hubungi",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = BrandNavy
+                        )
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(8.dp))
             Button(
                 onClick = onChatAndOrder,
                 modifier = Modifier

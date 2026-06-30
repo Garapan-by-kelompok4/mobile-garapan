@@ -1,6 +1,8 @@
 package com.app.garapan.data.remote.api
 
 import com.app.garapan.data.remote.dto.ConversationDto
+import com.app.garapan.data.remote.dto.OpenConversationRequestDto
+import com.app.garapan.data.remote.dto.OpenConversationResponseDto
 import com.app.garapan.data.remote.dto.OrderChatMessageDto
 import com.app.garapan.data.remote.dto.OrderChatPageDto
 import com.app.garapan.data.remote.dto.SendOrderMessageRequestDto
@@ -12,24 +14,29 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-/** Order (per-pesanan) chat — REST. Live updates come from polling the message history. */
+/** Person-pair chat — REST. Live updates come from polling the message history. */
 interface ChatApi {
     @GET("chat")
     suspend fun getConversations(): List<ConversationDto>
 
-    @GET("chat/{pesananId}/messages")
+    @POST("chat/conversations")
+    suspend fun openConversation(
+        @Body request: OpenConversationRequestDto
+    ): OpenConversationResponseDto
+
+    @GET("chat/{conversationId}/messages")
     suspend fun getMessages(
-        @Path("pesananId") pesananId: String,
+        @Path("conversationId") conversationId: String,
         @Query("page") page: Int,
         @Query("limit") limit: Int
     ): OrderChatPageDto
 
-    @POST("chat/{pesananId}/messages")
+    @POST("chat/{conversationId}/messages")
     suspend fun sendMessage(
-        @Path("pesananId") pesananId: String,
+        @Path("conversationId") conversationId: String,
         @Body request: SendOrderMessageRequestDto
     ): OrderChatMessageDto
 
-    @PATCH("chat/{pesananId}/read")
-    suspend fun markRead(@Path("pesananId") pesananId: String): JsonElement
+    @PATCH("chat/{conversationId}/read")
+    suspend fun markRead(@Path("conversationId") conversationId: String): JsonElement
 }

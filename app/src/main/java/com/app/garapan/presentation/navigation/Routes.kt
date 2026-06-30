@@ -36,10 +36,8 @@ object Routes {
     const val EDIT_PROJECT = "edit_project/{projectId}"
     const val PROJECT_DETAIL = "project_detail/{projectId}"
     const val JASA_DETAIL = "jasa_detail/{jasaId}"
-    const val CHAT = "chat/{workerId}?source={source}&peerName={peerName}"
+    const val CHAT = "chat/{conversationId}?peerName={peerName}&activePesananId={activePesananId}&activeOrderTitle={activeOrderTitle}&activeOrderStatus={activeOrderStatus}"
     const val SUPPORT_WORKER_ID = "admin-1"
-    const val CHAT_SOURCE_WORKER = "worker"
-    const val CHAT_SOURCE_ORDER = "order"
     const val CHECKOUT = "checkout/{jasaId}"
     const val BLOG_DETAIL = "blog_detail/{blogId}"
     const val PUBLIC_PROFILE = "public_profile/{userId}"
@@ -56,16 +54,18 @@ object Routes {
     fun editProjectRoute(projectId: String) = "edit_project/$projectId"
     fun jasaDetailRoute(jasaId: String) = "jasa_detail/$jasaId"
     fun chatRoute(
-        workerId: String,
-        source: String = CHAT_SOURCE_WORKER,
-        peerName: String = ""
+        conversationId: String,
+        peerName: String = "",
+        activeOrder: com.app.garapan.domain.model.ActiveOrder? = null
     ): String {
         val encodedPeerName = if (peerName.isBlank()) "" else Uri.encode(peerName)
-        return "chat/$workerId?source=$source&peerName=$encodedPeerName"
+        val encodedTitle = activeOrder?.title?.let { Uri.encode(it) }.orEmpty()
+        val status = activeOrder?.status?.name.orEmpty()
+        val pesananId = activeOrder?.pesananId.orEmpty()
+        return "chat/$conversationId?peerName=$encodedPeerName&activePesananId=$pesananId&activeOrderTitle=$encodedTitle&activeOrderStatus=$status"
     }
     fun supportChatRoute() = chatRoute(
-        workerId = SUPPORT_WORKER_ID,
-        source = CHAT_SOURCE_WORKER
+        conversationId = SUPPORT_WORKER_ID
     )
     fun checkoutRoute(jasaId: String) = "checkout/$jasaId"
     fun orderDetailRoute(pesananId: String) = "order_detail/$pesananId"

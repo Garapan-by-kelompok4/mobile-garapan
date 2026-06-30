@@ -2,11 +2,11 @@ package com.app.garapan.data.remote.dto
 
 /** One conversation row from `GET /chat`. */
 data class ConversationDto(
-    val pesananId: String? = null,
-    val status: String? = null,
+    val conversationId: String,
     val counterparty: ConversationCounterpartyDto? = null,
     val lastMessage: OrderChatMessageDto? = null,
-    val unreadCount: Int? = null
+    val unreadCount: Int? = null,
+    val activeOrder: ActiveOrderDto? = null
 )
 
 data class ConversationCounterpartyDto(
@@ -18,9 +18,26 @@ data class ConversationCounterpartyDto(
     val university: String? = null
 )
 
-/** A single order-chat message from `GET /chat/{id}/messages` or `POST /chat/{id}/messages`. */
+data class ActiveOrderDto(
+    val pesananId: String,
+    val status: String,
+    val title: String? = null
+)
+
+data class OpenConversationRequestDto(
+    val counterpartyId: String
+)
+
+data class OpenConversationResponseDto(
+    val conversationId: String,
+    val counterparty: ConversationCounterpartyDto? = null,
+    val activeOrder: ActiveOrderDto? = null
+)
+
+/** A single chat message from `GET /chat/{conversationId}/messages` or `POST`. */
 data class OrderChatMessageDto(
     val id: String? = null,
+    val conversationId: String? = null,
     val pesananId: String? = null,
     val senderId: String? = null,
     val receiverId: String? = null,
@@ -34,7 +51,7 @@ data class OrderChatMessageDto(
     val createdAt: String? = null
 )
 
-/** Paginated message history page from `GET /chat/{id}/messages` (ascending). */
+/** Paginated message history page from `GET /chat/{conversationId}/messages` (ascending). */
 data class OrderChatPageDto(
     val data: List<OrderChatMessageDto>? = null,
     val total: Int? = null,
@@ -43,5 +60,6 @@ data class OrderChatPageDto(
 )
 
 data class SendOrderMessageRequestDto(
-    val message: String
+    val message: String,
+    val pesananId: String? = null
 )

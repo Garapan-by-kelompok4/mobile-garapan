@@ -276,12 +276,20 @@ fun NavGraph(
         composable(
             route = Routes.CHAT,
             arguments = listOf(
-                navArgument("workerId") { type = NavType.StringType },
-                navArgument("source") {
-                    type = NavType.StringType
-                    defaultValue = Routes.CHAT_SOURCE_WORKER
-                },
+                navArgument("conversationId") { type = NavType.StringType },
                 navArgument("peerName") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+                navArgument("activePesananId") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+                navArgument("activeOrderTitle") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+                navArgument("activeOrderStatus") {
                     type = NavType.StringType
                     defaultValue = ""
                 }

@@ -130,15 +130,11 @@ class NotificationsViewModel @Inject constructor(
         }
         val pesananId = meta?.pesananId
         if (item.type == NotificationType.CHAT_MESSAGE) {
-            return if (pesananId.isNullOrBlank()) {
-                NotificationsEvent.NavigateToChat(Routes.supportChatRoute())
+            val conversationId = meta?.conversationId
+            return if (!conversationId.isNullOrBlank()) {
+                NotificationsEvent.NavigateToChat(Routes.chatRoute(conversationId))
             } else {
-                NotificationsEvent.NavigateToChat(
-                    Routes.chatRoute(
-                        workerId = pesananId,
-                        source = Routes.CHAT_SOURCE_ORDER
-                    )
-                )
+                NotificationsEvent.NavigateToChat(Routes.supportChatRoute())
             }
         }
         if (!pesananId.isNullOrBlank()) {

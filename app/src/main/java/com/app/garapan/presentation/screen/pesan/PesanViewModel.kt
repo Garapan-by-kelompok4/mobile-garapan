@@ -33,7 +33,8 @@ data class ChatPreviewItem(
     val unreadCount: Int = 0,
     val statusLabel: String? = null,
     val isAdmin: Boolean = false,
-    val accent: ChatAccent = ChatAccent.BLUE
+    val accent: ChatAccent = ChatAccent.BLUE,
+    val activeOrder: com.app.garapan.domain.model.ActiveOrder? = null
 )
 
 enum class ChatAccent {
@@ -174,14 +175,15 @@ class PesanViewModel @Inject constructor(
             else -> "Belum ada pesan"
         }
         return ChatPreviewItem(
-            id = pesananId,
+            id = conversationId,
             name = counterpartyName,
             preview = preview,
             time = formatRelative(lastMessageAt),
             unreadCount = unreadCount,
-            statusLabel = status?.toLabel(),
+            statusLabel = activeOrder?.status?.toLabel(),
             isAdmin = false,
-            accent = status.toAccent()
+            accent = activeOrder?.status.toAccent(),
+            activeOrder = activeOrder
         )
     }
 
