@@ -44,6 +44,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -94,6 +97,27 @@ fun ChatScreen(
         }
     }
 
+    // Trigger loading older history when the user scrolls near the top of the log.
+    val shouldLoadOlder by remember {
+        derivedStateOf {
+            uiState.isAdminSupport && uiState.hasMore && !uiState.isLoadingOlder &&
+                listState.firstVisibleItemIndex <= 1
+        }
+    }
+    LaunchedEffect(shouldLoadOlder) {
+        if (shouldLoadOlder) viewModel.loadOlderMessages()
+    }
+
+    // Keep the same message under the user's eyes after older content is prepended.
+    LaunchedEffect(Unit) {
+        viewModel.prependEvents.collect { added ->
+            listState.scrollToItem(
+                listState.firstVisibleItemIndex + added,
+                listState.firstVisibleItemScrollOffset
+            )
+        }
+    }
+
     Scaffold(
         containerColor = Surface,
         topBar = {
@@ -135,6 +159,11 @@ fun ChatScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 16.dp)
             ) {
+                if (uiState.isAdminSupport && (uiState.hasMore || uiState.isLoadingOlder)) {
+                    item {
+                        LoadOlderIndicator(isLoading = uiState.isLoadingOlder)
+                    }
+                }
                 uiState.errorMessage?.let { message ->
                     item {
                         ErrorBanner(
@@ -271,6 +300,24 @@ private fun ChatTopBar(
                     )
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun LoadOlderIndicator(isLoading: Boolean) {
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        if (isLoading) {
+            CircularProgressIndicator(
+                color = BrandNavy,
+                strokeWidth = 2.dp,
+                modifier = Modifier.size(18.dp)
+            )
+        } else {
+            Text(
+                text = "Gulir ke atas untuk pesan lama",
+                style = MaterialTheme.typography.labelSmall.copy(color = MutedText)
+            )
         }
     }
 }
