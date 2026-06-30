@@ -11,6 +11,7 @@ import com.app.garapan.data.repository.KategoriRepositoryImpl
 import com.app.garapan.data.repository.PembayaranRepositoryImpl
 import com.app.garapan.data.repository.LaporanRepositoryImpl
 import com.app.garapan.data.repository.NotificationRepositoryImpl
+import com.app.garapan.data.repository.OrderChatRepositoryImpl
 import com.app.garapan.data.repository.PesananRepositoryImpl
 import com.app.garapan.data.repository.PortofolioRepositoryImpl
 import com.app.garapan.data.repository.ProjectRepositoryImpl
@@ -34,6 +35,7 @@ import com.app.garapan.domain.repository.ProjectRepository
 import com.app.garapan.domain.repository.ReviewRepository
 import com.app.garapan.domain.repository.SessionRepository
 import com.app.garapan.domain.repository.SkillRepository
+import com.app.garapan.domain.repository.OrderChatRepository
 import com.app.garapan.domain.repository.SupportChatRepository
 import com.app.garapan.domain.repository.TopWorkerRepository
 import dagger.Binds
@@ -103,6 +105,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSupportChatRepository(impl: SupportChatRepositoryImpl): SupportChatRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindOrderChatRepository(impl: OrderChatRepositoryImpl): OrderChatRepository
 
     @Binds
     @Singleton
