@@ -115,6 +115,42 @@ class AuthRepositoryImplTest {
     }
 
     @Test
+    fun `logout clears device token before revoking refresh token`() = runBlocking {
+        var capturedDeviceTokenBody: com.google.gson.JsonObject? = null
+        var capturedLogoutBody: LogoutRequestDto? = null
+        val tokenStore = newTokenStore()
+        tokenStore.saveTokens(
+            com.app.garapan.domain.model.AuthTokens(
+                accessToken = "access-token",
+                refreshToken = "refresh-token"
+            )
+        )
+        val repository = AuthRepositoryImpl(
+            authApi = object : AuthApi by unusedAuthApi() {
+                override suspend fun logout(body: LogoutRequestDto): LogoutResponseDto {
+                    capturedLogoutBody = body
+                    return LogoutResponseDto(loggedOut = true)
+                }
+            },
+            usersApi = object : UsersApi by unusedUsersApi() {
+                override suspend fun updateMe(body: com.google.gson.JsonObject): UserDto {
+                    capturedDeviceTokenBody = body
+                    error("Ignored by logout")
+                }
+            },
+            tokenStore = tokenStore
+        )
+
+        val result = repository.logout()
+
+        assertEquals(Resource.Success(true), result)
+        assertTrue(capturedDeviceTokenBody?.get("deviceToken")?.isJsonNull == true)
+        assertEquals(LogoutRequestDto(refreshToken = "refresh-token"), capturedLogoutBody)
+        assertEquals(null, tokenStore.getAccessToken())
+        assertEquals(null, tokenStore.getRefreshToken())
+    }
+
+    @Test
     fun `safe api call rethrows cancellation exception`() {
         val repository = AuthRepositoryImpl(
             authApi = object : AuthApi by unusedAuthApi() {
@@ -178,6 +214,9 @@ class AuthRepositoryImplTest {
             error("Unused")
 
         override suspend fun updateMe(body: UpdateProfileRequestDto): UserDto =
+            error("Unused")
+
+        override suspend fun updateMe(body: com.google.gson.JsonObject): UserDto =
             error("Unused")
 
         override suspend fun uploadAvatar(image: okhttp3.MultipartBody.Part): UserDto =
