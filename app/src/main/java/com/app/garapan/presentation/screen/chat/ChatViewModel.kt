@@ -4,8 +4,10 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
+import com.app.garapan.domain.model.ActiveOrder
 import com.app.garapan.domain.model.OrderChatMessage
 import com.app.garapan.domain.model.OrderChatPage
+import com.app.garapan.domain.model.PesananStatus
 import com.app.garapan.domain.model.SupportMessage
 import com.app.garapan.domain.model.User
 import com.app.garapan.domain.repository.SessionRepository
@@ -80,7 +82,8 @@ data class ChatUiState(
     val isSending: Boolean = false,
     val isLoadingOlder: Boolean = false,
     val hasMore: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val activeOrder: ActiveOrder? = null
 )
 
 data class ChatCurrentUserProfile(
@@ -128,12 +131,11 @@ class ChatViewModel @Inject constructor(
     sessionRepository: SessionRepository
 ) : ViewModel() {
 
-    private val workerId: String = savedStateHandle["workerId"] ?: "1"
-    private val source: String = savedStateHandle["source"] ?: Routes.CHAT_SOURCE_WORKER
+    private val conversationId: String = savedStateHandle["conversationId"] ?: ""
     private val peerName: String = savedStateHandle["peerName"] ?: ""
-    private val isSupportThread = workerId == Routes.SUPPORT_WORKER_ID
-    // An order (pesanan) chat is opened from the inbox; workerId is the pesananId.
-    private val isOrderChat = !isSupportThread && source == Routes.CHAT_SOURCE_ORDER
+    private val navActiveOrder: ActiveOrder? = parseNavActiveOrder(savedStateHandle)
+    private val isSupportThread = conversationId == Routes.SUPPORT_WORKER_ID
+    private val isPeerChat = !isSupportThread && conversationId.isNotBlank()
     private val currentUser: User? = sessionRepository.peekCurrentUser()
     private val currentUserId: String? = currentUser?.id
     private val currentUserProfile: ChatCurrentUserProfile = ChatCurrentUserPresenter.from(currentUser)
@@ -148,19 +150,20 @@ class ChatViewModel @Inject constructor(
             dateSeparator = "Hari ini",
             isLoading = true
         )
-        isOrderChat -> ChatUiState(
+        isPeerChat -> ChatUiState(
             workerName = peerName.ifBlank { "Percakapan" },
             workerInitials = initialsOf(peerName),
             isOnline = true,
             showStatus = false,
-            isLoading = true
+            isLoading = true,
+            activeOrder = navActiveOrder
         )
         else -> ChatUiState(
             workerName = peerName.ifBlank { "Percakapan" },
             workerInitials = initialsOf(peerName),
             isOnline = false,
             showStatus = false,
-            errorMessage = "Percakapan jasa tersedia setelah pesanan dibuat."
+            errorMessage = "Percakapan tidak ditemukan."
         )
     }
 
@@ -192,7 +195,7 @@ class ChatViewModel @Inject constructor(
     init {
         when {
             isSupportThread -> loadSupportThread()
-            isOrderChat -> loadOrderThread()
+            isPeerChat -> loadPeerThread()
         }
     }
 
@@ -205,25 +208,25 @@ class ChatViewModel @Inject constructor(
             sendSupportMessage(text)
             return
         }
-        if (isOrderChat) {
-            sendOrderMessage(text)
+        if (isPeerChat) {
+            sendPeerMessage(text)
             return
         }
         _uiState.update {
-            it.copy(errorMessage = "Percakapan jasa tersedia setelah pesanan dibuat.")
+            it.copy(errorMessage = "Percakapan tidak ditemukan.")
         }
     }
 
     fun retry() {
         when {
             isSupportThread -> loadSupportThread()
-            isOrderChat -> loadOrderThread()
+            isPeerChat -> loadPeerThread()
         }
     }
 
     /** Starts silently polling the thread so new replies appear without leaving the screen. */
     fun startPolling() {
-        if (!isSupportThread && !isOrderChat) return
+        if (!isSupportThread && !isPeerChat) return
         if (pollJob?.isActive == true) return
         pollJob = viewModelScope.launch {
             while (isActive) {
@@ -232,7 +235,7 @@ class ChatViewModel @Inject constructor(
                     if (isSupportThread) {
                         fetchThread(showLoading = false, surfaceError = false)
                     } else {
-                        fetchOrderThread(showLoading = false, surfaceError = false)
+                        fetchPeerThread(showLoading = false, surfaceError = false)
                     }
                 }
             }
@@ -368,11 +371,11 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    private fun loadOrderThread() {
-        viewModelScope.launch { fetchOrderThread(showLoading = true, surfaceError = true) }
+    private fun loadPeerThread() {
+        viewModelScope.launch { fetchPeerThread(showLoading = true, surfaceError = true) }
     }
 
-    private suspend fun fetchOrderThread(showLoading: Boolean, surfaceError: Boolean) {
+    private suspend fun fetchPeerThread(showLoading: Boolean, surfaceError: Boolean) {
         if (showLoading) {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
         }
@@ -401,12 +404,12 @@ class ChatViewModel @Inject constructor(
      * newest tail.
      */
     private suspend fun fetchNewestOrderPage(): Resource<OrderChatPage> {
-        val first = getOrderMessagesUseCase(pesananId = workerId, page = 1, limit = ORDER_PAGE_SIZE)
+        val first = getOrderMessagesUseCase(conversationId = conversationId, page = 1, limit = ORDER_PAGE_SIZE)
         if (first !is Resource.Success) return first
         val total = first.data.total
         if (total <= ORDER_PAGE_SIZE) return first
         val lastPage = (total + ORDER_PAGE_SIZE - 1) / ORDER_PAGE_SIZE
-        return getOrderMessagesUseCase(pesananId = workerId, page = lastPage, limit = ORDER_PAGE_SIZE)
+        return getOrderMessagesUseCase(conversationId = conversationId, page = lastPage, limit = ORDER_PAGE_SIZE)
     }
 
     private fun rebuildOrderThread() {
@@ -420,16 +423,17 @@ class ChatViewModel @Inject constructor(
         if (last.id == lastSeenOrderMessageId) return
         lastSeenOrderMessageId = last.id
         if (last.senderId != currentUserId) {
-            viewModelScope.launch { markOrderChatReadUseCase(workerId) }
+            viewModelScope.launch { markOrderChatReadUseCase(conversationId) }
         }
     }
 
-    private fun sendOrderMessage(text: String) {
+    private fun sendPeerMessage(text: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isSending = true, errorMessage = null) }
-            when (val result = sendOrderMessageUseCase(workerId, text)) {
+            val pesananId = _uiState.value.activeOrder?.pesananId
+            when (val result = sendOrderMessageUseCase(conversationId, text, pesananId)) {
                 is Resource.Success -> {
-                    fetchOrderThread(showLoading = false, surfaceError = false)
+                    fetchPeerThread(showLoading = false, surfaceError = false)
                     _uiState.update { it.copy(isSending = false, inputText = "") }
                 }
                 is Resource.Error -> {
@@ -492,5 +496,17 @@ class ChatViewModel @Inject constructor(
         const val POLL_INTERVAL_MS = 4_000L
         const val PAGE_SIZE = 20
         const val ORDER_PAGE_SIZE = 30
+
+        fun parseNavActiveOrder(savedStateHandle: SavedStateHandle): ActiveOrder? {
+            val pesananId = savedStateHandle.get<String>("activePesananId").orEmpty()
+            val statusRaw = savedStateHandle.get<String>("activeOrderStatus").orEmpty()
+            if (pesananId.isBlank() || statusRaw.isBlank()) return null
+            val title = savedStateHandle.get<String>("activeOrderTitle")?.takeIf { it.isNotBlank() }
+            return ActiveOrder(
+                pesananId = pesananId,
+                status = PesananStatus.fromApiValue(statusRaw),
+                title = title
+            )
+        }
     }
 }

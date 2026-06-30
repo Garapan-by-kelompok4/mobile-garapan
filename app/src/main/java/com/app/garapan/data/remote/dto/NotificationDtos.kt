@@ -11,9 +11,11 @@ data class NotificationDto(
 )
 
 data class NotificationMetaDto(
+    val conversationId: String? = null,
     val pesananId: String? = null,
     val reviewId: String? = null,
-    val jasaId: String? = null
+    val jasaId: String? = null,
+    val senderId: String? = null
 )
 
 data class NotificationListResponseDto(

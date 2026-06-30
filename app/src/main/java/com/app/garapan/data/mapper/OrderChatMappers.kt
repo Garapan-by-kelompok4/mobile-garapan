@@ -1,9 +1,14 @@
 package com.app.garapan.data.mapper
 
+import com.app.garapan.data.remote.dto.ActiveOrderDto
+import com.app.garapan.data.remote.dto.ConversationCounterpartyDto
 import com.app.garapan.data.remote.dto.ConversationDto
+import com.app.garapan.data.remote.dto.OpenConversationResponseDto
 import com.app.garapan.data.remote.dto.OrderChatMessageDto
 import com.app.garapan.data.remote.dto.OrderChatPageDto
+import com.app.garapan.domain.model.ActiveOrder
 import com.app.garapan.domain.model.Conversation
+import com.app.garapan.domain.model.OpenConversationResult
 import com.app.garapan.domain.model.OrderChatMessage
 import com.app.garapan.domain.model.OrderChatPage
 import com.app.garapan.domain.model.PesananStatus
@@ -13,21 +18,37 @@ private const val FILE_MESSAGE_TYPE = "FILE"
 
 fun ConversationDto.toDomain(): Conversation {
     val cp = counterparty
-    val name = cp?.displayName?.takeIf { it.isNotBlank() }
-        ?: cp?.companyName?.takeIf { it.isNotBlank() }
-        ?: cp?.university?.takeIf { it.isNotBlank() }
-        ?: cp?.email?.substringBefore('@')?.takeIf { it.isNotBlank() }
-        ?: "Pengguna"
     return Conversation(
-        pesananId = pesananId.orEmpty(),
-        status = status?.let { PesananStatus.fromApiValue(it) },
+        conversationId = conversationId,
         counterpartyId = cp?.id,
-        counterpartyName = name,
+        counterpartyName = cp.resolveDisplayName(),
         lastMessage = lastMessage?.message,
         lastMessageIsFile = lastMessage?.messageType.equals(FILE_MESSAGE_TYPE, ignoreCase = true),
         lastMessageAt = lastMessage?.createdAt,
-        unreadCount = unreadCount ?: 0
+        unreadCount = unreadCount ?: 0,
+        activeOrder = activeOrder?.toDomain()
     )
+}
+
+fun OpenConversationResponseDto.toDomain(): OpenConversationResult = OpenConversationResult(
+    conversationId = conversationId,
+    counterpartyName = counterparty.resolveDisplayName(),
+    activeOrder = activeOrder?.toDomain()
+)
+
+private fun ActiveOrderDto.toDomain(): ActiveOrder = ActiveOrder(
+    pesananId = pesananId,
+    status = PesananStatus.fromApiValue(status),
+    title = title
+)
+
+private fun ConversationCounterpartyDto?.resolveDisplayName(): String {
+    if (this == null) return "Pengguna"
+    return displayName?.takeIf { it.isNotBlank() }
+        ?: companyName?.takeIf { it.isNotBlank() }
+        ?: university?.takeIf { it.isNotBlank() }
+        ?: email?.substringBefore('@')?.takeIf { it.isNotBlank() }
+        ?: "Pengguna"
 }
 
 fun OrderChatMessageDto.toDomain(): OrderChatMessage {

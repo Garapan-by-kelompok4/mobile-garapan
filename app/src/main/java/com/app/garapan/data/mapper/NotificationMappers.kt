@@ -17,7 +17,9 @@ fun NotificationDto.toDomain() = Notification(
 )
 
 private fun NotificationMetaDto.toDomain() = NotificationMeta(
+    conversationId = conversationId,
     pesananId = pesananId,
     reviewId = reviewId,
-    jasaId = jasaId
+    jasaId = jasaId,
+    senderId = senderId
 )

@@ -8,33 +8,30 @@ import org.junit.Test
 class GarapanNotificationRouterTest {
 
     @Test
-    fun chatMessageWithPesananIdRoutesToOrderChat() {
+    fun chatMessageWithConversationIdRoutesToPeerChat() {
         val route = GarapanNotificationRouter.routeFromData(
             type = "CHAT_MESSAGE",
-            pesananId = "pesanan-123"
+            conversationId = "conv-123"
         )
 
-        assertEquals(
-            Routes.chatRoute("pesanan-123", source = Routes.CHAT_SOURCE_ORDER),
-            route
-        )
+        assertEquals(Routes.chatRoute("conv-123"), route)
     }
 
     @Test
-    fun chatMessageWithBlankPesananIdRoutesToSupportChat() {
+    fun chatMessageWithoutConversationIdRoutesToSupportChat() {
         val route = GarapanNotificationRouter.routeFromData(
             type = "CHAT_MESSAGE",
-            pesananId = ""
+            conversationId = null
         )
 
         assertEquals(Routes.supportChatRoute(), route)
     }
 
     @Test
-    fun chatMessageWithoutPesananIdRoutesToSupportChat() {
+    fun chatMessageWithBlankConversationIdRoutesToSupportChat() {
         val route = GarapanNotificationRouter.routeFromData(
             type = "CHAT_MESSAGE",
-            pesananId = null
+            conversationId = ""
         )
 
         assertEquals(Routes.supportChatRoute(), route)
@@ -44,7 +41,7 @@ class GarapanNotificationRouterTest {
     fun missingTypeDoesNotRoute() {
         val route = GarapanNotificationRouter.routeFromData(
             type = null,
-            pesananId = "pesanan-123"
+            conversationId = "conv-123"
         )
 
         assertNull(route)

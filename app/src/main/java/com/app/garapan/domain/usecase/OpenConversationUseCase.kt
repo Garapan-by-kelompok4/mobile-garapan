@@ -3,8 +3,9 @@ package com.app.garapan.domain.usecase
 import com.app.garapan.domain.repository.OrderChatRepository
 import javax.inject.Inject
 
-class MarkOrderChatReadUseCase @Inject constructor(
+class OpenConversationUseCase @Inject constructor(
     private val orderChatRepository: OrderChatRepository
 ) {
-    suspend operator fun invoke(conversationId: String) = orderChatRepository.markRead(conversationId)
+    suspend operator fun invoke(counterpartyId: String) =
+        orderChatRepository.openConversation(counterpartyId)
 }

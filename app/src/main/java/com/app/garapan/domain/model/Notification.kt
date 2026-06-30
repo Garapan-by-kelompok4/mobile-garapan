@@ -11,9 +11,11 @@ data class Notification(
 )
 
 data class NotificationMeta(
+    val conversationId: String? = null,
     val pesananId: String? = null,
     val reviewId: String? = null,
-    val jasaId: String? = null
+    val jasaId: String? = null,
+    val senderId: String? = null
 )
 
 enum class NotificationType {

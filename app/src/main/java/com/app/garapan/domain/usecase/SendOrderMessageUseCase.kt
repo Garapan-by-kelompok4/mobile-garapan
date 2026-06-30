@@ -6,6 +6,9 @@ import javax.inject.Inject
 class SendOrderMessageUseCase @Inject constructor(
     private val orderChatRepository: OrderChatRepository
 ) {
-    suspend operator fun invoke(pesananId: String, message: String) =
-        orderChatRepository.sendMessage(pesananId, message)
+    suspend operator fun invoke(
+        conversationId: String,
+        message: String,
+        pesananId: String? = null
+    ) = orderChatRepository.sendMessage(conversationId, message, pesananId)
 }

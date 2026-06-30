@@ -150,9 +150,9 @@ fun PesanScreen(
                     onClick = {
                         navController.navigate(
                             Routes.chatRoute(
-                                workerId = chat.id,
-                                source = Routes.CHAT_SOURCE_ORDER,
-                                peerName = chat.name
+                                conversationId = chat.id,
+                                peerName = chat.name,
+                                activeOrder = chat.activeOrder
                             )
                         )
                     }

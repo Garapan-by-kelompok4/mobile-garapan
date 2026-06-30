@@ -67,6 +67,9 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.app.garapan.domain.model.ActiveOrder
+import com.app.garapan.domain.model.PesananStatus
+import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
@@ -181,6 +184,18 @@ fun ChatScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 16.dp)
             ) {
+                if (!uiState.isAdminSupport) {
+                    uiState.activeOrder?.let { order ->
+                        item {
+                            OrderContextBanner(
+                                activeOrder = order,
+                                onClick = {
+                                    navController.navigate(Routes.orderDetailRoute(order.pesananId))
+                                }
+                            )
+                        }
+                    }
+                }
                 if (uiState.isAdminSupport && (uiState.hasMore || uiState.isLoadingOlder)) {
                     item {
                         LoadOlderIndicator(isLoading = uiState.isLoadingOlder)
@@ -214,6 +229,72 @@ fun ChatScreen(
             }
         }
     }
+}
+
+@Composable
+private fun OrderContextBanner(
+    activeOrder: ActiveOrder,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .border(1.dp, BorderColor, RoundedCornerShape(12.dp))
+            .background(White)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Default.Receipt,
+            contentDescription = null,
+            tint = BrandNavy,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = activeOrder.title?.takeIf { it.isNotBlank() } ?: "Pesanan aktif",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = PrimaryText
+                ),
+                maxLines = 1
+            )
+            Text(
+                text = "Ketuk untuk lihat detail pesanan",
+                style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = activeOrder.status.toChatLabel(),
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontWeight = FontWeight.Bold,
+                color = BrandNavy
+            ),
+            modifier = Modifier
+                .clip(RoundedCornerShape(50.dp))
+                .background(AccentBlue.copy(alpha = 0.12f))
+                .padding(horizontal = 10.dp, vertical = 4.dp)
+        )
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+            contentDescription = null,
+            tint = MutedText,
+            modifier = Modifier.size(18.dp)
+        )
+    }
+}
+
+private fun PesananStatus.toChatLabel(): String = when (this) {
+    PesananStatus.PENDING -> "Menunggu"
+    PesananStatus.PAID -> "Dibayar"
+    PesananStatus.IN_PROGRESS -> "Proyek Aktif"
+    PesananStatus.DELIVERED -> "Dikirim"
+    PesananStatus.COMPLETED -> "Selesai"
+    PesananStatus.DISPUTED -> "Sengketa"
 }
 
 @Composable

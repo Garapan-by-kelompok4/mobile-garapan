@@ -11,11 +11,16 @@ import com.app.garapan.domain.model.Role
 import com.app.garapan.domain.usecase.GetJasaDetailUseCase
 import com.app.garapan.domain.usecase.GetReviewsUseCase
 import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
+import com.app.garapan.domain.usecase.OpenConversationUseCase
+import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.util.CurrencyFormatter
 import com.app.garapan.presentation.util.UserMessageLocalizer
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -68,14 +73,21 @@ data class JasaDetailUiState(
     val isOwner: Boolean = false,
     val isKlien: Boolean = false,
     val isLoading: Boolean = false,
+    val isOpeningChat: Boolean = false,
     val errorMessage: String? = null
 )
+
+sealed interface JasaDetailEvent {
+    data class NavigateToChat(val route: String) : JasaDetailEvent
+    data class ShowMessage(val message: String) : JasaDetailEvent
+}
 
 @HiltViewModel
 class JasaDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getJasaDetailUseCase: GetJasaDetailUseCase,
     private val getReviewsUseCase: GetReviewsUseCase,
+    private val openConversationUseCase: OpenConversationUseCase,
     observeCurrentUserUseCase: ObserveCurrentUserUseCase
 ) : ViewModel() {
 
@@ -90,6 +102,9 @@ class JasaDetailViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(JasaDetailUiState(isLoading = true))
     val uiState: StateFlow<JasaDetailUiState> = _uiState.asStateFlow()
+
+    private val _events = MutableSharedFlow<JasaDetailEvent>(extraBufferCapacity = 8)
+    val events: SharedFlow<JasaDetailEvent> = _events.asSharedFlow()
 
     init {
         viewModelScope.launch {
@@ -110,6 +125,39 @@ class JasaDetailViewModel @Inject constructor(
     }
 
     fun retry() = loadJasaDetail()
+
+    fun onHubungiClicked() {
+        val workerUserId = _uiState.value.workerUserId
+        if (workerUserId.isBlank()) {
+            viewModelScope.launch {
+                _events.emit(JasaDetailEvent.ShowMessage("Profil freelancer tidak tersedia."))
+            }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isOpeningChat = true) }
+            when (val result = openConversationUseCase(workerUserId)) {
+                is Resource.Success -> {
+                    val opened = result.data
+                    _uiState.update { it.copy(isOpeningChat = false) }
+                    _events.emit(
+                        JasaDetailEvent.NavigateToChat(
+                            Routes.chatRoute(
+                                conversationId = opened.conversationId,
+                                peerName = opened.counterpartyName,
+                                activeOrder = opened.activeOrder
+                            )
+                        )
+                    )
+                }
+                is Resource.Error -> {
+                    _uiState.update { it.copy(isOpeningChat = false) }
+                    _events.emit(JasaDetailEvent.ShowMessage(result.message))
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
 
     private fun loadJasaDetail() {
         if (jasaId.isBlank()) {

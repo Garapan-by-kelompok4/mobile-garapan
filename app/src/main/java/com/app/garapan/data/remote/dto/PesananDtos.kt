@@ -2,6 +2,7 @@ package com.app.garapan.data.remote.dto
 
 data class PesananDto(
     val id: String,
+    val conversationId: String? = null,
     val klienId: String,
     val mahasiswaId: String,
     val jasaId: String? = null,

@@ -106,6 +106,9 @@ fun OrderDetailScreen(
                 is OrderDetailEvent.NavigateToReview -> {
                     navController.navigate(com.app.garapan.presentation.navigation.Routes.reviewRoute(event.pesananId))
                 }
+                is OrderDetailEvent.NavigateToChat -> {
+                    navController.navigate(event.route) { launchSingleTop = true }
+                }
             }
         }
     }
@@ -138,7 +141,7 @@ fun OrderDetailScreen(
             }
         },
         bottomBar = {
-            if (uiState.canPay || uiState.canDeliver || uiState.canComplete || uiState.canReview || uiState.canDispute) {
+            if (uiState.canChat || uiState.canPay || uiState.canDeliver || uiState.canComplete || uiState.canReview || uiState.canDispute) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -147,6 +150,24 @@ fun OrderDetailScreen(
                         .padding(horizontal = 20.dp, vertical = 12.dp)
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (uiState.canChat) {
+                            OutlinedButton(
+                                onClick = viewModel::onChatClicked,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(50.dp),
+                                border = BorderStroke(1.dp, BrandNavy)
+                            ) {
+                                Text(
+                                    text = "Buka Chat",
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = BrandNavy
+                                    )
+                                )
+                            }
+                        }
                         if (uiState.canPay) {
                             Button(
                                 onClick = viewModel::onPayClicked,

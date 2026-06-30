@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
+import com.app.garapan.domain.model.ActiveOrder
 import com.app.garapan.domain.model.Pesanan
 import com.app.garapan.domain.model.PesananStatus
 import com.app.garapan.domain.model.Role
@@ -15,6 +16,7 @@ import com.app.garapan.domain.usecase.GetPesananDetailUseCase
 import com.app.garapan.domain.usecase.GetReviewsUseCase
 import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
 import com.app.garapan.domain.usecase.WaitForPesananPaymentUseCase
+import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.util.CurrencyFormatter
 import com.app.garapan.presentation.util.PesananDisplayMapper
 import com.app.garapan.presentation.util.UserMessageLocalizer
@@ -46,6 +48,8 @@ data class OrderDetailUiState(
     val reviewButtonLabel: String = "Beri Ulasan",
     val canPay: Boolean = false,
     val canDispute: Boolean = false,
+    val canChat: Boolean = false,
+    val conversationId: String? = null,
     val showDisputedInfoBanner: Boolean = false,
     val isLoading: Boolean = false,
     val isActionLoading: Boolean = false,
@@ -56,6 +60,7 @@ data class OrderDetailUiState(
 sealed interface OrderDetailEvent {
     data class LaunchSnapPayment(val snapToken: String) : OrderDetailEvent
     data class NavigateToReview(val pesananId: String) : OrderDetailEvent
+    data class NavigateToChat(val route: String) : OrderDetailEvent
     data class ShowMessage(val message: String) : OrderDetailEvent
 }
 
@@ -315,6 +320,29 @@ class OrderDetailViewModel @Inject constructor(
         }
     }
 
+    fun onChatClicked() {
+        val conversationId = _uiState.value.conversationId ?: return
+        val counterpartyName = _uiState.value.counterpartyName
+        val activeOrder = currentPesanan?.let { pesanan ->
+            ActiveOrder(
+                pesananId = pesanan.id,
+                status = pesanan.status,
+                title = PesananDisplayMapper.orderTitle(pesanan.jasaTitle, pesanan.projectId)
+            )
+        }
+        viewModelScope.launch {
+            _events.emit(
+                OrderDetailEvent.NavigateToChat(
+                    Routes.chatRoute(
+                        conversationId = conversationId,
+                        peerName = counterpartyName,
+                        activeOrder = activeOrder
+                    )
+                )
+            )
+        }
+    }
+
     private fun applyPesanan(pesanan: Pesanan) {
         currentPesanan = pesanan
         val isBuyer = pesanan.isBuyerForCurrentUser()
@@ -337,6 +365,8 @@ class OrderDetailViewModel @Inject constructor(
                 reviewButtonLabel = "Beri Ulasan",
                 canPay = canPay(pesanan.status, isBuyer),
                 canDispute = canDispute(pesanan.status, isBuyer),
+                canChat = !pesanan.conversationId.isNullOrBlank(),
+                conversationId = pesanan.conversationId,
                 showDisputedInfoBanner = showDisputedInfoBanner(pesanan.status, isProvider),
                 isLoading = false,
                 isActionLoading = false,
