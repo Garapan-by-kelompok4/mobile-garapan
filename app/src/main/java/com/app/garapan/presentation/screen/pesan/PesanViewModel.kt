@@ -85,7 +85,7 @@ class PesanViewModel @Inject constructor(
         pollJob = viewModelScope.launch {
             var first = true
             while (isActive) {
-                refreshSupportThread()
+                refreshSupportThreadSnapshot()
                 loadConversations(showLoading = first && peopleChats.isEmpty())
                 first = false
                 delay(POLL_INTERVAL_MS)
@@ -99,8 +99,10 @@ class PesanViewModel @Inject constructor(
     }
 
     fun refresh() {
-        refreshSupportThread()
-        viewModelScope.launch { loadConversations() }
+        viewModelScope.launch {
+            refreshSupportThreadSnapshot()
+            loadConversations()
+        }
     }
 
     fun onQueryChanged(query: String) {
@@ -109,20 +111,18 @@ class PesanViewModel @Inject constructor(
     }
 
     /** Refresh the support inbox entry (unread, last message preview, time, agent name). */
-    fun refreshSupportThread() {
-        viewModelScope.launch {
-            val result = getSupportThreadUseCase()
-            if (result is Resource.Success) {
-                val page = result.data
-                val last = page.messages.lastOrNull()
-                adminChat = adminChat.copy(
-                    name = page.agentName?.takeIf { it.isNotBlank() } ?: adminChat.name,
-                    preview = last?.message?.takeIf { it.isNotBlank() } ?: adminChat.preview,
-                    time = formatRelative(last?.createdAt),
-                    unreadCount = page.unreadCount
-                )
-                publish()
-            }
+    private suspend fun refreshSupportThreadSnapshot() {
+        val result = getSupportThreadUseCase()
+        if (result is Resource.Success) {
+            val page = result.data
+            val last = page.messages.lastOrNull()
+            adminChat = adminChat.copy(
+                name = page.agentName?.takeIf { it.isNotBlank() } ?: adminChat.name,
+                preview = last?.message?.takeIf { it.isNotBlank() } ?: adminChat.preview,
+                time = formatRelative(last?.createdAt),
+                unreadCount = page.unreadCount
+            )
+            publish()
         }
     }
 

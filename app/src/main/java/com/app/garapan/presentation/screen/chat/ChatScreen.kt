@@ -46,7 +46,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -57,11 +60,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil3.compose.AsyncImage
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
@@ -71,6 +76,7 @@ import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
 import com.app.garapan.ui.theme.Surface
 import com.app.garapan.ui.theme.White
+import kotlinx.coroutines.flow.first
 
 @Composable
 fun ChatScreen(
@@ -81,6 +87,7 @@ fun ChatScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
     val lifecycleOwner = LocalLifecycleOwner.current
+    var didInitialSupportScroll by remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -100,12 +107,26 @@ fun ChatScreen(
     // Trigger loading older history when the user scrolls near the top of the log.
     val shouldLoadOlder by remember {
         derivedStateOf {
-            uiState.isAdminSupport && uiState.hasMore && !uiState.isLoadingOlder &&
+            didInitialSupportScroll && uiState.isAdminSupport && uiState.hasMore && !uiState.isLoadingOlder &&
                 listState.firstVisibleItemIndex <= 1
         }
     }
     LaunchedEffect(shouldLoadOlder) {
         if (shouldLoadOlder) viewModel.loadOlderMessages()
+    }
+
+    LaunchedEffect(uiState.isAdminSupport, uiState.isLoading, uiState.messages.size) {
+        if (
+            uiState.isAdminSupport &&
+            !uiState.isLoading &&
+            uiState.messages.isNotEmpty() &&
+            !didInitialSupportScroll
+        ) {
+            val itemCount = snapshotFlow { listState.layoutInfo.totalItemsCount }
+                .first { it > 0 }
+            listState.scrollToItem(itemCount - 1)
+            didInitialSupportScroll = true
+        }
     }
 
     // Keep the same message under the user's eyes after older content is prepended.
@@ -179,7 +200,10 @@ fun ChatScreen(
                 items(uiState.messages) { message ->
                     when (message) {
                         is ChatMessage.JasaCard -> JasaContextCard(message = message)
-                        is ChatMessage.Sent -> SentBubble(message = message)
+                        is ChatMessage.Sent -> SentBubble(
+                            message = message,
+                            currentUserProfile = uiState.currentUserProfile
+                        )
                         is ChatMessage.Received -> ReceivedBubble(
                             message = message,
                             isAdminSupport = uiState.isAdminSupport
@@ -430,7 +454,10 @@ private fun JasaContextCard(message: ChatMessage.JasaCard) {
 }
 
 @Composable
-private fun SentBubble(message: ChatMessage.Sent) {
+private fun SentBubble(
+    message: ChatMessage.Sent,
+    currentUserProfile: ChatCurrentUserProfile
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.End,
@@ -471,14 +498,25 @@ private fun SentBubble(message: ChatMessage.Sent) {
                 .border(1.dp, BorderColor, CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "PT",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = AccentBlue,
-                    fontSize = 9.sp
+            if (currentUserProfile.avatarUrl != null) {
+                AsyncImage(
+                    model = currentUserProfile.avatarUrl,
+                    contentDescription = "Profile photo",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
                 )
-            )
+            } else {
+                Text(
+                    text = currentUserProfile.initials,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = AccentBlue,
+                        fontSize = 9.sp
+                    )
+                )
+            }
         }
     }
 }
