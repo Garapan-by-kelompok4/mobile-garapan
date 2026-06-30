@@ -4,6 +4,7 @@ import com.app.garapan.data.remote.dto.SendSupportMessageRequestDto
 import com.google.gson.JsonElement
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Query
 
@@ -16,4 +17,7 @@ interface SupportChatApi {
 
     @POST("live-chat-admin")
     suspend fun sendMessage(@Body request: SendSupportMessageRequestDto): JsonElement
+
+    @PATCH("live-chat-admin/me/read")
+    suspend fun markMyThreadRead(): JsonElement
 }

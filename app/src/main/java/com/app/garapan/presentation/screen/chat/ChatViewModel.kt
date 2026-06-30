@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.SupportMessage
 import com.app.garapan.domain.usecase.GetSupportThreadUseCase
+import com.app.garapan.domain.usecase.MarkSupportThreadReadUseCase
 import com.app.garapan.domain.usecase.SendSupportMessageUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -76,7 +77,8 @@ data class ChatUiState(
 class ChatViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getSupportThreadUseCase: GetSupportThreadUseCase,
-    private val sendSupportMessageUseCase: SendSupportMessageUseCase
+    private val sendSupportMessageUseCase: SendSupportMessageUseCase,
+    private val markSupportThreadReadUseCase: MarkSupportThreadReadUseCase
 ) : ViewModel() {
 
     private val workerId: String = savedStateHandle["workerId"] ?: "1"
@@ -267,6 +269,9 @@ class ChatViewModel @Inject constructor(
                     )
                 }
                 rebuildThread(emitPrependCount = false)
+                // The user is looking at the thread, so clear any unread admin
+                // messages server-side; the inbox badge reflects this next refresh.
+                if (page.unreadCount > 0) markThreadRead()
             }
             is Resource.Error -> {
                 _uiState.update {
@@ -308,6 +313,11 @@ class ChatViewModel @Inject constructor(
     private fun String?.toEpochMillisOrMax(): Long {
         if (isNullOrBlank()) return Long.MAX_VALUE
         return runCatching { Instant.parse(this).toEpochMilli() }.getOrDefault(Long.MAX_VALUE)
+    }
+
+    /** Best-effort read receipt; failures are silent and retried on the next fetch. */
+    private fun markThreadRead() {
+        viewModelScope.launch { markSupportThreadReadUseCase() }
     }
 
     private fun sendSupportMessage(text: String) {
