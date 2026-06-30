@@ -10,6 +10,10 @@ object UserMessageLocalizer {
                 "Layanan tidak dapat dihapus karena sudah ada pesanan yang terhubung."
             normalized.equals("Current password is incorrect", ignoreCase = true) ->
                 "Kata sandi saat ini salah."
+            normalized.equals("You cannot order your own jasa", ignoreCase = true) ->
+                "Anda tidak dapat memesan jasa milik sendiri."
+            normalized.equals("You do not own this order", ignoreCase = true) ->
+                "Anda tidak memiliki akses ke pesanan ini."
             normalized.equals("Request failed. Please try again.", ignoreCase = true) ->
                 "Permintaan gagal. Silakan coba lagi."
             normalized.equals("Something went wrong. Please try again.", ignoreCase = true) ->

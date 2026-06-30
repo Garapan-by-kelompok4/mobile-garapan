@@ -41,6 +41,7 @@ class OrderHistoryViewModel @Inject constructor(
 ) : ViewModel() {
 
     private var currentRole: Role? = null
+    private var currentUserId: String? = null
 
     private val _uiState = MutableStateFlow(OrderHistoryUiState(isLoading = true))
     val uiState: StateFlow<OrderHistoryUiState> = _uiState.asStateFlow()
@@ -49,6 +50,7 @@ class OrderHistoryViewModel @Inject constructor(
         viewModelScope.launch {
             observeCurrentUserUseCase().collect { user ->
                 currentRole = user?.role
+                currentUserId = user?.id
                 if (user != null) {
                     loadOrders()
                 }
@@ -67,7 +69,7 @@ class OrderHistoryViewModel @Inject constructor(
                 is Resource.Success -> {
                     _uiState.update {
                         it.copy(
-                            items = result.data.map { pesanan -> pesanan.toHistoryItem(currentRole) },
+                            items = result.data.map { pesanan -> pesanan.toHistoryItem(currentRole, currentUserId) },
                             isLoading = false,
                             errorMessage = null
                         )
@@ -86,17 +88,26 @@ class OrderHistoryViewModel @Inject constructor(
         }
     }
 
-    private fun Pesanan.toHistoryItem(role: Role?): OrderHistoryItem {
-        val isMahasiswa = role == Role.MAHASISWA
-        val amountPrefix = if (isMahasiswa) "+" else "-"
+    private fun Pesanan.toHistoryItem(role: Role?, userId: String?): OrderHistoryItem {
+        val isProvider = isProviderFor(userId, role)
+        val isBuyer = isBuyerFor(userId, role)
+        val amountPrefix = if (isProvider) "+" else "-"
         return OrderHistoryItem(
             id = id,
             title = PesananDisplayMapper.orderTitle(jasaTitle, projectId),
             amount = "$amountPrefix${CurrencyFormatter.formatRupiah(totalPrice)}",
-            counterpartyName = if (isMahasiswa) clientLabel else workerName,
+            counterpartyName = if (isBuyer) workerName else clientLabel,
             time = PesananDisplayMapper.formatOrderDate(createdAt),
             status = PesananDisplayMapper.statusLabel(status),
-            isIncome = isMahasiswa
+            isIncome = isProvider
         )
     }
+
+    private fun Pesanan.isBuyerFor(userId: String?, role: Role?): Boolean =
+        !userId.isNullOrBlank() && clientUserId == userId ||
+            (userId.isNullOrBlank() && role == Role.KLIEN)
+
+    private fun Pesanan.isProviderFor(userId: String?, role: Role?): Boolean =
+        !userId.isNullOrBlank() && workerUserId == userId ||
+            (userId.isNullOrBlank() && role == Role.MAHASISWA)
 }

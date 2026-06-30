@@ -13,6 +13,8 @@ data class Pesanan(
     val jasaTitle: String,
     val workerName: String,
     val clientLabel: String,
+    val workerUserId: String?,
+    val clientUserId: String?,
     val payment: PesananPaymentSummary?
 )
 
