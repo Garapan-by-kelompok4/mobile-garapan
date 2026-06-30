@@ -26,6 +26,8 @@ import com.app.garapan.domain.model.Role
 import com.app.garapan.domain.model.UpdateProfileParams
 import com.app.garapan.domain.model.User
 import com.app.garapan.domain.repository.AuthRepository
+import com.google.gson.JsonNull
+import com.google.gson.JsonObject
 import kotlinx.coroutines.CancellationException
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -131,6 +133,7 @@ class AuthRepositoryImpl @Inject constructor(
             return Resource.Success(true)
         }
 
+        clearDeviceToken()
         return when (val result = safeApiCall { authApi.logout(LogoutRequestDto(refreshToken)).loggedOut }) {
             is Resource.Success -> {
                 tokenStore.clearTokens()
@@ -164,4 +167,13 @@ class AuthRepositoryImpl @Inject constructor(
             if (throwable is CancellationException) throw throwable
             Resource.Error(ApiErrorMapper.toMessage(throwable))
         }
+
+    private suspend fun clearDeviceToken() {
+        val body = JsonObject().apply {
+            add("deviceToken", JsonNull.INSTANCE)
+        }
+        runCatching {
+            usersApi.updateMe(body)
+        }
+    }
 }

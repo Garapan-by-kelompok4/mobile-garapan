@@ -3,6 +3,7 @@ package com.app.garapan.data.remote.api
 import com.app.garapan.data.remote.dto.PublicUserDto
 import com.app.garapan.data.remote.dto.UpdateProfileRequestDto
 import com.app.garapan.data.remote.dto.UserDto
+import com.google.gson.JsonObject
 import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -18,6 +19,9 @@ interface UsersApi {
 
     @PATCH("users/me")
     suspend fun updateMe(@Body body: UpdateProfileRequestDto): UserDto
+
+    @PATCH("users/me")
+    suspend fun updateMe(@Body body: JsonObject): UserDto
 
     @Multipart
     @POST("users/me/avatar")
