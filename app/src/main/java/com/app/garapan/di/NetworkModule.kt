@@ -3,6 +3,7 @@ package com.app.garapan.di
 import com.app.garapan.BuildConfig
 import com.app.garapan.data.remote.api.ArtikelApi
 import com.app.garapan.data.remote.api.AuthApi
+import com.app.garapan.data.remote.api.ChatApi
 import com.app.garapan.data.remote.api.JasaApi
 import com.app.garapan.data.remote.api.KategoriApi
 import com.app.garapan.data.remote.api.LaporanApi
@@ -126,6 +127,11 @@ object NetworkModule {
     @Singleton
     fun provideSupportChatApi(retrofit: Retrofit): SupportChatApi =
         retrofit.create(SupportChatApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideChatApi(retrofit: Retrofit): ChatApi =
+        retrofit.create(ChatApi::class.java)
 
     @Provides
     @Singleton
