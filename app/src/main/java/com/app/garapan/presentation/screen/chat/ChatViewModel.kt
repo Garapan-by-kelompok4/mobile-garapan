@@ -10,8 +10,11 @@ import com.app.garapan.domain.usecase.SendSupportMessageUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
@@ -64,6 +67,8 @@ data class ChatUiState(
     val inputText: String = "",
     val isLoading: Boolean = false,
     val isSending: Boolean = false,
+    val isLoadingOlder: Boolean = false,
+    val hasMore: Boolean = false,
     val errorMessage: String? = null
 )
 
@@ -151,6 +156,20 @@ class ChatViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(dummyData[workerId] ?: dummyData["1"]!!)
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 
+    // Number of items prepended to the top of the thread on the last load-older.
+    // The screen collects this to keep the user's scroll anchored after older
+    // history is inserted above the current viewport.
+    private val _prependEvents = MutableSharedFlow<Int>(extraBufferCapacity = 8)
+    val prependEvents: SharedFlow<Int> = _prependEvents.asSharedFlow()
+
+    // `liveMessages` is the newest page kept fresh by polling; `olderMessages`
+    // accumulates earlier pages fetched on scroll-up. They are merged, de-duped
+    // by id and ordered oldest -> newest for display.
+    private var liveMessages: List<SupportMessage> = emptyList()
+    private var olderMessages: List<SupportMessage> = emptyList()
+    private var oldestPageLoaded: Int = 1
+    private var totalMessages: Int = 0
+
     private var pollJob: Job? = null
 
     init {
@@ -204,21 +223,41 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch { fetchThread(showLoading = true, surfaceError = true) }
     }
 
+    /** Loads the next older page and prepends it for reverse infinite scroll. */
+    fun loadOlderMessages() {
+        if (!isSupportThread) return
+        val state = _uiState.value
+        if (state.isLoadingOlder || !state.hasMore || state.isLoading) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingOlder = true) }
+            when (val result = getSupportThreadUseCase(page = oldestPageLoaded + 1, limit = PAGE_SIZE)) {
+                is Resource.Success -> {
+                    val page = result.data
+                    olderMessages = dedupeById(olderMessages + page.messages)
+                    oldestPageLoaded += 1
+                    totalMessages = maxOf(page.total, olderMessages.size + liveMessages.size)
+                    _uiState.update { it.copy(isLoadingOlder = false) }
+                    rebuildThread(emitPrependCount = true)
+                }
+                is Resource.Error -> {
+                    _uiState.update { it.copy(isLoadingOlder = false, errorMessage = result.message) }
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
     private suspend fun fetchThread(showLoading: Boolean, surfaceError: Boolean) {
         if (showLoading) {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
         }
-        when (val result = getSupportThreadUseCase()) {
+        when (val result = getSupportThreadUseCase(page = 1, limit = PAGE_SIZE)) {
             is Resource.Success -> {
-                val mapped = result.data.map { message -> message.toChatMessage() }
-                _uiState.update { state ->
-                    // Avoid needless recomposition when a poll returns the same thread.
-                    if (!showLoading && state.messages == mapped && state.errorMessage == null) {
-                        state.copy(isLoading = false)
-                    } else {
-                        state.copy(isLoading = false, errorMessage = null, messages = mapped)
-                    }
-                }
+                val page = result.data
+                liveMessages = page.messages
+                totalMessages = maxOf(page.total, olderMessages.size + liveMessages.size)
+                _uiState.update { it.copy(isLoading = false, errorMessage = null) }
+                rebuildThread(emitPrependCount = false)
             }
             is Resource.Error -> {
                 _uiState.update {
@@ -230,6 +269,36 @@ class ChatViewModel @Inject constructor(
             }
             Resource.Loading -> Unit
         }
+    }
+
+    /**
+     * Merge older history + live tail (de-duped by id, ordered oldest -> newest),
+     * map to UI messages and publish. Setting an equal list is a no-op for
+     * StateFlow, so polling that returns the same thread won't recompose.
+     */
+    private fun rebuildThread(emitPrependCount: Boolean) {
+        val merged = dedupeById(olderMessages + liveMessages)
+            .sortedBy { it.createdAt.toEpochMillisOrMax() }
+        val mapped = merged.map { it.toChatMessage() }
+        val previousSize = _uiState.value.messages.size
+        _uiState.update { it.copy(messages = mapped, hasMore = merged.size < totalMessages) }
+        if (emitPrependCount) {
+            val added = mapped.size - previousSize
+            if (added > 0) _prependEvents.tryEmit(added)
+        }
+    }
+
+    private fun dedupeById(messages: List<SupportMessage>): List<SupportMessage> {
+        val byId = LinkedHashMap<String, SupportMessage>()
+        for (message in messages) byId[message.id] = message
+        return byId.values.toList()
+    }
+
+    // Unparseable / missing timestamps sort to the newest end so optimistic or
+    // malformed rows never jump above real history.
+    private fun String?.toEpochMillisOrMax(): Long {
+        if (isNullOrBlank()) return Long.MAX_VALUE
+        return runCatching { Instant.parse(this).toEpochMilli() }.getOrDefault(Long.MAX_VALUE)
     }
 
     private fun sendSupportMessage(text: String) {
@@ -282,5 +351,6 @@ class ChatViewModel @Inject constructor(
     private companion object {
         const val SUPPORT_WORKER_ID = "admin-1"
         const val POLL_INTERVAL_MS = 4_000L
+        const val PAGE_SIZE = 20
     }
 }
