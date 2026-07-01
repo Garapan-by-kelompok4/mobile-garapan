@@ -194,8 +194,12 @@ fun ProfileScreen(
                         ProfileMenuItem("Riwayat Pesanan", Lucide.ShoppingCart) {
                             navController.navigate(Routes.ORDER_HISTORY)
                         },
-                        ProfileMenuItem("Syarat & Ketentuan", Lucide.ScrollText),
-                        ProfileMenuItem("Kebijakan Privasi", Lucide.ShieldCheck),
+                        ProfileMenuItem("Syarat & Ketentuan", Lucide.ScrollText) {
+                            navController.navigate(Routes.TERMS_AND_CONDITIONS)
+                        },
+                        ProfileMenuItem("Kebijakan Privasi", Lucide.ShieldCheck) {
+                            navController.navigate(Routes.PRIVACY_POLICY)
+                        },
                         ProfileMenuItem(
                             label = "Keluar (Log Out)",
                             icon = Lucide.LogOut,
