@@ -9,6 +9,7 @@ import com.app.garapan.domain.model.Pesanan
 import com.app.garapan.domain.model.PesananStatus
 import com.app.garapan.domain.model.Role
 import com.app.garapan.domain.model.CreatePaymentTokenParams
+import com.app.garapan.domain.usecase.CancelPesananUseCase
 import com.app.garapan.domain.usecase.CompletePesananUseCase
 import com.app.garapan.domain.usecase.CreatePaymentTokenUseCase
 import com.app.garapan.domain.usecase.DeliverPesananUseCase
@@ -47,6 +48,7 @@ data class OrderDetailUiState(
     val existingReviewId: String? = null,
     val reviewButtonLabel: String = "Beri Ulasan",
     val canPay: Boolean = false,
+    val canCancel: Boolean = false,
     val canDispute: Boolean = false,
     val canChat: Boolean = false,
     val conversationId: String? = null,
@@ -70,6 +72,7 @@ class OrderDetailViewModel @Inject constructor(
     private val getPesananDetailUseCase: GetPesananDetailUseCase,
     private val deliverPesananUseCase: DeliverPesananUseCase,
     private val completePesananUseCase: CompletePesananUseCase,
+    private val cancelPesananUseCase: CancelPesananUseCase,
     private val createPaymentTokenUseCase: CreatePaymentTokenUseCase,
     private val waitForPesananPaymentUseCase: WaitForPesananPaymentUseCase,
     private val getReviewsUseCase: GetReviewsUseCase,
@@ -260,6 +263,28 @@ class OrderDetailViewModel @Inject constructor(
         }
     }
 
+    fun onCancelClicked() {
+        if (pesananId.isBlank()) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isActionLoading = true, actionMessage = null, errorMessage = null) }
+            when (val result = cancelPesananUseCase(pesananId)) {
+                is Resource.Success -> {
+                    applyPesanan(result.data)
+                    _events.emit(OrderDetailEvent.ShowMessage("Pesanan dibatalkan."))
+                }
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isActionLoading = false,
+                            errorMessage = UserMessageLocalizer.localize(result.message)
+                        )
+                    }
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
     fun onReviewClicked() {
         if (pesananId.isBlank()) return
         viewModelScope.launch {
@@ -364,6 +389,7 @@ class OrderDetailViewModel @Inject constructor(
                 existingReviewId = null,
                 reviewButtonLabel = "Beri Ulasan",
                 canPay = canPay(pesanan.status, isBuyer),
+                canCancel = canCancel(pesanan.status, isBuyer),
                 canDispute = canDispute(pesanan.status, isBuyer),
                 canChat = !pesanan.conversationId.isNullOrBlank(),
                 conversationId = pesanan.conversationId,
@@ -385,6 +411,9 @@ class OrderDetailViewModel @Inject constructor(
         pesanan?.isBuyerForCurrentUser() == true && status == PesananStatus.COMPLETED && !jasaId.isNullOrBlank()
 
     private fun canPay(status: PesananStatus, isBuyer: Boolean): Boolean =
+        isBuyer && status == PesananStatus.PENDING
+
+    private fun canCancel(status: PesananStatus, isBuyer: Boolean): Boolean =
         isBuyer && status == PesananStatus.PENDING
 
     private fun canDispute(status: PesananStatus, isBuyer: Boolean): Boolean =

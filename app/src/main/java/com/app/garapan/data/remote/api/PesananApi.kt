@@ -28,4 +28,7 @@ interface PesananApi {
 
     @PATCH("pesanan/{id}/complete")
     suspend fun completePesanan(@Path("id") id: String): PesananDto
+
+    @PATCH("pesanan/{id}/cancel")
+    suspend fun cancelPesanan(@Path("id") id: String): PesananDto
 }

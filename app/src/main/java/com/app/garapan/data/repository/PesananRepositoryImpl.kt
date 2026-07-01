@@ -32,6 +32,9 @@ class PesananRepositoryImpl @Inject constructor(
     override suspend fun completePesanan(id: String): Resource<Pesanan> =
         safeApiCall { pesananApi.completePesanan(id).toDomain() }
 
+    override suspend fun cancelPesanan(id: String): Resource<Pesanan> =
+        safeApiCall { pesananApi.cancelPesanan(id).toDomain() }
+
     private suspend fun <T> safeApiCall(block: suspend () -> T): Resource<T> =
         try {
             Resource.Success(block())

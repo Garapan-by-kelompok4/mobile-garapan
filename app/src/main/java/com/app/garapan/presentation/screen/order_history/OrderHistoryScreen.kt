@@ -15,22 +15,31 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.NorthEast
 import androidx.compose.material.icons.filled.SouthWest
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -47,6 +56,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavController
+import com.app.garapan.domain.model.PesananStatus
 import com.app.garapan.domain.model.ProposalStatus
 import com.app.garapan.presentation.components.PesananStatusBadge
 import com.app.garapan.presentation.navigation.Routes
@@ -56,6 +66,7 @@ import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
 import com.app.garapan.ui.theme.White
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OrderHistoryScreen(
     navController: NavController,
@@ -63,7 +74,19 @@ fun OrderHistoryScreen(
     viewModel: OrderHistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    if (uiState.showFilterSheet) {
+        OrderHistoryFilterBottomSheet(
+            filter = uiState.filter,
+            sheetState = sheetState,
+            onDismiss = viewModel::onDismissFilter,
+            onPeriodSelected = viewModel::onPeriodSelected,
+            onStatusSelected = viewModel::onStatusSelected,
+            onApply = viewModel::onApplyFilter
+        )
+    }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -140,7 +163,10 @@ fun OrderHistoryScreen(
                     }
                 }
                 else -> {
-                    MonthChip()
+                    OrderHistoryFilterChip(
+                        filter = uiState.filter,
+                        onClick = viewModel::onFilterChipClicked
+                    )
                     LazyColumn(
                         contentPadding = PaddingValues(
                             start = 14.dp,
@@ -197,13 +223,7 @@ private fun OrderHistoryTopBar(
             modifier = Modifier.weight(1f),
             textAlign = TextAlign.Center
         )
-        IconButton(onClick = {}) {
-            Icon(
-                imageVector = Icons.Filled.FilterList,
-                contentDescription = "Filter",
-                tint = AccentBlue
-            )
-        }
+        Spacer(modifier = Modifier.size(48.dp))
     }
 }
 
@@ -357,23 +377,171 @@ private fun ProposalHistoryCard(
 }
 
 @Composable
-private fun MonthChip() {
+private fun OrderHistoryFilterChip(
+    filter: OrderHistoryFilterState,
+    onClick: () -> Unit
+) {
     Box(
         modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = "BULAN INI",
-            style = MaterialTheme.typography.labelMedium.copy(
-                fontWeight = FontWeight.Bold,
-                color = SecondaryText
-            ),
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .clip(RoundedCornerShape(50.dp))
                 .background(Color(0xFFF0EEF8))
+                .clickable(onClick = onClick)
                 .padding(horizontal = 18.dp, vertical = 6.dp)
+        ) {
+            Text(
+                text = filter.period.label.uppercase(),
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = SecondaryText
+                )
+            )
+            if (filter.status != null) {
+                Spacer(modifier = Modifier.width(6.dp))
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(AccentBlue)
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun OrderHistoryFilterBottomSheet(
+    filter: OrderHistoryFilterState,
+    sheetState: SheetState,
+    onDismiss: () -> Unit,
+    onPeriodSelected: (OrderHistoryPeriod) -> Unit,
+    onStatusSelected: (PesananStatus?) -> Unit,
+    onApply: () -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = White,
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 32.dp)
+        ) {
+            Text(
+                text = "Periode",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = SecondaryText,
+                    fontWeight = FontWeight.SemiBold
+                )
+            )
+            OrderHistoryPeriod.entries.forEach { period ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onPeriodSelected(period) }
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = period.label,
+                        style = MaterialTheme.typography.bodyMedium.copy(color = PrimaryText),
+                        modifier = Modifier.weight(1f)
+                    )
+                    RadioButton(
+                        selected = filter.period == period,
+                        onClick = { onPeriodSelected(period) },
+                        colors = RadioButtonDefaults.colors(selectedColor = BrandNavy)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Status",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = SecondaryText,
+                    fontWeight = FontWeight.SemiBold
+                )
+            )
+            StatusFilterRow(
+                label = "Semua",
+                selected = filter.status == null,
+                onClick = { onStatusSelected(null) }
+            )
+            PesananStatus.entries.forEach { status ->
+                StatusFilterRow(
+                    label = status.filterLabel(),
+                    selected = filter.status == status,
+                    onClick = { onStatusSelected(status) }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = onApply,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = BrandNavy,
+                    contentColor = White
+                )
+            ) {
+                Text(
+                    text = "Terapkan",
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatusFilterRow(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium.copy(color = PrimaryText),
+            modifier = Modifier.weight(1f)
+        )
+        RadioButton(
+            selected = selected,
+            onClick = onClick,
+            colors = RadioButtonDefaults.colors(selectedColor = BrandNavy)
         )
     }
+}
+
+private fun PesananStatus.filterLabel(): String = when (this) {
+    PesananStatus.PENDING -> "Menunggu Bayar"
+    PesananStatus.PAID -> "Dibayar"
+    PesananStatus.IN_PROGRESS -> "Diproses"
+    PesananStatus.DELIVERED -> "Dikirim"
+    PesananStatus.COMPLETED -> "Selesai"
+    PesananStatus.DISPUTED -> "Dispute"
+    PesananStatus.CANCELLED -> "Dibatalkan"
 }
 
 @Composable

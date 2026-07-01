@@ -32,7 +32,8 @@ enum class PesananStatus {
     IN_PROGRESS,
     DELIVERED,
     COMPLETED,
-    DISPUTED;
+    DISPUTED,
+    CANCELLED;
 
     companion object {
         fun fromApiValue(value: String): PesananStatus =
