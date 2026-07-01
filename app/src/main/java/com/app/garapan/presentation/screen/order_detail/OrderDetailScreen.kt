@@ -13,19 +13,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.OutlinedButton
@@ -47,6 +52,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -164,7 +171,7 @@ fun OrderDetailScreen(
             }
         },
         bottomBar = {
-            if (uiState.canChat || uiState.canPay || uiState.canCancel || uiState.canDeliver || uiState.canComplete || uiState.canReview || uiState.canDispute) {
+            if (uiState.canPay || uiState.canReview || uiState.canDeliver || uiState.canComplete || uiState.canDispute) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -173,24 +180,6 @@ fun OrderDetailScreen(
                         .padding(horizontal = 20.dp, vertical = 12.dp)
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (uiState.canChat) {
-                            OutlinedButton(
-                                onClick = viewModel::onChatClicked,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp),
-                                shape = RoundedCornerShape(50.dp),
-                                border = BorderStroke(1.dp, BrandNavy)
-                            ) {
-                                Text(
-                                    text = "Buka Chat",
-                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = BrandNavy
-                                    )
-                                )
-                            }
-                        }
                         if (uiState.canPay) {
                             Button(
                                 onClick = viewModel::onPayClicked,
@@ -216,25 +205,6 @@ fun OrderDetailScreen(
                                         style = MaterialTheme.typography.bodyLarge.copy(
                                             fontWeight = FontWeight.ExtraBold
                                         )
-                                    )
-                                }
-                            }
-                            TextButton(
-                                onClick = viewModel::onRefreshStatusClicked,
-                                enabled = !uiState.isActionLoading,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text("Perbarui Status")
-                            }
-                            if (uiState.canCancel) {
-                                TextButton(
-                                    onClick = { showCancelDialog = true },
-                                    enabled = !uiState.isActionLoading,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(
-                                        text = "Batalkan Pesanan",
-                                        color = Color(0xFFE31B23)
                                     )
                                 }
                             }
@@ -385,15 +355,60 @@ fun OrderDetailScreen(
                             text = uiState.createdAt,
                             style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
                         )
+                        if (uiState.canCancel) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                TextButton(
+                                    onClick = { showCancelDialog = true },
+                                    enabled = !uiState.isActionLoading
+                                ) {
+                                    Text(
+                                        text = "Batalkan Pesanan",
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color(0xFFE31B23)
+                                        )
+                                    )
+                                }
+                            }
+                        }
                     }
                     DetailCard {
-                        DetailRow(label = uiState.counterpartyLabel, value = uiState.counterpartyName)
+                        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            DetailRow(
+                                label = uiState.counterpartyLabel,
+                                value = uiState.counterpartyName,
+                                modifier = Modifier.weight(1f)
+                            )
+                            if (uiState.canChat) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                ChatIconButton(onClick = viewModel::onChatClicked)
+                            }
+                        }
                         Spacer(modifier = Modifier.height(12.dp))
                         DetailRow(label = "Total", value = uiState.amount, emphasize = true)
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ChatIconButton(onClick: () -> Unit) {
+    FilledTonalIconButton(
+        onClick = onClick,
+        modifier = Modifier.size(36.dp),
+        colors = IconButtonDefaults.filledTonalIconButtonColors(
+            containerColor = Surface,
+            contentColor = BrandNavy
+        )
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.Chat,
+            contentDescription = "Buka Chat",
+            modifier = Modifier.size(18.dp)
+        )
     }
 }
 
@@ -435,19 +450,24 @@ private fun DetailCard(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun DetailRow(label: String, value: String, emphasize: Boolean = false) {
-    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+private fun DetailRow(label: String, value: String, emphasize: Boolean = false, modifier: Modifier = Modifier) {
+    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText),
-            modifier = Modifier.weight(1f)
+            maxLines = 1
         )
+        Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontWeight = if (emphasize) FontWeight.ExtraBold else FontWeight.SemiBold,
                 color = if (emphasize) AccentBlue else PrimaryText
-            )
+            ),
+            modifier = Modifier.weight(1f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.End
         )
     }
 }
