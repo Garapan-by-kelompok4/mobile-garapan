@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Store
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -146,6 +147,11 @@ fun ProfileScreen(
                             }
                         )
                         if (uiState.role == Role.MAHASISWA) {
+                            add(
+                                ProfileMenuItem("Layanan Saya", Icons.Filled.Store) {
+                                    navController.navigate(Routes.PROFILE_SERVICES)
+                                }
+                            )
                             add(
                                 ProfileMenuItem("Portofolio", Icons.Filled.Work) {
                                     navController.navigate(Routes.PROFILE_PORTFOLIO)
