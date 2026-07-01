@@ -411,6 +411,7 @@ private fun PesananStatus.toChatLabel(): String = when (this) {
     PesananStatus.DELIVERED -> "Dikirim"
     PesananStatus.COMPLETED -> "Selesai"
     PesananStatus.DISPUTED -> "Sengketa"
+    PesananStatus.CANCELLED -> "Dibatalkan"
 }
 
 @Composable

@@ -194,6 +194,7 @@ class PesanViewModel @Inject constructor(
         PesananStatus.DELIVERED -> "Dikirim"
         PesananStatus.COMPLETED -> "Selesai"
         PesananStatus.DISPUTED -> "Sengketa"
+        PesananStatus.CANCELLED -> "Dibatalkan"
     }
 
     private fun PesananStatus?.toAccent(): ChatAccent = when (this) {

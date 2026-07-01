@@ -15,6 +15,7 @@ object PesananDisplayMapper {
         PesananStatus.DELIVERED -> "DIKIRIM"
         PesananStatus.COMPLETED -> "SELESAI"
         PesananStatus.DISPUTED -> "DISPUTE"
+        PesananStatus.CANCELLED -> "DIBATALKAN"
     }
 
     fun formatOrderDate(isoDate: String): String {
