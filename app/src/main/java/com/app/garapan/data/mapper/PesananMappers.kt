@@ -34,7 +34,8 @@ fun PesananDto.toDomain(): Pesanan = Pesanan(
 
 private fun com.app.garapan.data.remote.dto.PesananMahasiswaDto?.resolveDisplayName(): String {
     if (this == null) return "Freelancer"
-    return user?.displayName
+    return fullName?.takeIf { it.isNotBlank() }
+        ?: user?.displayName
         ?: user?.name
         ?: user?.email
         ?: university

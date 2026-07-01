@@ -30,6 +30,7 @@ data class PesananKlienDto(
 
 data class PesananMahasiswaDto(
     val id: String,
+    val fullName: String? = null,
     val university: String? = null,
     val user: PesananUserDto? = null
 )
