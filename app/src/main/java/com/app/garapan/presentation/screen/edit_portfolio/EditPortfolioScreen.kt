@@ -9,7 +9,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,13 +19,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.ImagePlus
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -46,12 +41,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.app.garapan.presentation.components.AppPrimaryButton
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
 import com.app.garapan.ui.theme.ErrorRed
 import com.app.garapan.ui.theme.LightGray
-import com.app.garapan.ui.theme.OnPrimary
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
 import com.app.garapan.ui.theme.Surface
@@ -81,7 +77,10 @@ fun EditPortfolioScreen(
         }
     }
 
-    Scaffold(containerColor = Surface) { innerPadding ->
+    Scaffold(
+        containerColor = Surface,
+        topBar = { AppTopBar(title = "Edit Portofolio", onBack = { navController.navigateUp() }) }
+    ) { innerPadding ->
         if (uiState.isLoading) {
             Box(
                 modifier = Modifier
@@ -101,25 +100,6 @@ fun EditPortfolioScreen(
                 .padding(horizontal = 20.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(
-                        imageVector = Lucide.ArrowLeft,
-                        contentDescription = "Back",
-                        tint = BrandNavy
-                    )
-                }
-                Text(
-                    text = "Edit Portofolio",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        color = BrandNavy
-                    )
-                )
-            }
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "Perbarui item portofolio",
@@ -160,31 +140,12 @@ fun EditPortfolioScreen(
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))
-            Button(
+            AppPrimaryButton(
+                text = "Simpan Perubahan",
                 onClick = viewModel::onSave,
                 enabled = !uiState.isSaving,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = BrandNavy,
-                    contentColor = OnPrimary
-                )
-            ) {
-                if (uiState.isSaving) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.height(22.dp),
-                        strokeWidth = 2.dp,
-                        color = OnPrimary
-                    )
-                } else {
-                    Text(
-                        text = "Simpan Perubahan",
-                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
-                    )
-                }
-            }
+                isLoading = uiState.isSaving
+            )
             Spacer(modifier = Modifier.height(24.dp))
         }
     }

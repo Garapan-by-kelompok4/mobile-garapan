@@ -25,15 +25,10 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Camera
 import com.composables.icons.lucide.ChevronDown
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -57,7 +52,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.app.garapan.domain.model.ProfileStatus
-import com.app.garapan.ui.theme.AccentBlue
+import com.app.garapan.presentation.components.AppCard
+import com.app.garapan.presentation.components.AppPrimaryButton
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.ui.theme.BrandNavy
 import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.PrimaryText
@@ -125,12 +122,7 @@ fun EditProfileScreen(
                     )
                 )
                 Spacer(modifier = Modifier.height(10.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                ) {
+                AppCard(modifier = Modifier.fillMaxWidth()) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -180,61 +172,22 @@ fun EditProfileScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
-            Button(
+            AppPrimaryButton(
+                text = "Simpan",
                 onClick = viewModel::onSave,
                 enabled = !uiState.isSaving && !uiState.isLoading,
+                isLoading = uiState.isSaving,
                 modifier = Modifier
-                    .fillMaxWidth()
                     .padding(horizontal = 16.dp)
                     .padding(bottom = 24.dp)
-                    .height(52.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = BrandNavy,
-                    contentColor = White
-                ),
-                shape = RoundedCornerShape(50.dp)
-            ) {
-                if (uiState.isSaving) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(22.dp),
-                        color = White,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text(
-                        text = "Simpan",
-                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
-                    )
-                }
-            }
+            )
         }
     }
 }
 
 @Composable
 private fun EditProfileTopBar(onBack: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(White)
-            .padding(horizontal = 4.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Lucide.ArrowLeft,
-                contentDescription = "Back",
-                tint = AccentBlue
-            )
-        }
-        Text(
-            text = "Edit Profile",
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.Bold,
-                color = BrandNavy
-            )
-        )
-    }
+    AppTopBar(title = "Edit Profile", onBack = onBack)
 }
 
 @Composable

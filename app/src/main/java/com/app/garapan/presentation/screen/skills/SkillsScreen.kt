@@ -5,7 +5,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
@@ -14,13 +13,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.ArrowLeft
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -35,6 +29,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.app.garapan.presentation.components.AppPrimaryButton
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
 import com.app.garapan.ui.theme.ErrorRed
@@ -125,31 +121,12 @@ fun SkillsScreen(
                 )
             }
             Spacer(modifier = Modifier.weight(1f))
-            Button(
+            AppPrimaryButton(
+                text = "Simpan Keahlian",
                 onClick = viewModel::onSave,
                 enabled = uiState.selectedSkills.isNotEmpty() && !uiState.isSaving,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = BrandNavy,
-                    contentColor = OnPrimary
-                )
-            ) {
-                if (uiState.isSaving) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.height(22.dp),
-                        strokeWidth = 2.dp,
-                        color = OnPrimary
-                    )
-                } else {
-                    Text(
-                        text = "Simpan Keahlian",
-                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
-                    )
-                }
-            }
+                isLoading = uiState.isSaving
+            )
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
@@ -157,27 +134,7 @@ fun SkillsScreen(
 
 @Composable
 private fun SkillsTopBar(onBack: () -> Unit) {
-    androidx.compose.foundation.layout.Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Lucide.ArrowLeft,
-                contentDescription = "Back",
-                tint = BrandNavy
-            )
-        }
-        Text(
-            text = "Edit Keahlian",
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.ExtraBold,
-                color = BrandNavy
-            )
-        )
-    }
+    AppTopBar(title = "Edit Keahlian", onBack = onBack)
 }
 
 @Composable

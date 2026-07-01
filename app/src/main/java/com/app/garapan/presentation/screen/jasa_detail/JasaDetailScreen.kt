@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
@@ -26,15 +25,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.CircleCheckBig
 import com.composables.icons.lucide.Zap
 import com.composables.icons.lucide.Share2
 import com.composables.icons.lucide.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -60,6 +56,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.app.garapan.presentation.components.AppCard
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.util.RatingFormatter
 import com.app.garapan.ui.theme.AccentBlue
@@ -551,12 +549,7 @@ private fun SectionHeader(title: String) {
 
 @Composable
 private fun FeatureCard(feature: JasaFeatureItem) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
+    AppCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.Top
@@ -649,9 +642,11 @@ private fun RatingSummary(rating: Float, reviewCount: Int, breakdown: Map<Int, I
             ) {
                 Text(
                     text = RatingFormatter.format(rating),
-                    fontSize = 36.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = PrimaryText
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontSize = 36.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = PrimaryText
+                    )
                 )
                 Row {
                     repeat(5) { i ->
@@ -704,12 +699,7 @@ private fun RatingSummary(rating: Float, reviewCount: Int, breakdown: Map<Int, I
 
 @Composable
 private fun ReviewCard(review: JasaReviewItem) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
+    AppCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -868,35 +858,17 @@ private fun JasaDetailBottomBar(
 
 @Composable
 private fun JasaDetailTopBar(onBack: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(White)
-            .statusBarsPadding()
-            .padding(horizontal = 4.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Lucide.ArrowLeft,
-                contentDescription = "Back",
-                tint = PrimaryText
-            )
+    AppTopBar(
+        title = "Detail Jasa",
+        onBack = onBack,
+        trailing = {
+            IconButton(onClick = {}) {
+                Icon(
+                    imageVector = Lucide.Share2,
+                    contentDescription = "Share",
+                    tint = PrimaryText
+                )
+            }
         }
-        Text(
-            text = "Detail Jasa",
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.Bold,
-                color = AccentBlue
-            ),
-            modifier = Modifier.weight(1f)
-        )
-        IconButton(onClick = {}) {
-            Icon(
-                imageVector = Lucide.Share2,
-                contentDescription = "Share",
-                tint = PrimaryText
-            )
-        }
-    }
+    )
 }

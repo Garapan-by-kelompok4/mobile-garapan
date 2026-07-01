@@ -24,13 +24,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.ImagePlus
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -43,7 +39,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -60,17 +55,20 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.app.garapan.presentation.components.AppCard
+import com.app.garapan.presentation.components.AppPrimaryButton
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
+import com.app.garapan.ui.theme.ErrorRed
 import com.app.garapan.ui.theme.LightGray
 import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
 import com.app.garapan.ui.theme.Surface
-import com.app.garapan.ui.theme.White
 
 @Composable
 fun EditServiceScreen(
@@ -215,40 +213,18 @@ fun EditServiceScreen(
                     item {
                         Text(
                             text = uiState.errorMessage.orEmpty(),
-                            style = MaterialTheme.typography.bodySmall.copy(color = Color(0xFFB42318)),
+                            style = MaterialTheme.typography.bodySmall.copy(color = ErrorRed),
                             modifier = Modifier.padding(top = 4.dp)
                         )
                     }
                 }
                 item {
-                    Button(
+                    AppPrimaryButton(
+                        text = if (viewModel.isNewJasa) "Buat Layanan" else "Simpan Perubahan",
                         onClick = viewModel::onSave,
                         enabled = !uiState.isSaving,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(54.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = BrandNavy,
-                            contentColor = White
-                        ),
-                        shape = RoundedCornerShape(50.dp),
-                        contentPadding = PaddingValues(horizontal = 18.dp)
-                    ) {
-                        if (uiState.isSaving) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(22.dp),
-                                color = White,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text(
-                                text = if (viewModel.isNewJasa) "Buat Layanan" else "Simpan Perubahan",
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontWeight = FontWeight.ExtraBold
-                                )
-                            )
-                        }
-                    }
+                        isLoading = uiState.isSaving
+                    )
                 }
             }
         }
@@ -257,29 +233,7 @@ fun EditServiceScreen(
 
 @Composable
 private fun EditServiceTopBar(onBack: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(White)
-            .padding(horizontal = 4.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Lucide.ArrowLeft,
-                contentDescription = "Back",
-                tint = AccentBlue
-            )
-        }
-        Text(
-            text = "Edit Layanan",
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.ExtraBold,
-                color = AccentBlue
-            ),
-            modifier = Modifier.weight(1f)
-        )
-    }
+    AppTopBar(title = "Edit Layanan", onBack = onBack)
 }
 
 @Composable
@@ -327,29 +281,25 @@ private fun FormCard(
     title: String,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(White)
-            .padding(22.dp)
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.SemiBold,
-                color = PrimaryText
+    AppCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(22.dp)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = PrimaryText
+                )
             )
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(BorderColor.copy(alpha = 0.7f))
-        )
-        Spacer(modifier = Modifier.height(18.dp))
-        content()
+            Spacer(modifier = Modifier.height(16.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(BorderColor.copy(alpha = 0.7f))
+            )
+            Spacer(modifier = Modifier.height(18.dp))
+            content()
+        }
     }
 }
 
@@ -369,7 +319,7 @@ private fun CategoryChips(
                 modifier = Modifier
                     .clip(RoundedCornerShape(50.dp))
                     .clickable { onCategorySelected(category) }
-                    .background(if (selected) AccentBlue.copy(alpha = 0.14f) else Color(0xFFE4E7EA))
+                    .background(if (selected) AccentBlue.copy(alpha = 0.14f) else Surface)
                     .padding(horizontal = 14.dp, vertical = 8.dp)
             ) {
                 Text(
@@ -394,8 +344,8 @@ private fun PriceField(
     Row(
         modifier = modifier
             .height(52.dp)
-            .clip(RoundedCornerShape(6.dp))
-            .background(Color(0xFFE1E4E6))
+            .clip(RoundedCornerShape(8.dp))
+            .background(Surface)
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -455,8 +405,8 @@ private fun EditTextField(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(minHeight)
-                .clip(RoundedCornerShape(6.dp))
-                .background(Color(0xFFE1E4E6))
+                .clip(RoundedCornerShape(8.dp))
+                .background(Surface)
                 .padding(horizontal = 12.dp, vertical = if (singleLine) 0.dp else 12.dp),
             verticalAlignment = if (singleLine) Alignment.CenterVertically else Alignment.Top
         ) {

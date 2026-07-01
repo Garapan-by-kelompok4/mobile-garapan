@@ -14,14 +14,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.MessageSquare
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -29,7 +27,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -48,7 +45,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
@@ -59,10 +55,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavController
+import com.app.garapan.presentation.components.AppCard
+import com.app.garapan.presentation.components.AppPrimaryButton
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.presentation.components.PesananStatusBadge
 import com.app.garapan.presentation.payment.SnapPaymentLauncher
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BrandNavy
+import com.app.garapan.ui.theme.ErrorRed
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
 import com.app.garapan.ui.theme.Surface
@@ -132,7 +132,7 @@ fun OrderDetailScreen(
                     showCancelDialog = false
                     viewModel.onCancelClicked()
                 }) {
-                    Text("Batalkan", color = Color(0xFFE31B23))
+                    Text("Batalkan", color = ErrorRed)
                 }
             },
             dismissButton = {
@@ -146,29 +146,7 @@ fun OrderDetailScreen(
     Scaffold(
         containerColor = Surface,
         topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(White)
-                    .statusBarsPadding()
-                    .padding(horizontal = 4.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(
-                        imageVector = Lucide.ArrowLeft,
-                        contentDescription = "Back",
-                        tint = AccentBlue
-                    )
-                }
-                Text(
-                    text = "Detail Pesanan",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = AccentBlue
-                    )
-                )
-            }
+            AppTopBar(title = "Detail Pesanan", onBack = { navController.navigateUp() })
         },
         bottomBar = {
             if (uiState.canPay || uiState.canReview || uiState.canDeliver || uiState.canComplete || uiState.canDispute) {
@@ -181,89 +159,33 @@ fun OrderDetailScreen(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         if (uiState.canPay) {
-                            Button(
+                            AppPrimaryButton(
+                                text = "Lanjutkan Pembayaran",
                                 onClick = viewModel::onPayClicked,
                                 enabled = !uiState.isActionLoading,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(54.dp),
-                                shape = RoundedCornerShape(50.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = BrandNavy,
-                                    contentColor = White
-                                )
-                            ) {
-                                if (uiState.isActionLoading) {
-                                    CircularProgressIndicator(
-                                        color = White,
-                                        strokeWidth = 2.dp,
-                                        modifier = Modifier.height(22.dp)
-                                    )
-                                } else {
-                                    Text(
-                                        text = "Lanjutkan Pembayaran",
-                                        style = MaterialTheme.typography.bodyLarge.copy(
-                                            fontWeight = FontWeight.ExtraBold
-                                        )
-                                    )
-                                }
-                            }
+                                isLoading = uiState.isActionLoading
+                            )
                         } else if (uiState.canReview) {
-                            Button(
+                            AppPrimaryButton(
+                                text = uiState.reviewButtonLabel,
                                 onClick = viewModel::onReviewClicked,
-                                enabled = !uiState.isActionLoading,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(54.dp),
-                                shape = RoundedCornerShape(50.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = BrandNavy,
-                                    contentColor = White
-                                )
-                            ) {
-                                Text(
-                                    text = uiState.reviewButtonLabel,
-                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                        fontWeight = FontWeight.ExtraBold
-                                    )
-                                )
-                            }
+                                enabled = !uiState.isActionLoading
+                            )
                         } else {
                             if (uiState.canDeliver || uiState.canComplete) {
-                                Button(
+                                AppPrimaryButton(
+                                    text = if (uiState.canDeliver) {
+                                        "Tandai Sudah Dikirim"
+                                    } else {
+                                        "Terima Pekerjaan"
+                                    },
                                     onClick = {
                                         if (uiState.canDeliver) viewModel.onDeliverClicked()
                                         else viewModel.onCompleteClicked()
                                     },
                                     enabled = !uiState.isActionLoading,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(54.dp),
-                                    shape = RoundedCornerShape(50.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = BrandNavy,
-                                        contentColor = White
-                                    )
-                                ) {
-                                    if (uiState.isActionLoading) {
-                                        CircularProgressIndicator(
-                                            color = White,
-                                            strokeWidth = 2.dp,
-                                            modifier = Modifier.height(22.dp)
-                                        )
-                                    } else {
-                                        Text(
-                                            text = if (uiState.canDeliver) {
-                                                "Tandai Sudah Dikirim"
-                                            } else {
-                                                "Terima Pekerjaan"
-                                            },
-                                            style = MaterialTheme.typography.bodyLarge.copy(
-                                                fontWeight = FontWeight.ExtraBold
-                                            )
-                                        )
-                                    }
-                                }
+                                    isLoading = uiState.isActionLoading
+                                )
                             }
                             if (uiState.canDispute) {
                                 OutlinedButton(
@@ -273,9 +195,9 @@ fun OrderDetailScreen(
                                         .fillMaxWidth()
                                         .height(54.dp),
                                     shape = RoundedCornerShape(50.dp),
-                                    border = BorderStroke(1.dp, Color(0xFFE31B23)),
+                                    border = BorderStroke(1.dp, ErrorRed),
                                     colors = ButtonDefaults.outlinedButtonColors(
-                                        contentColor = Color(0xFFE31B23)
+                                        contentColor = ErrorRed
                                     )
                                 ) {
                                     Text(
@@ -366,7 +288,7 @@ fun OrderDetailScreen(
                                         text = "Batalkan Pesanan",
                                         style = MaterialTheme.typography.bodySmall.copy(
                                             fontWeight = FontWeight.SemiBold,
-                                            color = Color(0xFFE31B23)
+                                            color = ErrorRed
                                         )
                                     )
                                 }
@@ -418,7 +340,7 @@ private fun DisputedInfoBanner() {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFFFFE1E1))
+            .background(ErrorRed.copy(alpha = 0.1f))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
@@ -426,7 +348,7 @@ private fun DisputedInfoBanner() {
             text = "Pesanan dalam sengketa",
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFFE31B23)
+                color = ErrorRed
             )
         )
         Text(
@@ -438,14 +360,10 @@ private fun DisputedInfoBanner() {
 
 @Composable
 private fun DetailCard(content: @Composable () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(White)
-            .padding(20.dp)
-    ) {
-        content()
+    AppCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            content()
+        }
     }
 }
 

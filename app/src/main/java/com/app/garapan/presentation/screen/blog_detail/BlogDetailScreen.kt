@@ -12,14 +12,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Share2
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -42,6 +40,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.app.garapan.presentation.components.AppCard
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.ui.theme.BrandNavy
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
@@ -187,37 +187,19 @@ fun BlogDetailScreen(
 
 @Composable
 private fun BlogDetailTopBar(onBack: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(White)
-            .statusBarsPadding()
-            .padding(horizontal = 4.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Lucide.ArrowLeft,
-                contentDescription = "Back",
-                tint = PrimaryText
-            )
+    AppTopBar(
+        title = "BLOG",
+        onBack = onBack,
+        trailing = {
+            IconButton(onClick = {}) {
+                Icon(
+                    imageVector = Lucide.Share2,
+                    contentDescription = "Share",
+                    tint = PrimaryText
+                )
+            }
         }
-        Text(
-            text = "BLOG",
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.ExtraBold,
-                color = AccentBlue
-            ),
-            modifier = Modifier.weight(1f)
-        )
-        IconButton(onClick = {}) {
-            Icon(
-                imageVector = Lucide.Share2,
-                contentDescription = "Share",
-                tint = PrimaryText
-            )
-        }
-    }
+    )
 }
 
 @Composable
@@ -233,7 +215,7 @@ private fun BlogHeroSection(uiState: BlogDetailUiState) {
                 .fillMaxSize()
                 .background(
                     Brush.linearGradient(
-                        colors = listOf(BrandNavy, Color(0xFF1565C0))
+                        colors = listOf(BrandNavy, AccentBlue)
                     )
                 )
         )
@@ -406,46 +388,43 @@ private fun BlogBlock(block: BlogBodyBlock) {
 
 @Composable
 private fun RecommendationCard(item: RecommendationItem) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(Surface)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(140.dp)
-                .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(BrandNavy.copy(alpha = 0.15f), AccentBlue.copy(alpha = 0.08f))
+    AppCard(modifier = Modifier.fillMaxWidth()) {
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(140.dp)
+                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(BrandNavy.copy(alpha = 0.15f), AccentBlue.copy(alpha = 0.08f))
+                        )
+                    )
+            )
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(
+                    text = item.category,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = AccentBlue
                     )
                 )
-        )
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                text = item.category,
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    color = AccentBlue
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = item.title,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = PrimaryText
+                    ),
+                    maxLines = 2
                 )
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = item.title,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = PrimaryText
-                ),
-                maxLines = 2
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = item.excerpt,
-                style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText),
-                maxLines = 2
-            )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = item.excerpt,
+                    style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText),
+                    maxLines = 2
+                )
+            }
         }
     }
 }

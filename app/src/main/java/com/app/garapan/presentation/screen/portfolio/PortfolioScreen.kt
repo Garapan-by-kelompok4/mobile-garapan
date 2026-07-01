@@ -22,8 +22,6 @@ import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Plus
 import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.Pencil
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -45,12 +43,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.app.garapan.presentation.components.AppCard
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BrandNavy
 import com.app.garapan.ui.theme.ErrorRed
-import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
@@ -76,7 +74,7 @@ fun PortfolioScreen(
             }
     }
 
-    Scaffold(containerColor = Color(0xFFFAF8FF)) { innerPadding ->
+    Scaffold(containerColor = Surface) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -196,12 +194,7 @@ private fun PortfolioCard(
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
+    AppCard(modifier = Modifier.fillMaxWidth()) {
         Column {
             PortfolioCover(item = item)
             Column(
@@ -259,7 +252,7 @@ private fun PortfolioCover(item: PortfolioItem) {
         modifier = Modifier
             .fillMaxWidth()
             .height(180.dp)
-            .clip(RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp))
+            .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
             .background(item.coverColor),
         contentAlignment = Alignment.Center
     ) {

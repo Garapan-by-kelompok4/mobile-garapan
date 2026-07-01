@@ -12,20 +12,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.ArrowLeft
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -45,6 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BrandNavy
@@ -167,49 +163,31 @@ private fun NotificationsTopBar(
     onBack: () -> Unit,
     onMarkAllRead: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(White)
-            .statusBarsPadding()
-            .padding(horizontal = 4.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Lucide.ArrowLeft,
-                contentDescription = "Back",
-                tint = PrimaryText
-            )
-        }
-        Text(
-            text = "Notifikasi",
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.Bold,
-                color = PrimaryText
-            ),
-            modifier = Modifier.weight(1f)
-        )
-        if (unreadCount > 0) {
-            TextButton(
-                onClick = onMarkAllRead,
-                enabled = !isMarkingAllRead
-            ) {
-                if (isMarkingAllRead) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        color = BrandNavy,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text(
-                        text = "Tandai dibaca",
-                        style = MaterialTheme.typography.labelLarge.copy(color = BrandNavy)
-                    )
+    AppTopBar(
+        title = "Notifikasi",
+        onBack = onBack,
+        trailing = {
+            if (unreadCount > 0) {
+                TextButton(
+                    onClick = onMarkAllRead,
+                    enabled = !isMarkingAllRead
+                ) {
+                    if (isMarkingAllRead) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = BrandNavy,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = "Tandai dibaca",
+                            style = MaterialTheme.typography.labelLarge.copy(color = BrandNavy)
+                        )
+                    }
                 }
             }
         }
-    }
+    )
 }
 
 @Composable

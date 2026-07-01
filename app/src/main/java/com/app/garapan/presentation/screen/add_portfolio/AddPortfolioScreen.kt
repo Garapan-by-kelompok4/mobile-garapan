@@ -20,13 +20,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.ImagePlus
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -47,12 +43,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.app.garapan.presentation.components.AppPrimaryButton
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
 import com.app.garapan.ui.theme.ErrorRed
 import com.app.garapan.ui.theme.LightGray
-import com.app.garapan.ui.theme.OnPrimary
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
 import com.app.garapan.ui.theme.Surface
@@ -85,7 +82,10 @@ fun AddPortfolioScreen(
         }
     }
 
-    Scaffold(containerColor = Surface) { innerPadding ->
+    Scaffold(
+        containerColor = Surface,
+        topBar = { AppTopBar(title = "Tambah Portofolio", onBack = { navController.navigateUp() }) }
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -93,25 +93,6 @@ fun AddPortfolioScreen(
                 .padding(horizontal = 20.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(
-                        imageVector = Lucide.ArrowLeft,
-                        contentDescription = "Back",
-                        tint = BrandNavy
-                    )
-                }
-                Text(
-                    text = "Tambah Portofolio",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        color = BrandNavy
-                    )
-                )
-            }
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "Unggah item portofolio baru",
@@ -146,31 +127,12 @@ fun AddPortfolioScreen(
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))
-            Button(
+            AppPrimaryButton(
+                text = "Simpan Portofolio",
                 onClick = viewModel::onSave,
                 enabled = !uiState.isSaving && !uiState.isProcessingImage,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = BrandNavy,
-                    contentColor = OnPrimary
-                )
-            ) {
-                if (uiState.isSaving) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.height(22.dp),
-                        strokeWidth = 2.dp,
-                        color = OnPrimary
-                    )
-                } else {
-                    Text(
-                        text = "Simpan Portofolio",
-                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
-                    )
-                }
-            }
+                isLoading = uiState.isSaving
+            )
             Spacer(modifier = Modifier.height(24.dp))
         }
     }

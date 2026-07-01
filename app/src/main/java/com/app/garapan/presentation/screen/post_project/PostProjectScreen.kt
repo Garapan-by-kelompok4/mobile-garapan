@@ -35,8 +35,6 @@ import com.composables.icons.lucide.ChevronDown
 import com.composables.icons.lucide.User
 import com.composables.icons.lucide.Search
 import com.composables.icons.lucide.MessageCircle
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
@@ -65,7 +63,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -83,6 +80,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.app.garapan.presentation.components.AppPrimaryButton
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
@@ -262,34 +260,12 @@ fun PostProjectScreen(
                     }
                 }
                 item {
-                    Button(
+                    AppPrimaryButton(
+                        text = "Publikasikan Proyek",
                         onClick = viewModel::onPublish,
                         enabled = !uiState.isSubmitting && !uiState.isProcessingImage,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(54.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = BrandNavy,
-                            contentColor = White
-                        ),
-                        shape = RoundedCornerShape(50.dp),
-                        contentPadding = PaddingValues(horizontal = 18.dp)
-                    ) {
-                        if (uiState.isSubmitting) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(22.dp),
-                                color = White,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text(
-                                text = "Publikasikan Proyek",
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontWeight = FontWeight.ExtraBold
-                                )
-                            )
-                        }
-                    }
+                        isLoading = uiState.isSubmitting
+                    )
                 }
             }
         }
@@ -434,8 +410,8 @@ private fun PriceField(
     Row(
         modifier = modifier
             .height(52.dp)
-            .clip(RoundedCornerShape(6.dp))
-            .background(Color(0xFFE1E4E6))
+            .clip(RoundedCornerShape(8.dp))
+            .background(Surface)
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -489,7 +465,7 @@ internal fun CategoryChips(
                 modifier = Modifier
                     .clip(RoundedCornerShape(50.dp))
                     .clickable { onCategorySelected(category) }
-                    .background(if (selected) AccentBlue.copy(alpha = 0.14f) else Color(0xFFE4E7EA))
+                    .background(if (selected) AccentBlue.copy(alpha = 0.14f) else Surface)
                     .padding(horizontal = 14.dp, vertical = 8.dp)
             ) {
                 Text(
@@ -526,9 +502,9 @@ private fun TeamSizeDropdown(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
-                    .clip(RoundedCornerShape(6.dp))
+                    .clip(RoundedCornerShape(8.dp))
                     .clickable { expanded = true }
-                    .background(Color(0xFFE1E4E6))
+                    .background(Surface)
                     .padding(horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -603,9 +579,9 @@ internal fun ReadOnlyPostProjectField(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp)
-                .clip(RoundedCornerShape(6.dp))
+                .clip(RoundedCornerShape(8.dp))
                 .clickable(onClick = onClick)
-                .background(Color(0xFFE1E4E6))
+                .background(Surface)
                 .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -684,8 +660,8 @@ internal fun PostProjectField(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(minHeight)
-                .clip(RoundedCornerShape(6.dp))
-                .background(Color(0xFFE1E4E6))
+                .clip(RoundedCornerShape(8.dp))
+                .background(Surface)
                 .padding(horizontal = 12.dp, vertical = if (singleLine) 0.dp else 12.dp),
             verticalAlignment = if (singleLine) Alignment.CenterVertically else Alignment.Top
         ) {

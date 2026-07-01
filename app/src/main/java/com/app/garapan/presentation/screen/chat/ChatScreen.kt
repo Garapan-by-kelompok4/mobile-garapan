@@ -1,5 +1,10 @@
 package com.app.garapan.presentation.screen.chat
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -40,6 +45,7 @@ import com.composables.icons.lucide.Receipt
 import com.composables.icons.lucide.Headset
 import com.composables.icons.lucide.Download
 import com.composables.icons.lucide.Eye
+import com.composables.icons.lucide.Paperclip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -61,6 +67,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -82,10 +89,12 @@ import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
+import com.app.garapan.ui.theme.ErrorRed
 import com.app.garapan.ui.theme.LightGray
 import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
+import com.app.garapan.ui.theme.SuccessGreen
 import com.app.garapan.ui.theme.Surface
 import com.app.garapan.ui.theme.White
 import kotlinx.coroutines.flow.first
@@ -423,8 +432,8 @@ private fun ErrorBanner(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFFEF4444).copy(alpha = 0.1f))
-            .border(1.dp, Color(0xFFEF4444).copy(alpha = 0.18f), RoundedCornerShape(12.dp))
+            .background(ErrorRed.copy(alpha = 0.1f))
+            .border(1.dp, ErrorRed.copy(alpha = 0.18f), RoundedCornerShape(12.dp))
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -455,7 +464,7 @@ private fun ChatTopBar(
     showStatus: Boolean,
     onBack: () -> Unit
 ) {
-    val statusColor = if (isOnline) Color(0xFF16A34A) else Color(0xFFDC2626)
+    val statusColor = if (isOnline) SuccessGreen else ErrorRed
     val connectionText = if (isOnline) "Tersambung" else "Terputus"
     val subtitle = supportLabel?.let { "$it - $connectionText" } ?: connectionText
 
@@ -651,11 +660,43 @@ private fun JasaContextCard(message: ChatMessage.JasaCard) {
     }
 }
 
+/** Opens an attachment URL in whatever app can view it (browser, PDF viewer, gallery, etc). */
+private fun openAttachment(context: Context, url: String) {
+    try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    } catch (e: ActivityNotFoundException) {
+        Toast.makeText(context, "Tidak ada aplikasi untuk membuka file ini.", Toast.LENGTH_SHORT).show()
+    }
+}
+
+@Composable
+private fun AttachmentRow(fileName: String, contentColor: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            imageVector = Lucide.Paperclip,
+            contentDescription = "Lampiran",
+            tint = contentColor,
+            modifier = Modifier.size(16.dp)
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = fileName,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = contentColor,
+                textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
+            ),
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+        )
+    }
+}
+
 @Composable
 private fun SentBubble(
     message: ChatMessage.Sent,
     currentUserProfile: ChatCurrentUserProfile
 ) {
+    val context = LocalContext.current
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.End,
@@ -667,14 +708,22 @@ private fun SentBubble(
                     .widthIn(max = 260.dp)
                     .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 16.dp, bottomEnd = 4.dp))
                     .background(BrandNavy)
+                    .let { base ->
+                        val url = message.attachmentUrl
+                        if (url != null) base.clickable { openAttachment(context, url) } else base
+                    }
                     .padding(horizontal = 14.dp, vertical = 10.dp)
             ) {
                 Column {
-                    Text(
-                        text = message.text,
-                        style = MaterialTheme.typography.bodyMedium.copy(color = White),
-                        lineHeight = 20.sp
-                    )
+                    if (message.attachmentUrl != null) {
+                        AttachmentRow(fileName = message.attachmentName ?: message.text, contentColor = White)
+                    } else {
+                        Text(
+                            text = message.text,
+                            style = MaterialTheme.typography.bodyMedium.copy(color = White),
+                            lineHeight = 20.sp
+                        )
+                    }
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = message.time,
@@ -724,6 +773,7 @@ private fun ReceivedBubble(
     message: ChatMessage.Received,
     isAdminSupport: Boolean
 ) {
+    val context = LocalContext.current
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Start,
@@ -762,14 +812,22 @@ private fun ReceivedBubble(
                 .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 16.dp, bottomStart = 16.dp, bottomEnd = 16.dp))
                 .background(White)
                 .border(1.dp, BorderColor, RoundedCornerShape(topStart = 4.dp, topEnd = 16.dp, bottomStart = 16.dp, bottomEnd = 16.dp))
+                .let { base ->
+                    val url = message.attachmentUrl
+                    if (url != null) base.clickable { openAttachment(context, url) } else base
+                }
                 .padding(horizontal = 14.dp, vertical = 10.dp)
         ) {
             Column {
-                Text(
-                    text = message.text,
-                    style = MaterialTheme.typography.bodyMedium.copy(color = PrimaryText),
-                    lineHeight = 20.sp
-                )
+                if (message.attachmentUrl != null) {
+                    AttachmentRow(fileName = message.attachmentName ?: message.text, contentColor = AccentBlue)
+                } else {
+                    Text(
+                        text = message.text,
+                        style = MaterialTheme.typography.bodyMedium.copy(color = PrimaryText),
+                        lineHeight = 20.sp
+                    )
+                }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = message.time,
