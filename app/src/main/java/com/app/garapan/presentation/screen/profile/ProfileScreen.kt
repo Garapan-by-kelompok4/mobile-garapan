@@ -21,7 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.ScrollText
-import com.composables.icons.lucide.CircleHelp
 import com.composables.icons.lucide.LogOut
 import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.ClipboardList
@@ -197,7 +196,6 @@ fun ProfileScreen(
                         ProfileMenuItem("Riwayat Pesanan", Lucide.ShoppingCart) {
                             navController.navigate(Routes.ORDER_HISTORY)
                         },
-                        ProfileMenuItem("Pusat Bantuan", Lucide.CircleHelp),
                         ProfileMenuItem("Syarat & Ketentuan", Lucide.ScrollText),
                         ProfileMenuItem("Kebijakan Privasi", Lucide.ShieldCheck),
                         ProfileMenuItem(
