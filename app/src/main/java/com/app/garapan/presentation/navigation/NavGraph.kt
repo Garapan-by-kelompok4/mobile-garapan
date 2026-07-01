@@ -29,6 +29,7 @@ import com.app.garapan.presentation.screen.dispute.DisputeScreen
 import com.app.garapan.presentation.screen.order_detail.OrderDetailScreen
 import com.app.garapan.presentation.screen.order_history.OrderHistoryScreen
 import com.app.garapan.presentation.screen.portfolio.PortfolioScreen
+import com.app.garapan.presentation.screen.privacy_policy.PrivacyPolicyScreen
 import com.app.garapan.presentation.screen.profile_services.ProfileServicesScreen
 import com.app.garapan.presentation.screen.public_profile.PublicProfileScreen
 import com.app.garapan.presentation.screen.my_projects.MyProjectsScreen
@@ -40,6 +41,7 @@ import com.app.garapan.presentation.screen.reset_password.ResetPasswordScreen
 import com.app.garapan.presentation.screen.change_password.ChangePasswordScreen
 import com.app.garapan.presentation.screen.security.SecurityScreen
 import com.app.garapan.presentation.screen.skills.SkillsScreen
+import com.app.garapan.presentation.screen.terms_and_conditions.TermsAndConditionsScreen
 import com.app.garapan.presentation.screen.two_factor.TwoFactorScreen
 import com.app.garapan.presentation.screen.verify_email.VerifyEmailScreen
 import com.app.garapan.domain.model.Role
@@ -335,6 +337,12 @@ fun NavGraph(
         }
         composable(Routes.NOTIFICATIONS) {
             NotificationsScreen(navController = navController)
+        }
+        composable(Routes.TERMS_AND_CONDITIONS) {
+            TermsAndConditionsScreen(navController = navController)
+        }
+        composable(Routes.PRIVACY_POLICY) {
+            PrivacyPolicyScreen(navController = navController)
         }
     }
 }
