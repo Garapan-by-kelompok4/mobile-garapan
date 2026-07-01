@@ -1,16 +1,20 @@
 package com.app.garapan.presentation.screen.order_history
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -24,6 +28,9 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.ArrowUpRight
 import com.composables.icons.lucide.ArrowDownLeft
+import com.composables.icons.lucide.Calendar
+import com.composables.icons.lucide.ChevronDown
+import com.composables.icons.lucide.X
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -34,10 +41,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -61,7 +69,9 @@ import com.app.garapan.domain.model.ProposalStatus
 import com.app.garapan.presentation.components.PesananStatusBadge
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
+import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
+import com.app.garapan.ui.theme.LightGray
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
 import com.app.garapan.ui.theme.White
@@ -151,38 +161,39 @@ fun OrderHistoryScreen(
                         }
                     }
                 }
-                uiState.items.isEmpty() -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Belum ada pesanan.",
-                            style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
-                        )
-                    }
-                }
                 else -> {
                     OrderHistoryFilterChip(
                         filter = uiState.filter,
                         onClick = viewModel::onFilterChipClicked
                     )
-                    LazyColumn(
-                        contentPadding = PaddingValues(
-                            start = 14.dp,
-                            end = 14.dp,
-                            top = 14.dp,
-                            bottom = 24.dp
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        items(uiState.items, key = { it.id }) { item ->
-                            OrderHistoryCard(
-                                item = item,
-                                onClick = {
-                                    navController.navigate(Routes.orderDetailRoute(item.id))
-                                }
+                    if (uiState.items.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Belum ada pesanan.",
+                                style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
                             )
+                        }
+                    } else {
+                        LazyColumn(
+                            contentPadding = PaddingValues(
+                                start = 14.dp,
+                                end = 14.dp,
+                                top = 14.dp,
+                                bottom = 24.dp
+                            ),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            items(uiState.items, key = { it.id }) { item ->
+                                OrderHistoryCard(
+                                    item = item,
+                                    onClick = {
+                                        navController.navigate(Routes.orderDetailRoute(item.id))
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -232,43 +243,38 @@ private fun OrderHistoryTabRow(
     selectedTab: OrderHistoryTab,
     onTabSelected: (OrderHistoryTab) -> Unit
 ) {
-    Row(
+    val tabs = listOf(
+        OrderHistoryTab.PESANAN to "Pesanan",
+        OrderHistoryTab.PROPOSAL to "Proposal"
+    )
+    SingleChoiceSegmentedButtonRow(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+            .padding(horizontal = 20.dp, vertical = 10.dp)
     ) {
-        OrderHistoryTabChip(
-            label = "Pesanan",
-            selected = selectedTab == OrderHistoryTab.PESANAN,
-            onClick = { onTabSelected(OrderHistoryTab.PESANAN) }
-        )
-        OrderHistoryTabChip(
-            label = "Proposal",
-            selected = selectedTab == OrderHistoryTab.PROPOSAL,
-            onClick = { onTabSelected(OrderHistoryTab.PROPOSAL) }
-        )
+        tabs.forEachIndexed { index, (tab, label) ->
+            SegmentedButton(
+                selected = selectedTab == tab,
+                onClick = { onTabSelected(tab) },
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = tabs.size),
+                colors = SegmentedButtonDefaults.colors(
+                    activeContainerColor = BrandNavy,
+                    activeContentColor = White,
+                    activeBorderColor = BrandNavy,
+                    inactiveContainerColor = Color(0xFFF0EEF8),
+                    inactiveContentColor = SecondaryText,
+                    inactiveBorderColor = Color(0xFFF0EEF8)
+                ),
+                icon = {},
+                label = {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                }
+            )
+        }
     }
-}
-
-@Composable
-private fun OrderHistoryTabChip(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    Text(
-        text = label,
-        style = MaterialTheme.typography.labelMedium.copy(
-            fontWeight = FontWeight.Bold,
-            color = if (selected) White else SecondaryText
-        ),
-        modifier = Modifier
-            .clip(RoundedCornerShape(50.dp))
-            .background(if (selected) BrandNavy else Color(0xFFF0EEF8))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 8.dp)
-    )
 }
 
 @Composable
@@ -381,39 +387,51 @@ private fun OrderHistoryFilterChip(
     filter: OrderHistoryFilterState,
     onClick: () -> Unit
 ) {
-    Box(
-        modifier = Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .padding(horizontal = 20.dp)
+            .heightIn(min = 44.dp)
+            .clip(RoundedCornerShape(50.dp))
+            .border(1.dp, BorderColor, RoundedCornerShape(50.dp))
+            .background(Color(0xFFF0EEF8))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 10.dp)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .clip(RoundedCornerShape(50.dp))
-                .background(Color(0xFFF0EEF8))
-                .clickable(onClick = onClick)
-                .padding(horizontal = 18.dp, vertical = 6.dp)
-        ) {
-            Text(
-                text = filter.period.label.uppercase(),
-                style = MaterialTheme.typography.labelMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = SecondaryText
-                )
+        Icon(
+            imageVector = Lucide.Calendar,
+            contentDescription = null,
+            tint = SecondaryText,
+            modifier = Modifier.size(16.dp)
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = filter.period.label,
+            style = MaterialTheme.typography.labelMedium.copy(
+                fontWeight = FontWeight.Bold,
+                color = SecondaryText
             )
-            if (filter.status != null) {
-                Spacer(modifier = Modifier.width(6.dp))
-                Box(
-                    modifier = Modifier
-                        .size(6.dp)
-                        .clip(CircleShape)
-                        .background(AccentBlue)
-                )
-            }
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        Icon(
+            imageVector = Lucide.ChevronDown,
+            contentDescription = "Buka filter periode",
+            tint = SecondaryText,
+            modifier = Modifier.size(14.dp)
+        )
+        if (filter.status != null) {
+            Spacer(modifier = Modifier.width(6.dp))
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .clip(CircleShape)
+                    .background(AccentBlue)
+            )
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun OrderHistoryFilterBottomSheet(
     filter: OrderHistoryFilterState,
@@ -436,57 +454,75 @@ private fun OrderHistoryFilterBottomSheet(
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 32.dp)
         ) {
-            Text(
-                text = "Periode",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    color = SecondaryText,
-                    fontWeight = FontWeight.SemiBold
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Filter Pesanan",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = PrimaryText
+                    ),
+                    modifier = Modifier.weight(1f)
                 )
-            )
-            OrderHistoryPeriod.entries.forEach { period ->
-                Row(
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onPeriodSelected(period) }
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(LightGray)
+                        .clickable(onClick = onDismiss),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = period.label,
-                        style = MaterialTheme.typography.bodyMedium.copy(color = PrimaryText),
-                        modifier = Modifier.weight(1f)
-                    )
-                    RadioButton(
-                        selected = filter.period == period,
-                        onClick = { onPeriodSelected(period) },
-                        colors = RadioButtonDefaults.colors(selectedColor = BrandNavy)
+                    Icon(
+                        imageVector = Lucide.X,
+                        contentDescription = "Tutup",
+                        tint = PrimaryText,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = "Status",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    color = SecondaryText,
-                    fontWeight = FontWeight.SemiBold
-                )
-            )
-            StatusFilterRow(
-                label = "Semua",
-                selected = filter.status == null,
-                onClick = { onStatusSelected(null) }
-            )
-            PesananStatus.entries.forEach { status ->
-                StatusFilterRow(
-                    label = status.filterLabel(),
-                    selected = filter.status == status,
-                    onClick = { onStatusSelected(status) }
-                )
+            FilterSectionLabel(text = "PERIODE")
+            Spacer(modifier = Modifier.height(10.dp))
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OrderHistoryPeriod.entries.forEach { period ->
+                    FilterChipItem(
+                        label = period.label,
+                        selected = filter.period == period,
+                        onClick = { onPeriodSelected(period) }
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            FilterSectionLabel(text = "STATUS")
+            Spacer(modifier = Modifier.height(10.dp))
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChipItem(
+                    label = "Semua",
+                    selected = filter.status == null,
+                    onClick = { onStatusSelected(null) }
+                )
+                PesananStatus.entries.forEach { status ->
+                    FilterChipItem(
+                        label = status.filterLabel(),
+                        selected = filter.status == status,
+                        onClick = { onStatusSelected(status) }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             Button(
                 onClick = onApply,
@@ -509,27 +545,42 @@ private fun OrderHistoryFilterBottomSheet(
 }
 
 @Composable
-private fun StatusFilterRow(
+private fun FilterSectionLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall.copy(
+            color = SecondaryText,
+            fontWeight = FontWeight.SemiBold
+        )
+    )
+}
+
+@Composable
+private fun FilterChipItem(
     label: String,
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    Row(
+    Box(
         modifier = Modifier
-            .fillMaxWidth()
+            .heightIn(min = 40.dp)
+            .clip(RoundedCornerShape(50.dp))
+            .background(if (selected) BrandNavy else White)
+            .border(
+                width = 1.dp,
+                color = if (selected) BrandNavy else BorderColor,
+                shape = RoundedCornerShape(50.dp)
+            )
             .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyMedium.copy(color = PrimaryText),
-            modifier = Modifier.weight(1f)
-        )
-        RadioButton(
-            selected = selected,
-            onClick = onClick,
-            colors = RadioButtonDefaults.colors(selectedColor = BrandNavy)
+            style = MaterialTheme.typography.bodySmall.copy(
+                color = if (selected) White else PrimaryText,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+            )
         )
     }
 }
