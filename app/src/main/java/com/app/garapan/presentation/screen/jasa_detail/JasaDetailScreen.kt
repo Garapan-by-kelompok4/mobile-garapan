@@ -25,12 +25,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.FlashOn
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Star
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.CircleCheckBig
+import com.composables.icons.lucide.Zap
+import com.composables.icons.lucide.Share2
+import com.composables.icons.lucide.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -197,7 +197,7 @@ fun JasaDetailScreen(
                 Spacer(modifier = Modifier.height(10.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.Star,
+                        imageVector = Lucide.Star,
                         contentDescription = null,
                         tint = StarYellow,
                         modifier = Modifier.size(16.dp)
@@ -319,7 +319,7 @@ fun JasaDetailScreen(
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                imageVector = Icons.Default.Star,
+                                imageVector = Lucide.Star,
                                 contentDescription = null,
                                 tint = StarYellow,
                                 modifier = Modifier.size(14.dp)
@@ -569,7 +569,7 @@ private fun FeatureCard(feature: JasaFeatureItem) {
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.FlashOn,
+                    imageVector = Lucide.Zap,
                     contentDescription = null,
                     tint = AccentBlue,
                     modifier = Modifier.size(20.dp)
@@ -656,7 +656,7 @@ private fun RatingSummary(rating: Float, reviewCount: Int, breakdown: Map<Int, I
                 Row {
                     repeat(5) { i ->
                         Icon(
-                            imageVector = Icons.Default.Star,
+                            imageVector = Lucide.Star,
                             contentDescription = null,
                             tint = if (i < rating.toInt()) StarYellow else LightGray,
                             modifier = Modifier.size(14.dp)
@@ -683,7 +683,7 @@ private fun RatingSummary(rating: Float, reviewCount: Int, breakdown: Map<Int, I
                             modifier = Modifier.width(12.dp)
                         )
                         Icon(
-                            imageVector = Icons.Default.Star,
+                            imageVector = Lucide.Star,
                             contentDescription = null,
                             tint = StarYellow,
                             modifier = Modifier.size(12.dp)
@@ -747,7 +747,7 @@ private fun ReviewCard(review: JasaReviewItem) {
                 Row {
                     repeat(review.rating) {
                         Icon(
-                            imageVector = Icons.Default.Star,
+                            imageVector = Lucide.Star,
                             contentDescription = null,
                             tint = StarYellow,
                             modifier = Modifier.size(14.dp)
@@ -878,7 +878,7 @@ private fun JasaDetailTopBar(onBack: () -> Unit) {
     ) {
         IconButton(onClick = onBack) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                imageVector = Lucide.ArrowLeft,
                 contentDescription = "Back",
                 tint = PrimaryText
             )
@@ -893,7 +893,7 @@ private fun JasaDetailTopBar(onBack: () -> Unit) {
         )
         IconButton(onClick = {}) {
             Icon(
-                imageVector = Icons.Default.Share,
+                imageVector = Lucide.Share2,
                 contentDescription = "Share",
                 tint = PrimaryText
             )

@@ -20,15 +20,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.outlined.Paid
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.CircleCheckBig
+import com.composables.icons.lucide.Code
+import com.composables.icons.lucide.Users
+import com.composables.icons.lucide.Clock
+import com.composables.icons.lucide.Pencil
+import com.composables.icons.lucide.Share2
+import com.composables.icons.lucide.CircleDollarSign
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -196,11 +196,11 @@ private fun ProjectDetailContent(
                     )
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                MetaRow(icon = Icons.Default.Schedule, text = uiState.deadline)
+                MetaRow(icon = Lucide.Clock, text = uiState.deadline)
                 Spacer(modifier = Modifier.height(8.dp))
-                MetaRow(icon = Icons.Outlined.Paid, text = uiState.budget)
+                MetaRow(icon = Lucide.CircleDollarSign, text = uiState.budget)
                 Spacer(modifier = Modifier.height(8.dp))
-                MetaRow(icon = Icons.Default.Group, text = uiState.teamSize)
+                MetaRow(icon = Lucide.Users, text = uiState.teamSize)
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -258,7 +258,7 @@ private fun ProjectDetailContent(
                             Spacer(modifier = Modifier.height(8.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    imageVector = Icons.Default.CheckCircle,
+                                    imageVector = Lucide.CircleCheckBig,
                                     contentDescription = null,
                                     tint = AccentBlue,
                                     modifier = Modifier.size(16.dp)
@@ -571,7 +571,7 @@ private fun ProjectDetailTopBar(
     ) {
         IconButton(onClick = onBack) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                imageVector = Lucide.ArrowLeft,
                 contentDescription = "Back",
                 tint = PrimaryText
             )
@@ -587,7 +587,7 @@ private fun ProjectDetailTopBar(
         if (showEditButton) {
             IconButton(onClick = onEdit) {
                 Icon(
-                    imageVector = Icons.Default.Edit,
+                    imageVector = Lucide.Pencil,
                     contentDescription = "Edit proyek",
                     tint = PrimaryText
                 )
@@ -595,7 +595,7 @@ private fun ProjectDetailTopBar(
         } else {
             IconButton(onClick = {}) {
                 Icon(
-                    imageVector = Icons.Default.Share,
+                    imageVector = Lucide.Share2,
                     contentDescription = "Share",
                     tint = PrimaryText
                 )
@@ -614,7 +614,7 @@ private fun CategoryChip(category: String) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            imageVector = Icons.Default.Code,
+            imageVector = Lucide.Code,
             contentDescription = null,
             tint = AccentBlue,
             modifier = Modifier.size(14.dp)

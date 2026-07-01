@@ -15,8 +15,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarToday
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Calendar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -234,7 +234,7 @@ fun EditProjectScreen(
                                     label = "Tenggat Waktu (Deadline)",
                                     value = uiState.deadline,
                                     placeholder = "mm/dd/yyyy",
-                                    leadingIcon = Icons.Filled.CalendarToday,
+                                    leadingIcon = Lucide.Calendar,
                                     onClick = { showDeadlinePicker = true }
                                 )
                             }

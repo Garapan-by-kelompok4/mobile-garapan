@@ -20,10 +20,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.NorthEast
-import androidx.compose.material.icons.filled.SouthWest
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.ArrowUpRight
+import com.composables.icons.lucide.ArrowDownLeft
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -206,7 +206,7 @@ private fun OrderHistoryTopBar(
         if (showBackButton) {
             IconButton(onClick = onBack) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    imageVector = Lucide.ArrowLeft,
                     contentDescription = "Back",
                     tint = AccentBlue
                 )
@@ -570,7 +570,7 @@ private fun OrderHistoryCard(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = if (item.isIncome) Icons.Filled.SouthWest else Icons.Filled.NorthEast,
+                imageVector = if (item.isIncome) Lucide.ArrowDownLeft else Lucide.ArrowUpRight,
                 contentDescription = null,
                 tint = iconColor,
                 modifier = Modifier.size(18.dp)

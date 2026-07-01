@@ -23,19 +23,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Paid
-import androidx.compose.material.icons.outlined.ChatBubbleOutline
-import androidx.compose.material.icons.outlined.ImageNotSupported
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Search
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Plus
+import com.composables.icons.lucide.House
+import com.composables.icons.lucide.User
+import com.composables.icons.lucide.Clock
+import com.composables.icons.lucide.Search
+import com.composables.icons.lucide.Star
+import com.composables.icons.lucide.CircleDollarSign
+import com.composables.icons.lucide.MessageCircle
+import com.composables.icons.lucide.ImageOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -344,7 +341,7 @@ private fun HomeTopBar(
         )
         IconButton(onClick = onSearchClick) {
             Icon(
-                imageVector = Icons.Default.Search,
+                imageVector = Lucide.Search,
                 contentDescription = "Search",
                 tint = PrimaryText
             )
@@ -505,7 +502,7 @@ private fun ProjectCard(project: ProjectItem, onClick: () -> Unit = {}) {
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.ImageNotSupported,
+                            imageVector = Lucide.ImageOff,
                             contentDescription = null,
                             tint = MutedText,
                             modifier = Modifier.size(28.dp)
@@ -527,7 +524,7 @@ private fun ProjectCard(project: ProjectItem, onClick: () -> Unit = {}) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.Schedule,
+                        imageVector = Lucide.Clock,
                         contentDescription = null,
                         tint = MutedText,
                         modifier = Modifier.size(14.dp)
@@ -541,7 +538,7 @@ private fun ProjectCard(project: ProjectItem, onClick: () -> Unit = {}) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Outlined.Paid,
+                        imageVector = Lucide.CircleDollarSign,
                         contentDescription = null,
                         tint = MutedText,
                         modifier = Modifier.size(14.dp)
@@ -640,7 +637,7 @@ private fun ServiceCard(service: ServiceItem, onClick: () -> Unit = {}) {
                         modifier = Modifier.weight(1f)
                     )
                     Icon(
-                        imageVector = Icons.Default.Star,
+                        imageVector = Lucide.Star,
                         contentDescription = null,
                         tint = StarYellow,
                         modifier = Modifier.size(12.dp)
@@ -711,7 +708,7 @@ fun TopWorkerCard(worker: TopWorkerItem, onClick: () -> Unit = {}) {
             Column(horizontalAlignment = Alignment.End) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.Star,
+                        imageVector = Lucide.Star,
                         contentDescription = null,
                         tint = StarYellow,
                         modifier = Modifier.size(14.dp)

@@ -17,13 +17,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.outlined.Paid
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.Trash2
+import com.composables.icons.lucide.Pencil
+import com.composables.icons.lucide.Users
+import com.composables.icons.lucide.Clock
+import com.composables.icons.lucide.CircleDollarSign
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -244,7 +244,7 @@ private fun ProfileServicesTopBar(
         if (showBackButton) {
             IconButton(onClick = onBack) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    imageVector = Lucide.ArrowLeft,
                     contentDescription = "Back",
                     tint = AccentBlue
                 )
@@ -287,7 +287,7 @@ private fun SectionHeader(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Default.Edit,
+                    imageVector = Lucide.Pencil,
                     contentDescription = null,
                     tint = AccentBlue,
                     modifier = Modifier.size(16.dp)
@@ -372,12 +372,12 @@ private fun ProfileServiceCard(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     ServiceActionButton(
-                        icon = Icons.Default.Edit,
+                        icon = Lucide.Pencil,
                         contentDescription = "Edit layanan",
                         onClick = onEditClick
                     )
                     ServiceActionButton(
-                        icon = Icons.Default.Delete,
+                        icon = Lucide.Trash2,
                         contentDescription = "Hapus layanan",
                         enabled = !isDeleting,
                         onClick = onDeleteClick
@@ -395,16 +395,16 @@ private fun ProfileServiceCard(
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(10.dp))
-                ServiceMetaRow(icon = Icons.Default.Schedule, text = service.deadline)
+                ServiceMetaRow(icon = Lucide.Clock, text = service.deadline)
                 Spacer(modifier = Modifier.height(5.dp))
-                ServiceMetaRow(icon = Icons.Outlined.Paid, text = service.budget)
+                ServiceMetaRow(icon = Lucide.CircleDollarSign, text = service.budget)
                 Spacer(modifier = Modifier.height(5.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Group,
+                        imageVector = Lucide.Users,
                         contentDescription = null,
                         tint = MutedText,
                         modifier = Modifier.size(14.dp)

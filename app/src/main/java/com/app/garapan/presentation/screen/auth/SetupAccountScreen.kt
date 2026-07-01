@@ -20,8 +20,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.ArrowRight
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
@@ -283,7 +283,7 @@ private fun StudentSetupForm(
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Icon(imageVector = Icons.Default.ArrowForward, contentDescription = null)
+                Icon(imageVector = Lucide.ArrowRight, contentDescription = null)
             }
         }
 

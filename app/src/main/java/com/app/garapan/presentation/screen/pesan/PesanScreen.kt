@@ -21,16 +21,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.SupportAgent
-import androidx.compose.material.icons.outlined.ChatBubbleOutline
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Search
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Plus
+import com.composables.icons.lucide.House
+import com.composables.icons.lucide.User
+import com.composables.icons.lucide.Search
+import com.composables.icons.lucide.Headset
+import com.composables.icons.lucide.MessageCircle
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -213,7 +210,7 @@ private fun PesanSearchField(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            imageVector = Icons.Filled.Search,
+            imageVector = Lucide.Search,
             contentDescription = null,
             tint = MutedText,
             modifier = Modifier.size(20.dp)
@@ -349,7 +346,7 @@ private fun ConversationEmptyState(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.ChatBubbleOutline,
+                    imageVector = Lucide.MessageCircle,
                     contentDescription = null,
                     tint = AccentBlue,
                     modifier = Modifier.size(26.dp)
@@ -403,7 +400,7 @@ private fun ChatAvatar(chat: ChatPreviewItem) {
     ) {
         if (chat.isAdmin) {
             Icon(
-                imageVector = Icons.Filled.SupportAgent,
+                imageVector = Lucide.Headset,
                 contentDescription = null,
                 tint = avatarColor,
                 modifier = Modifier.size(28.dp)

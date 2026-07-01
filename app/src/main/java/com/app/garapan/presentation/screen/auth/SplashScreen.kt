@@ -67,10 +67,10 @@ fun SplashScreen(
         contentAlignment = Alignment.Center
     ) {
         Image(
-            painter = painterResource(R.drawable.logo_garapan),
+            painter = painterResource(R.drawable.logo_garapan_mark),
             contentDescription = "GARAPAN Logo",
             modifier = Modifier
-                .size(160.dp)
+                .size(140.dp)
                 .scale(logoScale)
                 .alpha(logoAlpha)
         )
