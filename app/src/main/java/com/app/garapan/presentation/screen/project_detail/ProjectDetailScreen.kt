@@ -50,8 +50,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -377,7 +381,8 @@ private fun MahasiswaProposalSection(
                     placeholder = { Text("500000") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    visualTransformation = ThousandSeparatorTransformation
                 )
                 Spacer(modifier = Modifier.height(14.dp))
                 Button(
@@ -639,5 +644,24 @@ private fun MetaRow(icon: ImageVector, text: String) {
             text = text,
             style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
         )
+    }
+}
+
+private object ThousandSeparatorTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val digits = text.text
+        val formatted = digits.reversed().chunked(3).joinToString(".").reversed()
+        val offsetMapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int {
+                val dotsAdded = ((offset - 1) / 3).coerceAtLeast(0)
+                return (offset + dotsAdded).coerceAtMost(formatted.length)
+            }
+
+            override fun transformedToOriginal(offset: Int): Int =
+                formatted.substring(0, offset.coerceAtMost(formatted.length))
+                    .count(Char::isDigit)
+                    .coerceAtMost(digits.length)
+        }
+        return TransformedText(AnnotatedString(formatted), offsetMapping)
     }
 }
