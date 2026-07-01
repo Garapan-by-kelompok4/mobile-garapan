@@ -109,8 +109,8 @@ class OrderHistoryViewModel @Inject constructor(
     fun retry() = loadOrders()
 
     fun refresh() {
-        loadOrders()
-        if (_uiState.value.selectedTab == OrderHistoryTab.PROPOSAL) loadProposals()
+        loadOrders(silent = true)
+        if (_uiState.value.selectedTab == OrderHistoryTab.PROPOSAL) loadProposals(silent = true)
     }
 
     fun onTabSelected(tab: OrderHistoryTab) {
@@ -134,9 +134,10 @@ class OrderHistoryViewModel @Inject constructor(
         }
     }
 
-    private fun loadOrders() {
+    private fun loadOrders(silent: Boolean = false) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            val keepStale = silent && _uiState.value.items.isNotEmpty()
+            _uiState.update { it.copy(isLoading = !keepStale, errorMessage = null) }
             when (val result = getMyPesananUseCase(limit = HISTORY_PAGE_LIMIT)) {
                 is Resource.Success -> {
                     allItems = result.data.map { pesanan -> pesanan.toHistoryItem(currentRole, currentUserId) }
@@ -152,7 +153,7 @@ class OrderHistoryViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            errorMessage = UserMessageLocalizer.localize(result.message)
+                            errorMessage = if (keepStale) null else UserMessageLocalizer.localize(result.message)
                         )
                     }
                 }
@@ -186,9 +187,10 @@ class OrderHistoryViewModel @Inject constructor(
         }
     }
 
-    private fun loadProposals() {
+    private fun loadProposals(silent: Boolean = false) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoadingProposals = true, proposalsErrorMessage = null) }
+            val keepStale = silent && _uiState.value.proposals.isNotEmpty()
+            _uiState.update { it.copy(isLoadingProposals = !keepStale, proposalsErrorMessage = null) }
             when (val result = getMyProposalsUseCase(page = 1, limit = 50)) {
                 is Resource.Success -> {
                     _uiState.update {
@@ -202,7 +204,7 @@ class OrderHistoryViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isLoadingProposals = false,
-                            proposalsErrorMessage = UserMessageLocalizer.localize(result.message)
+                            proposalsErrorMessage = if (keepStale) null else UserMessageLocalizer.localize(result.message)
                         )
                     }
                 }

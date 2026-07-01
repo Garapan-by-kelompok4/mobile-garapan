@@ -15,6 +15,7 @@ import com.app.garapan.domain.usecase.GetProjectListUseCase
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.util.CurrencyFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -24,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -214,13 +216,16 @@ class SearchViewModel @Inject constructor(
 
     fun retryResults() = refreshResults()
 
-    fun refreshResults() {
+    fun refreshResults(silent: Boolean = false) {
         when {
-            shouldLoadJasaBrowseOnly() -> loadJasaBrowseResults()
-            _uiState.value.query.isBlank() -> loadBrowseResults()
-            else -> loadUnifiedResults()
+            shouldLoadJasaBrowseOnly() -> loadJasaBrowseResults(silent)
+            _uiState.value.query.isBlank() -> loadBrowseResults(silent)
+            else -> loadUnifiedResults(silent)
         }
     }
+
+    private fun hasResults(): Boolean =
+        _uiState.value.jasaResults.isNotEmpty() || _uiState.value.projectResults.isNotEmpty()
 
     private fun shouldLoadJasaBrowseOnly(): Boolean =
         _uiState.value.query.isBlank() &&
@@ -237,14 +242,15 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-    private fun loadJasaBrowseResults() {
+    private fun loadJasaBrowseResults(silent: Boolean = false) {
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
+            val keepStale = silent && hasResults()
             _uiState.update {
                 it.copy(
-                    isResultsLoading = true,
+                    isResultsLoading = !keepStale,
                     resultsErrorMessage = null,
-                    projectResults = emptyList()
+                    projectResults = if (keepStale) it.projectResults else emptyList()
                 )
             }
             val state = _uiState.value
@@ -262,14 +268,18 @@ class SearchViewModel @Inject constructor(
                     }
                 }
                 is Resource.Error -> {
-                    _uiState.update {
-                        it.copy(
-                            jasaResults = emptyList(),
-                            projectResults = emptyList(),
-                            isResultsLoading = false,
-                            resultsErrorMessage = result.message,
-                            showResults = true
-                        )
+                    if (keepStale) {
+                        _uiState.update { it.copy(isResultsLoading = false) }
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                jasaResults = emptyList(),
+                                projectResults = emptyList(),
+                                isResultsLoading = false,
+                                resultsErrorMessage = result.message,
+                                showResults = true
+                            )
+                        }
                     }
                 }
                 Resource.Loading -> Unit
@@ -277,10 +287,11 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-    private fun loadBrowseResults() {
+    private fun loadBrowseResults(silent: Boolean = false) {
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
-            _uiState.update { it.copy(isResultsLoading = true, resultsErrorMessage = null) }
+            val keepStale = silent && hasResults()
+            _uiState.update { it.copy(isResultsLoading = !keepStale, resultsErrorMessage = null) }
             val state = _uiState.value
             val jasaFilters = buildJasaFilters(state)
             val projectFilters = buildProjectFilters(state)
@@ -304,6 +315,11 @@ class SearchViewModel @Inject constructor(
                 else -> null
             }
 
+            if (keepStale && errorMessage != null) {
+                _uiState.update { it.copy(isResultsLoading = false) }
+                return@launch
+            }
+
             _uiState.update {
                 it.copy(
                     jasaResults = jasaItems.map(::toJasaSearchResultItem),
@@ -317,10 +333,11 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-    private fun loadUnifiedResults() {
+    private fun loadUnifiedResults(silent: Boolean = false) {
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
-            _uiState.update { it.copy(isResultsLoading = true, resultsErrorMessage = null) }
+            val keepStale = silent && hasResults()
+            _uiState.update { it.copy(isResultsLoading = !keepStale, resultsErrorMessage = null) }
             val state = _uiState.value
             val jasaFilters = buildJasaFilters(state)
             val projectFilters = buildProjectFilters(state)
@@ -331,19 +348,22 @@ class SearchViewModel @Inject constructor(
                 Pair(jasaDeferred.await(), projectDeferred.await())
             }
 
-            val jasaItems = (jasaResult as? Resource.Success)?.data.orEmpty().let { items ->
-                if (SearchQueryMatcher.isLongEnough(state.query)) {
-                    SearchQueryMatcher.filterJasa(items, state.query.trim())
-                } else {
-                    items
+            val (jasaItems, projectItems) = withContext(Dispatchers.Default) {
+                val jasa = (jasaResult as? Resource.Success)?.data.orEmpty().let { items ->
+                    if (SearchQueryMatcher.isLongEnough(state.query)) {
+                        SearchQueryMatcher.filterJasa(items, state.query.trim())
+                    } else {
+                        items
+                    }
                 }
-            }
-            val projectItems = (projectResult as? Resource.Success)?.data.orEmpty().let { items ->
-                if (SearchQueryMatcher.isLongEnough(state.query)) {
-                    SearchQueryMatcher.filterProjects(items, state.query.trim())
-                } else {
-                    items
+                val projects = (projectResult as? Resource.Success)?.data.orEmpty().let { items ->
+                    if (SearchQueryMatcher.isLongEnough(state.query)) {
+                        SearchQueryMatcher.filterProjects(items, state.query.trim())
+                    } else {
+                        items
+                    }
                 }
+                Pair(jasa, projects)
             }
             val jasaError = (jasaResult as? Resource.Error)?.message
             val projectError = (projectResult as? Resource.Error)?.message
@@ -354,6 +374,11 @@ class SearchViewModel @Inject constructor(
                 jasaItems.isEmpty() && projectItems.isEmpty() && jasaError != null -> jasaError
                 jasaItems.isEmpty() && projectItems.isEmpty() && projectError != null -> projectError
                 else -> null
+            }
+
+            if (keepStale && errorMessage != null) {
+                _uiState.update { it.copy(isResultsLoading = false) }
+                return@launch
             }
 
             _uiState.update {

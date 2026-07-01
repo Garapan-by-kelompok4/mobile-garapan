@@ -243,7 +243,11 @@ fun ChatScreen(
                 item {
                     DateSeparator(label = uiState.dateSeparator)
                 }
-                items(uiState.messages) { message ->
+                items(
+                    items = uiState.messages,
+                    key = { it.id },
+                    contentType = { it::class }
+                ) { message ->
                     when (message) {
                         is ChatMessage.JasaCard -> JasaContextCard(message = message)
                         is ChatMessage.Sent -> SentBubble(

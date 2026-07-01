@@ -240,7 +240,9 @@ class JasaDetailViewModel @Inject constructor(
             if (workerUniversity.isNotBlank()) add(workerUniversity)
         }.joinToString(" - ").ifBlank { "Mahasiswa IT" }
 
-        val reviewItems = reviews.map { review ->
+        // The detail screen composes reviews eagerly inside a scroll column;
+        // the full list lives on the AllReviews screen ("Lihat Semua Ulasan").
+        val reviewItems = reviews.take(INLINE_REVIEW_LIMIT).map { review ->
             JasaReviewItem(
                 reviewerName = review.reviewerName.ifBlank { "Klien" },
                 date = formatReviewDate(review.createdAt),
@@ -295,5 +297,9 @@ class JasaDetailViewModel @Inject constructor(
             val date = Instant.parse(isoDate).atZone(ZoneId.systemDefault()).toLocalDate()
             date.format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale("id", "ID")))
         }.getOrDefault(isoDate)
+    }
+
+    private companion object {
+        const val INLINE_REVIEW_LIMIT = 3
     }
 }

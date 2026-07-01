@@ -113,7 +113,7 @@ class OrderDetailViewModel @Inject constructor(
 
     fun retry() = loadDetail()
 
-    fun refresh() = loadDetail()
+    fun refresh() = loadDetail(silent = true)
 
     fun onPayClicked() {
         if (pesananId.isBlank()) return
@@ -255,7 +255,7 @@ class OrderDetailViewModel @Inject constructor(
         }
     }
 
-    private fun loadDetail() {
+    private fun loadDetail(silent: Boolean = false) {
         if (pesananId.isBlank()) {
             _uiState.value = OrderDetailUiState(
                 isLoading = false,
@@ -265,7 +265,8 @@ class OrderDetailViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            val keepStale = silent && currentPesanan != null
+            _uiState.update { it.copy(isLoading = !keepStale, errorMessage = null) }
             when (val result = getPesananDetailUseCase(pesananId)) {
                 is Resource.Success -> {
                     applyPesanan(result.data)
@@ -275,7 +276,7 @@ class OrderDetailViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            errorMessage = UserMessageLocalizer.localize(result.message)
+                            errorMessage = if (keepStale) null else UserMessageLocalizer.localize(result.message)
                         )
                     }
                 }
