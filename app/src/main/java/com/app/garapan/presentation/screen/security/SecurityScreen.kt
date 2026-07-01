@@ -15,9 +15,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Lock
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -77,7 +77,7 @@ fun SecurityScreen(
                 Spacer(modifier = Modifier.height(10.dp))
                 SecurityCard {
                     SecurityActionRow(
-                        icon = Icons.Filled.Lock,
+                        icon = Lucide.Lock,
                         title = "Ubah Kata Sandi",
                         subtitle = "Perbarui kata sandi akun Anda secara berkala untuk menjaga keamanan.",
                         action = "Perbarui",
@@ -100,7 +100,7 @@ private fun SecurityTopBar(onBack: () -> Unit) {
     ) {
         IconButton(onClick = onBack) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                imageVector = Lucide.ArrowLeft,
                 contentDescription = "Back",
                 tint = AccentBlue
             )

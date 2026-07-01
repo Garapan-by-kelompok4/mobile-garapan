@@ -25,19 +25,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AddPhotoAlternate
-import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.ChatBubbleOutline
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Search
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.ImagePlus
+import com.composables.icons.lucide.Calendar
+import com.composables.icons.lucide.Users
+import com.composables.icons.lucide.House
+import com.composables.icons.lucide.ChevronDown
+import com.composables.icons.lucide.User
+import com.composables.icons.lucide.Search
+import com.composables.icons.lucide.MessageCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
@@ -259,7 +256,7 @@ fun PostProjectScreen(
                             label = "Tenggat Waktu (Deadline)",
                             value = uiState.deadline,
                             placeholder = "mm/dd/yyyy",
-                            leadingIcon = Icons.Filled.CalendarToday,
+                            leadingIcon = Lucide.Calendar,
                             onClick = { showDeadlinePicker = true }
                         )
                     }
@@ -310,7 +307,7 @@ internal fun PostProjectTopBar(title: String, onBack: () -> Unit) {
     ) {
         IconButton(onClick = onBack) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                imageVector = Lucide.ArrowLeft,
                 contentDescription = "Back",
                 tint = AccentBlue
             )
@@ -536,7 +533,7 @@ private fun TeamSizeDropdown(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Group,
+                    imageVector = Lucide.Users,
                     contentDescription = null,
                     tint = SecondaryText,
                     modifier = Modifier.size(20.dp)
@@ -553,7 +550,7 @@ private fun TeamSizeDropdown(
                     overflow = TextOverflow.Ellipsis
                 )
                 Icon(
-                    imageVector = Icons.Filled.KeyboardArrowDown,
+                    imageVector = Lucide.ChevronDown,
                     contentDescription = null,
                     tint = SecondaryText,
                     modifier = Modifier.size(22.dp)
@@ -773,7 +770,7 @@ internal fun ProjectImagePicker(
                 imageUri == null && previewModel == null -> {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(
-                            imageVector = Icons.Default.AddPhotoAlternate,
+                            imageVector = Lucide.ImagePlus,
                             contentDescription = null,
                             tint = BrandNavy,
                             modifier = Modifier.size(40.dp)

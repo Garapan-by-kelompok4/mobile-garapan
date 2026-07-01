@@ -17,12 +17,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.outlined.Paid
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.Pencil
+import com.composables.icons.lucide.Trash2
+import com.composables.icons.lucide.Clock
+import com.composables.icons.lucide.CircleDollarSign
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -169,7 +169,7 @@ private fun MyProjectsTopBar(
         if (showBackButton) {
             IconButton(onClick = onBack) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    imageVector = Lucide.ArrowLeft,
                     contentDescription = "Back",
                     tint = AccentBlue
                 )
@@ -234,7 +234,7 @@ private fun MyProjectCard(
                                 modifier = Modifier.size(36.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Filled.Edit,
+                                    imageVector = Lucide.Pencil,
                                     contentDescription = "Edit project",
                                     tint = AccentBlue
                                 )
@@ -246,7 +246,7 @@ private fun MyProjectCard(
                             modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.Delete,
+                                imageVector = Lucide.Trash2,
                                 contentDescription = "Delete project",
                                 tint = ErrorRed
                             )
@@ -256,9 +256,9 @@ private fun MyProjectCard(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-            ProjectMetaRow(icon = Icons.Outlined.Paid, text = project.budget)
+            ProjectMetaRow(icon = Lucide.CircleDollarSign, text = project.budget)
             Spacer(modifier = Modifier.height(6.dp))
-            ProjectMetaRow(icon = Icons.Filled.Schedule, text = project.deadline)
+            ProjectMetaRow(icon = Lucide.Clock, text = project.deadline)
             if (project.assigneeName.isNotBlank()) {
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(

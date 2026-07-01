@@ -19,20 +19,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Explore
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material.icons.outlined.ChatBubbleOutline
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Search
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.Plus
+import com.composables.icons.lucide.Compass
+import com.composables.icons.lucide.House
+import com.composables.icons.lucide.User
+import com.composables.icons.lucide.Clock
+import com.composables.icons.lucide.Search
+import com.composables.icons.lucide.Star
+import com.composables.icons.lucide.SlidersHorizontal
+import com.composables.icons.lucide.MessageCircle
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -252,7 +249,7 @@ private fun SearchTopBar(
         if (showBackButton) {
             IconButton(onClick = onBack) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    imageVector = Lucide.ArrowLeft,
                     contentDescription = "Back",
                     tint = PrimaryText
                 )
@@ -287,7 +284,7 @@ private fun SearchBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            imageVector = Icons.Default.Search,
+            imageVector = Lucide.Search,
             contentDescription = null,
             tint = MutedText,
             modifier = Modifier.size(20.dp)
@@ -321,7 +318,7 @@ private fun SearchBar(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Icons.Default.Tune,
+                imageVector = Lucide.SlidersHorizontal,
                 contentDescription = "Filter",
                 tint = PrimaryText,
                 modifier = Modifier.size(18.dp)
@@ -463,7 +460,7 @@ private fun SearchResultCard(
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.Star,
+                        imageVector = Lucide.Star,
                         contentDescription = null,
                         tint = StarYellow,
                         modifier = Modifier.size(14.dp)
@@ -495,7 +492,7 @@ private fun SearchResultCard(
                         modifier = Modifier.weight(1f)
                     )
                     Icon(
-                        imageVector = Icons.Default.Schedule,
+                        imageVector = Lucide.Clock,
                         contentDescription = null,
                         tint = MutedText,
                         modifier = Modifier.size(14.dp)
@@ -594,7 +591,7 @@ private fun SearchEmptyState() {
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.Explore,
+                    imageVector = Lucide.Compass,
                     contentDescription = null,
                     tint = White,
                     modifier = Modifier.size(32.dp)

@@ -18,19 +18,19 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Article
-import androidx.compose.material.icons.automirrored.filled.Help
-import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Assignment
-import androidx.compose.material.icons.filled.Computer
-import androidx.compose.material.icons.filled.PrivacyTip
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.Store
-import androidx.compose.material.icons.filled.Work
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.ScrollText
+import com.composables.icons.lucide.CircleHelp
+import com.composables.icons.lucide.LogOut
+import com.composables.icons.lucide.ChevronRight
+import com.composables.icons.lucide.ClipboardList
+import com.composables.icons.lucide.Computer
+import com.composables.icons.lucide.ShieldCheck
+import com.composables.icons.lucide.Shield
+import com.composables.icons.lucide.ShoppingCart
+import com.composables.icons.lucide.Store
+import com.composables.icons.lucide.Briefcase
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -142,23 +142,23 @@ fun ProfileScreen(
                 ProfileMenuCard(
                     items = buildList {
                         add(
-                            ProfileMenuItem("Keamanan Akun", Icons.Filled.Security) {
+                            ProfileMenuItem("Keamanan Akun", Lucide.Shield) {
                                 navController.navigate(Routes.SECURITY)
                             }
                         )
                         if (uiState.role == Role.MAHASISWA) {
                             add(
-                                ProfileMenuItem("Layanan Saya", Icons.Filled.Store) {
+                                ProfileMenuItem("Layanan Saya", Lucide.Store) {
                                     navController.navigate(Routes.PROFILE_SERVICES)
                                 }
                             )
                             add(
-                                ProfileMenuItem("Portofolio", Icons.Filled.Work) {
+                                ProfileMenuItem("Portofolio", Lucide.Briefcase) {
                                     navController.navigate(Routes.PROFILE_PORTFOLIO)
                                 }
                             )
                             add(
-                                ProfileMenuItem("Keahlian", Icons.Filled.Computer) {
+                                ProfileMenuItem("Keahlian", Lucide.Computer) {
                                     navController.navigate(Routes.SKILLS)
                                 }
                             )
@@ -171,7 +171,7 @@ fun ProfileScreen(
                                     } else {
                                         "Proyek Saya"
                                     },
-                                    icon = Icons.Filled.Assignment
+                                    icon = Lucide.ClipboardList
                                 ) {
                                     navController.navigate(Routes.MY_PROJECTS)
                                 }
@@ -194,15 +194,15 @@ fun ProfileScreen(
             item {
                 ProfileMenuCard(
                     items = listOf(
-                        ProfileMenuItem("Riwayat Pesanan", Icons.Filled.ShoppingCart) {
+                        ProfileMenuItem("Riwayat Pesanan", Lucide.ShoppingCart) {
                             navController.navigate(Routes.ORDER_HISTORY)
                         },
-                        ProfileMenuItem("Pusat Bantuan", Icons.AutoMirrored.Filled.Help),
-                        ProfileMenuItem("Syarat & Ketentuan", Icons.AutoMirrored.Filled.Article),
-                        ProfileMenuItem("Kebijakan Privasi", Icons.Filled.PrivacyTip),
+                        ProfileMenuItem("Pusat Bantuan", Lucide.CircleHelp),
+                        ProfileMenuItem("Syarat & Ketentuan", Lucide.ScrollText),
+                        ProfileMenuItem("Kebijakan Privasi", Lucide.ShieldCheck),
                         ProfileMenuItem(
                             label = "Keluar (Log Out)",
-                            icon = Icons.AutoMirrored.Filled.Logout,
+                            icon = Lucide.LogOut,
                             destructive = true,
                             onClick = { viewModel.onLogout() }
                         )
@@ -229,7 +229,7 @@ private fun ProfileHeader(
         ) {
             IconButton(onClick = onBack) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    imageVector = Lucide.ArrowLeft,
                     contentDescription = "Back",
                     tint = AccentBlue
                 )
@@ -311,7 +311,7 @@ private fun ProfileHeaderCard(
                 )
             }
             Icon(
-                imageVector = Icons.Filled.ChevronRight,
+                imageVector = Lucide.ChevronRight,
                 contentDescription = "Open profile detail",
                 tint = MutedText,
                 modifier = Modifier.size(22.dp)
@@ -440,7 +440,7 @@ private fun ProfileMenuRow(item: ProfileMenuItem) {
         )
         if (!item.destructive) {
             Icon(
-                imageVector = Icons.Filled.ChevronRight,
+                imageVector = Lucide.ChevronRight,
                 contentDescription = null,
                 tint = MutedText,
                 modifier = Modifier.size(20.dp)

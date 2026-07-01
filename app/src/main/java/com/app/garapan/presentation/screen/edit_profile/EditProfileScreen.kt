@@ -21,10 +21,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.KeyboardArrowDown
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.Camera
+import com.composables.icons.lucide.ChevronDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -222,7 +222,7 @@ private fun EditProfileTopBar(onBack: () -> Unit) {
     ) {
         IconButton(onClick = onBack) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                imageVector = Lucide.ArrowLeft,
                 contentDescription = "Back",
                 tint = AccentBlue
             )
@@ -298,7 +298,7 @@ private fun EditProfileAvatar(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Icons.Filled.CameraAlt,
+                imageVector = Lucide.Camera,
                 contentDescription = "Change photo",
                 tint = White,
                 modifier = Modifier.size(18.dp)
@@ -388,7 +388,7 @@ private fun EditProfileStatusField(
                     modifier = Modifier.weight(1f)
                 )
                 Icon(
-                    imageVector = Icons.Filled.KeyboardArrowDown,
+                    imageVector = Lucide.ChevronDown,
                     contentDescription = null,
                     tint = MutedText
                 )

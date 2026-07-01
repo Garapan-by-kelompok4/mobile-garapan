@@ -17,11 +17,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.Plus
+import com.composables.icons.lucide.Trash2
+import com.composables.icons.lucide.Pencil
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -129,7 +129,7 @@ private fun PortfolioTopBar(onBack: () -> Unit) {
     ) {
         IconButton(onClick = onBack, modifier = Modifier.size(34.dp)) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                imageVector = Lucide.ArrowLeft,
                 contentDescription = "Back",
                 tint = AccentBlue,
                 modifier = Modifier.size(20.dp)
@@ -173,7 +173,7 @@ private fun PortfolioHero(onAddClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = Icons.Default.Add,
+                imageVector = Lucide.Plus,
                 contentDescription = null,
                 tint = White,
                 modifier = Modifier.size(20.dp)
@@ -235,14 +235,14 @@ private fun PortfolioCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     CardActionIcon(
-                        icon = Icons.Default.Edit,
+                        icon = Lucide.Pencil,
                         tint = AccentBlue,
                         contentDescription = "Edit portofolio",
                         onClick = onEditClick
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     CardActionIcon(
-                        icon = Icons.Default.Delete,
+                        icon = Lucide.Trash2,
                         tint = ErrorRed,
                         contentDescription = "Hapus portofolio",
                         onClick = onDeleteClick

@@ -28,18 +28,18 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.InsertDriveFile
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Receipt
-import androidx.compose.material.icons.filled.SupportAgent
-import androidx.compose.material.icons.outlined.FileDownload
-import androidx.compose.material.icons.outlined.RemoveRedEye
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.ArrowRight
+import com.composables.icons.lucide.Send
+import com.composables.icons.lucide.Plus
+import com.composables.icons.lucide.FileText
+import com.composables.icons.lucide.File
+import com.composables.icons.lucide.Image
+import com.composables.icons.lucide.Receipt
+import com.composables.icons.lucide.Headset
+import com.composables.icons.lucide.Download
+import com.composables.icons.lucide.Eye
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -299,12 +299,12 @@ private fun AttachmentOptionsSheet(
             )
             Spacer(modifier = Modifier.height(12.dp))
             AttachmentOptionRow(
-                icon = Icons.Filled.Image,
+                icon = Lucide.Image,
                 label = "Foto",
                 onClick = onPickPhoto
             )
             AttachmentOptionRow(
-                icon = Icons.Filled.InsertDriveFile,
+                icon = Lucide.File,
                 label = "Dokumen",
                 onClick = onPickDocument
             )
@@ -363,7 +363,7 @@ private fun OrderContextBanner(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            imageVector = Icons.Default.Receipt,
+            imageVector = Lucide.Receipt,
             contentDescription = null,
             tint = BrandNavy,
             modifier = Modifier.size(20.dp)
@@ -396,7 +396,7 @@ private fun OrderContextBanner(
                 .padding(horizontal = 10.dp, vertical = 4.dp)
         )
         Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+            imageVector = Lucide.ArrowRight,
             contentDescription = null,
             tint = MutedText,
             modifier = Modifier.size(18.dp)
@@ -469,7 +469,7 @@ private fun ChatTopBar(
     ) {
         IconButton(onClick = onBack) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                imageVector = Lucide.ArrowLeft,
                 contentDescription = "Back",
                 tint = PrimaryText
             )
@@ -484,7 +484,7 @@ private fun ChatTopBar(
     ) {
             if (isAdminSupport) {
                 Icon(
-                    imageVector = Icons.Filled.SupportAgent,
+                    imageVector = Lucide.Headset,
                     contentDescription = null,
                     tint = AccentBlue,
                     modifier = Modifier.size(22.dp)
@@ -626,7 +626,7 @@ private fun JasaContextCard(message: ChatMessage.JasaCard) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.RemoveRedEye,
+                        imageVector = Lucide.Eye,
                         contentDescription = null,
                         tint = AccentBlue,
                         modifier = Modifier.size(18.dp)
@@ -739,7 +739,7 @@ private fun ReceivedBubble(
         ) {
             if (isAdminSupport) {
                 Icon(
-                    imageVector = Icons.Filled.SupportAgent,
+                    imageVector = Lucide.Headset,
                     contentDescription = null,
                     tint = AccentBlue,
                     modifier = Modifier.size(18.dp)
@@ -831,7 +831,7 @@ private fun FileAndOrderConfirmationBubble(message: ChatMessage.FileAndOrderConf
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Description,
+                                imageVector = Lucide.FileText,
                                 contentDescription = null,
                                 tint = AccentBlue,
                                 modifier = Modifier.size(26.dp)
@@ -855,7 +855,7 @@ private fun FileAndOrderConfirmationBubble(message: ChatMessage.FileAndOrderConf
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(
-                            imageVector = Icons.Outlined.FileDownload,
+                            imageVector = Lucide.Download,
                             contentDescription = "Download",
                             tint = AccentBlue,
                             modifier = Modifier.size(22.dp)
@@ -874,7 +874,7 @@ private fun FileAndOrderConfirmationBubble(message: ChatMessage.FileAndOrderConf
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                imageVector = Icons.Default.Receipt,
+                                imageVector = Lucide.Receipt,
                                 contentDescription = null,
                                 tint = BrandNavy,
                                 modifier = Modifier.size(22.dp)
@@ -962,7 +962,7 @@ private fun FileAndOrderConfirmationBubble(message: ChatMessage.FileAndOrderConf
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                    imageVector = Lucide.ArrowRight,
                                     contentDescription = null,
                                     tint = White,
                                     modifier = Modifier.size(16.dp)
@@ -1008,7 +1008,7 @@ private fun ChatInputBar(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Icons.Default.Add,
+                imageVector = Lucide.Plus,
                 contentDescription = "Attach",
                 tint = if (onAttachClick != null) PrimaryText else MutedText,
                 modifier = Modifier.size(20.dp)
@@ -1058,7 +1058,7 @@ private fun ChatInputBar(
                     )
                 } else {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Send,
+                        imageVector = Lucide.Send,
                         contentDescription = "Send",
                         tint = White,
                         modifier = Modifier.size(20.dp)

@@ -10,16 +10,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.ChatBubbleOutline
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.ReceiptLong
-import androidx.compose.material.icons.outlined.Search
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Plus
+import com.composables.icons.lucide.House
+import com.composables.icons.lucide.User
+import com.composables.icons.lucide.Search
+import com.composables.icons.lucide.MessageCircle
+import com.composables.icons.lucide.ReceiptText
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -224,7 +221,7 @@ private fun MainBottomBar(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Add,
+                            imageVector = Lucide.Plus,
                             contentDescription = tab.label,
                             tint = White,
                             modifier = Modifier.size(26.dp)
@@ -265,56 +262,56 @@ private fun MainBottomBar(
 private fun tabsForRole(role: Role): List<MainTabItem> =
     when (role) {
         Role.KLIEN -> listOf(
-            MainTabItem(Routes.HOME, "Home", Icons.Filled.Home, Icons.Outlined.Home),
+            MainTabItem(Routes.HOME, "Home", Lucide.House, Lucide.House),
             MainTabItem(
                 Routes.ORDER_HISTORY,
                 "Pesanan",
-                Icons.Outlined.ReceiptLong,
-                Icons.Outlined.ReceiptLong
+                Lucide.ReceiptText,
+                Lucide.ReceiptText
             ),
-            MainTabItem(Routes.POST_PROJECT, "New", Icons.Default.Add, Icons.Default.Add, isCenterAction = true),
+            MainTabItem(Routes.POST_PROJECT, "New", Lucide.Plus, Lucide.Plus, isCenterAction = true),
             MainTabItem(
                 Routes.PESAN,
                 "Chat",
-                Icons.Outlined.ChatBubbleOutline,
-                Icons.Outlined.ChatBubbleOutline
+                Lucide.MessageCircle,
+                Lucide.MessageCircle
             ),
-            MainTabItem(Routes.PROFILE, "Profile", Icons.Filled.Person, Icons.Outlined.Person)
+            MainTabItem(Routes.PROFILE, "Profile", Lucide.User, Lucide.User)
         )
         Role.ADMIN -> listOf(
-            MainTabItem(Routes.HOME, "Home", Icons.Filled.Home, Icons.Outlined.Home),
-            MainTabItem(Routes.searchRoute(), "Cari Jasa", Icons.Filled.Search, Icons.Outlined.Search),
-            MainTabItem(Routes.POST_PROJECT, "New", Icons.Default.Add, Icons.Default.Add, isCenterAction = true),
+            MainTabItem(Routes.HOME, "Home", Lucide.House, Lucide.House),
+            MainTabItem(Routes.searchRoute(), "Cari Jasa", Lucide.Search, Lucide.Search),
+            MainTabItem(Routes.POST_PROJECT, "New", Lucide.Plus, Lucide.Plus, isCenterAction = true),
             MainTabItem(
                 Routes.ORDER_HISTORY,
                 "Pesanan",
-                Icons.Outlined.ReceiptLong,
-                Icons.Outlined.ReceiptLong
+                Lucide.ReceiptText,
+                Lucide.ReceiptText
             ),
-            MainTabItem(Routes.PROFILE, "Profile", Icons.Filled.Person, Icons.Outlined.Person)
+            MainTabItem(Routes.PROFILE, "Profile", Lucide.User, Lucide.User)
         )
         Role.MAHASISWA -> listOf(
-            MainTabItem(Routes.HOME, "Home", Icons.Filled.Home, Icons.Outlined.Home),
+            MainTabItem(Routes.HOME, "Home", Lucide.House, Lucide.House),
             MainTabItem(
                 Routes.ORDER_HISTORY,
                 "Pesanan",
-                Icons.Outlined.ReceiptLong,
-                Icons.Outlined.ReceiptLong
+                Lucide.ReceiptText,
+                Lucide.ReceiptText
             ),
             MainTabItem(
                 Routes.editServiceRoute("new"),
                 "New",
-                Icons.Default.Add,
-                Icons.Default.Add,
+                Lucide.Plus,
+                Lucide.Plus,
                 isCenterAction = true
             ),
             MainTabItem(
                 Routes.PESAN,
                 "Chat",
-                Icons.Outlined.ChatBubbleOutline,
-                Icons.Outlined.ChatBubbleOutline
+                Lucide.MessageCircle,
+                Lucide.MessageCircle
             ),
-            MainTabItem(Routes.PROFILE, "Profile", Icons.Filled.Person, Icons.Outlined.Person)
+            MainTabItem(Routes.PROFILE, "Profile", Lucide.User, Lucide.User)
         )
     }
 

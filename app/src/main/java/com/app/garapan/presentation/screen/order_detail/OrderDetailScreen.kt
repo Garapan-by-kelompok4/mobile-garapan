@@ -20,9 +20,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Chat
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.MessageSquare
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -156,7 +156,7 @@ fun OrderDetailScreen(
             ) {
                 IconButton(onClick = { navController.navigateUp() }) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        imageVector = Lucide.ArrowLeft,
                         contentDescription = "Back",
                         tint = AccentBlue
                     )
@@ -405,7 +405,7 @@ private fun ChatIconButton(onClick: () -> Unit) {
         )
     ) {
         Icon(
-            imageVector = Icons.AutoMirrored.Filled.Chat,
+            imageVector = Lucide.MessageSquare,
             contentDescription = "Buka Chat",
             modifier = Modifier.size(18.dp)
         )

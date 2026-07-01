@@ -18,9 +18,9 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Star
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -92,7 +92,7 @@ fun ReviewScreen(
             ) {
                 IconButton(onClick = { navController.navigateUp() }) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        imageVector = Lucide.ArrowLeft,
                         contentDescription = "Back",
                         tint = AccentBlue
                     )
@@ -241,7 +241,7 @@ private fun RatingPicker(
     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         (1..5).forEach { value ->
             Icon(
-                imageVector = Icons.Default.Star,
+                imageVector = Lucide.Star,
                 contentDescription = "$value bintang",
                 tint = if (value <= rating) StarYellow else LightGray,
                 modifier = Modifier
