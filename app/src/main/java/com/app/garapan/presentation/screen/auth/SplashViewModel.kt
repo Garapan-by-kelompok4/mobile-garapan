@@ -9,7 +9,6 @@ import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.navigation.authDestination
 import com.app.garapan.presentation.notification.FcmTokenRegistrar
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -38,7 +37,7 @@ class SplashViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(SplashUiState())
     val uiState: StateFlow<SplashUiState> = _uiState.asStateFlow()
 
-    private val _events = MutableSharedFlow<SplashEvent>()
+    private val _events = MutableSharedFlow<SplashEvent>(replay = 1)
     val events: SharedFlow<SplashEvent> = _events.asSharedFlow()
 
     init {
@@ -47,7 +46,6 @@ class SplashViewModel @Inject constructor(
 
     private fun checkAuth() {
         viewModelScope.launch {
-            delay(2000L)
             val isLoggedIn = checkAuthTokenUseCase()
             if (!isLoggedIn) {
                 _uiState.value = SplashUiState(isLoading = false)
