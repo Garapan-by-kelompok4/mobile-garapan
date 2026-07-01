@@ -25,8 +25,6 @@ import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.CircleDollarSign
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,6 +48,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.app.garapan.presentation.components.AppCard
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
@@ -194,13 +193,7 @@ private fun MyProjectCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
+    AppCard(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

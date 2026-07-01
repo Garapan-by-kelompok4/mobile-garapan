@@ -34,7 +34,6 @@ import com.composables.icons.lucide.X
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -55,7 +54,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -66,14 +64,18 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavController
 import com.app.garapan.domain.model.PesananStatus
 import com.app.garapan.domain.model.ProposalStatus
+import com.app.garapan.presentation.components.AppCard
+import com.app.garapan.presentation.components.AppPrimaryButton
 import com.app.garapan.presentation.components.PesananStatusBadge
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
+import com.app.garapan.ui.theme.ErrorRed
 import com.app.garapan.ui.theme.LightGray
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
+import com.app.garapan.ui.theme.Surface
 import com.app.garapan.ui.theme.White
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -108,7 +110,7 @@ fun OrderHistoryScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    Scaffold(containerColor = Color(0xFFFAF8FF)) { innerPadding ->
+    Scaffold(containerColor = Surface) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -261,9 +263,9 @@ private fun OrderHistoryTabRow(
                     activeContainerColor = BrandNavy,
                     activeContentColor = White,
                     activeBorderColor = BrandNavy,
-                    inactiveContainerColor = Color(0xFFF0EEF8),
+                    inactiveContainerColor = LightGray,
                     inactiveContentColor = SecondaryText,
-                    inactiveBorderColor = Color(0xFFF0EEF8)
+                    inactiveBorderColor = LightGray
                 ),
                 icon = {},
                 label = {
@@ -338,47 +340,42 @@ private fun ProposalHistoryCard(
 ) {
     val statusColor = when (item.status) {
         ProposalStatus.ACCEPTED -> AccentBlue
-        ProposalStatus.REJECTED -> Color(0xFFE31B23)
+        ProposalStatus.REJECTED -> ErrorRed
         ProposalStatus.WITHDRAWN -> SecondaryText
         ProposalStatus.PENDING -> BrandNavy
     }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(White)
-            .clickable(onClick = onClick)
-            .padding(16.dp)
-    ) {
-        Row(verticalAlignment = Alignment.Top) {
-            Text(
-                text = item.projectTitle,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = PrimaryText
-                ),
-                modifier = Modifier.weight(1f)
-            )
-            Text(
-                text = item.proposedPrice,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    color = PrimaryText
+    AppCard(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.Top) {
+                Text(
+                    text = item.projectTitle,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = PrimaryText
+                    ),
+                    modifier = Modifier.weight(1f)
                 )
+                Text(
+                    text = item.proposedPrice,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = PrimaryText
+                    )
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = item.statusLabel,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = White,
+                    fontWeight = FontWeight.Bold
+                ),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50.dp))
+                    .background(statusColor)
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
             )
         }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = item.statusLabel,
-            style = MaterialTheme.typography.labelSmall.copy(
-                color = White,
-                fontWeight = FontWeight.Bold
-            ),
-            modifier = Modifier
-                .clip(RoundedCornerShape(50.dp))
-                .background(statusColor)
-                .padding(horizontal = 10.dp, vertical = 4.dp)
-        )
     }
 }
 
@@ -394,7 +391,7 @@ private fun OrderHistoryFilterChip(
             .heightIn(min = 44.dp)
             .clip(RoundedCornerShape(50.dp))
             .border(1.dp, BorderColor, RoundedCornerShape(50.dp))
-            .background(Color(0xFFF0EEF8))
+            .background(LightGray)
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 10.dp)
     ) {
@@ -524,22 +521,10 @@ private fun OrderHistoryFilterBottomSheet(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Button(
-                onClick = onApply,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = BrandNavy,
-                    contentColor = White
-                )
-            ) {
-                Text(
-                    text = "Terapkan",
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
-                )
-            }
+            AppPrimaryButton(
+                text = "Terapkan",
+                onClick = onApply
+            )
         }
     }
 }
@@ -600,9 +585,9 @@ private fun OrderHistoryCard(
     item: OrderHistoryItem,
     onClick: () -> Unit
 ) {
-    val amountColor = if (item.isIncome) BrandNavy else Color(0xFFE31B23)
-    val iconColor = if (item.isIncome) AccentBlue else Color(0xFFE31B23)
-    val iconBg = if (item.isIncome) Color(0xFFE7EEFF) else Color(0xFFFFE7E8)
+    val amountColor = if (item.isIncome) BrandNavy else ErrorRed
+    val iconColor = if (item.isIncome) AccentBlue else ErrorRed
+    val iconBg = if (item.isIncome) AccentBlue.copy(alpha = 0.1f) else ErrorRed.copy(alpha = 0.1f)
 
     Row(
         modifier = Modifier

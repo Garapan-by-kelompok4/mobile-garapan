@@ -35,8 +35,6 @@ import com.composables.icons.lucide.MessageCircle
 import com.composables.icons.lucide.ImageOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -72,6 +70,7 @@ import androidx.compose.ui.unit.sp
 import com.app.garapan.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.app.garapan.presentation.components.AppCard
 import com.app.garapan.presentation.components.NotificationBellButton
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
@@ -459,13 +458,7 @@ private fun SectionHeader(title: String, onSeeAll: () -> Unit) {
 
 @Composable
 private fun ProjectCard(project: ProjectItem, onClick: () -> Unit = {}) {
-    Card(
-        modifier = Modifier.width(280.dp),
-        onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
+    AppCard(modifier = Modifier.width(280.dp).clickable(onClick = onClick)) {
         Column {
             Box(
                 modifier = Modifier
@@ -585,13 +578,7 @@ private fun ProjectCard(project: ProjectItem, onClick: () -> Unit = {}) {
 
 @Composable
 private fun ServiceCard(service: ServiceItem, onClick: () -> Unit = {}) {
-    Card(
-        modifier = Modifier.width(180.dp),
-        onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
+    AppCard(modifier = Modifier.width(180.dp).clickable(onClick = onClick)) {
         Column {
             Box(
                 modifier = Modifier
@@ -662,13 +649,7 @@ private fun ServiceCard(service: ServiceItem, onClick: () -> Unit = {}) {
 
 @Composable
 fun TopWorkerCard(worker: TopWorkerItem, onClick: () -> Unit = {}) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
+    AppCard(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Row(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -740,13 +721,7 @@ fun TopWorkerCard(worker: TopWorkerItem, onClick: () -> Unit = {}) {
 
 @Composable
 fun BlogCard(blog: BlogItem, onClick: () -> Unit = {}) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
+    AppCard(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Row(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically

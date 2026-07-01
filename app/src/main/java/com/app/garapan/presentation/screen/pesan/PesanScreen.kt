@@ -2,7 +2,6 @@ package com.app.garapan.presentation.screen.pesan
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,8 +27,6 @@ import com.composables.icons.lucide.User
 import com.composables.icons.lucide.Search
 import com.composables.icons.lucide.Headset
 import com.composables.icons.lucide.MessageCircle
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -59,13 +56,14 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.app.garapan.R
+import com.app.garapan.presentation.components.AppCard
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
-import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
 import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
+import com.app.garapan.ui.theme.SuccessGreen
 import com.app.garapan.ui.theme.Surface
 import com.app.garapan.ui.theme.White
 
@@ -204,8 +202,7 @@ private fun PesanSearchField(
             .fillMaxWidth()
             .height(52.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
-            .border(1.dp, BorderColor, RoundedCornerShape(12.dp))
+            .background(Surface)
             .padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -259,13 +256,10 @@ private fun ChatPreviewCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
-    Card(
+    AppCard(
         modifier = modifier
             .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
     ) {
         Row(
             modifier = Modifier.padding(14.dp),
@@ -326,12 +320,7 @@ private fun ConversationEmptyState(
     isSearching: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
+    AppCard(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -424,7 +413,7 @@ private fun StatusChip(
 ) {
     val chipBackground = when {
         admin -> BrandNavy.copy(alpha = 0.1f)
-        label.equals("Selesai", ignoreCase = true) -> Color(0xFF22C55E)
+        label.equals("Selesai", ignoreCase = true) -> SuccessGreen
         else -> AccentBlue
     }
     val chipContent = if (admin) BrandNavy else White

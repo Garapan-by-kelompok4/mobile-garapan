@@ -15,9 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -37,12 +34,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.app.garapan.presentation.components.AppPrimaryButton
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BrandNavy
 import com.app.garapan.ui.theme.ErrorRed
 import com.app.garapan.ui.theme.MutedText
-import com.app.garapan.ui.theme.OnPrimary
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
 import com.app.garapan.ui.theme.Surface
@@ -133,33 +130,12 @@ fun ForgotPasswordScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Button(
+                AppPrimaryButton(
+                    text = "Send reset link",
                     onClick = viewModel::onSubmit,
                     enabled = !uiState.isLoading,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(50.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = BrandNavy,
-                        contentColor = OnPrimary
-                    )
-                ) {
-                    if (uiState.isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp,
-                            color = OnPrimary
-                        )
-                    } else {
-                        Text(
-                            text = "Send reset link",
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        )
-                    }
-                }
+                    isLoading = uiState.isLoading
+                )
 
                 Spacer(modifier = Modifier.height(20.dp))
 

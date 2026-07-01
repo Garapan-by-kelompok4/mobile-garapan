@@ -14,11 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Calendar
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -39,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.app.garapan.presentation.components.AppPrimaryButton
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.screen.post_project.BudgetRangeFields
@@ -53,7 +52,6 @@ import com.app.garapan.ui.theme.BrandNavy
 import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.SecondaryText
 import com.app.garapan.ui.theme.Surface
-import com.app.garapan.ui.theme.White
 
 @Composable
 fun EditProjectScreen(
@@ -240,34 +238,12 @@ fun EditProjectScreen(
                             }
                         }
                         item {
-                            Button(
+                            AppPrimaryButton(
+                                text = "Simpan Perubahan",
                                 onClick = viewModel::onSave,
                                 enabled = !uiState.isSaving && !uiState.isProcessingImage,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(54.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = BrandNavy,
-                                    contentColor = White
-                                ),
-                                shape = RoundedCornerShape(50.dp),
-                                contentPadding = PaddingValues(horizontal = 18.dp)
-                            ) {
-                                if (uiState.isSaving) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.height(22.dp),
-                                        color = White,
-                                        strokeWidth = 2.dp
-                                    )
-                                } else {
-                                    Text(
-                                        text = "Simpan Perubahan",
-                                        style = MaterialTheme.typography.bodyLarge.copy(
-                                            fontWeight = FontWeight.ExtraBold
-                                        )
-                                    )
-                                }
-                            }
+                                isLoading = uiState.isSaving
+                            )
                         }
                     }
                 }
