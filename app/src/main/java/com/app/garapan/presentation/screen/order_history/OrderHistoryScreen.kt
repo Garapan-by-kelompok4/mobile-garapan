@@ -47,6 +47,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavController
+import com.app.garapan.domain.model.ProposalStatus
 import com.app.garapan.presentation.components.PesananStatusBadge
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
@@ -84,6 +85,22 @@ fun OrderHistoryScreen(
                 onBack = { navController.navigateUp() },
                 showBackButton = showBackButton
             )
+            if (uiState.isMahasiswa) {
+                OrderHistoryTabRow(
+                    selectedTab = uiState.selectedTab,
+                    onTabSelected = viewModel::onTabSelected
+                )
+            }
+            if (uiState.isMahasiswa && uiState.selectedTab == OrderHistoryTab.PROPOSAL) {
+                ProposalHistoryContent(
+                    uiState = uiState,
+                    onRetry = { viewModel.onTabSelected(OrderHistoryTab.PROPOSAL) },
+                    onProposalClick = { projectId ->
+                        navController.navigate(Routes.projectDetailRoute(projectId))
+                    }
+                )
+                return@Column
+            }
             when {
                 uiState.isLoading -> {
                     Box(
@@ -187,6 +204,155 @@ private fun OrderHistoryTopBar(
                 tint = AccentBlue
             )
         }
+    }
+}
+
+@Composable
+private fun OrderHistoryTabRow(
+    selectedTab: OrderHistoryTab,
+    onTabSelected: (OrderHistoryTab) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        OrderHistoryTabChip(
+            label = "Pesanan",
+            selected = selectedTab == OrderHistoryTab.PESANAN,
+            onClick = { onTabSelected(OrderHistoryTab.PESANAN) }
+        )
+        OrderHistoryTabChip(
+            label = "Proposal",
+            selected = selectedTab == OrderHistoryTab.PROPOSAL,
+            onClick = { onTabSelected(OrderHistoryTab.PROPOSAL) }
+        )
+    }
+}
+
+@Composable
+private fun OrderHistoryTabChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Text(
+        text = label,
+        style = MaterialTheme.typography.labelMedium.copy(
+            fontWeight = FontWeight.Bold,
+            color = if (selected) White else SecondaryText
+        ),
+        modifier = Modifier
+            .clip(RoundedCornerShape(50.dp))
+            .background(if (selected) BrandNavy else Color(0xFFF0EEF8))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 8.dp)
+    )
+}
+
+@Composable
+private fun ProposalHistoryContent(
+    uiState: OrderHistoryUiState,
+    onRetry: () -> Unit,
+    onProposalClick: (String) -> Unit
+) {
+    when {
+        uiState.isLoadingProposals -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = BrandNavy)
+            }
+        }
+        uiState.proposalsErrorMessage != null -> {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = uiState.proposalsErrorMessage,
+                    style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(onClick = onRetry) {
+                    Text("Coba Lagi")
+                }
+            }
+        }
+        uiState.proposals.isEmpty() -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(
+                    text = "Belum ada proposal yang diajukan.",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
+                )
+            }
+        }
+        else -> {
+            LazyColumn(
+                contentPadding = PaddingValues(start = 14.dp, end = 14.dp, top = 4.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                items(uiState.proposals, key = { it.id }) { proposal ->
+                    ProposalHistoryCard(
+                        item = proposal,
+                        onClick = { onProposalClick(proposal.projectId) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProposalHistoryCard(
+    item: ProposalHistoryItem,
+    onClick: () -> Unit
+) {
+    val statusColor = when (item.status) {
+        ProposalStatus.ACCEPTED -> AccentBlue
+        ProposalStatus.REJECTED -> Color(0xFFE31B23)
+        ProposalStatus.WITHDRAWN -> SecondaryText
+        ProposalStatus.PENDING -> BrandNavy
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(White)
+            .clickable(onClick = onClick)
+            .padding(16.dp)
+    ) {
+        Row(verticalAlignment = Alignment.Top) {
+            Text(
+                text = item.projectTitle,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = PrimaryText
+                ),
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                text = item.proposedPrice,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.ExtraBold,
+                    color = PrimaryText
+                )
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = item.statusLabel,
+            style = MaterialTheme.typography.labelSmall.copy(
+                color = White,
+                fontWeight = FontWeight.Bold
+            ),
+            modifier = Modifier
+                .clip(RoundedCornerShape(50.dp))
+                .background(statusColor)
+                .padding(horizontal = 10.dp, vertical = 4.dp)
+        )
     }
 }
 

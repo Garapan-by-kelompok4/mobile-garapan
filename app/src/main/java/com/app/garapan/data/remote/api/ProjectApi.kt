@@ -4,6 +4,9 @@ import com.app.garapan.data.remote.dto.CreateProjectRequest
 import com.app.garapan.data.remote.dto.PesananDto
 import com.app.garapan.data.remote.dto.ProjectDto
 import com.app.garapan.data.remote.dto.ProjectListResponseDto
+import com.app.garapan.data.remote.dto.ProjectProposalDto
+import com.app.garapan.data.remote.dto.ProjectProposalListResponseDto
+import com.app.garapan.data.remote.dto.SubmitProposalRequestDto
 import com.app.garapan.data.remote.dto.UpdateProjectRequest
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -59,8 +62,35 @@ interface ProjectApi {
         @Part image: MultipartBody.Part
     ): ProjectDto
 
-    @POST("project/{id}/take")
-    suspend fun takeProject(@Path("id") id: String): PesananDto
+    @POST("project/{id}/proposals")
+    suspend fun submitProposal(
+        @Path("id") id: String,
+        @Body body: SubmitProposalRequestDto
+    ): ProjectProposalDto
+
+    @DELETE("project/{id}/proposals/me")
+    suspend fun withdrawProposal(@Path("id") id: String)
+
+    @GET("project/{id}/proposals")
+    suspend fun getProjectProposals(@Path("id") id: String): List<ProjectProposalDto>
+
+    @GET("project/mine/proposals")
+    suspend fun getMyProposals(
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 20
+    ): ProjectProposalListResponseDto
+
+    @PATCH("project/{id}/proposals/{proposalId}/accept")
+    suspend fun acceptProposal(
+        @Path("id") id: String,
+        @Path("proposalId") proposalId: String
+    ): PesananDto
+
+    @PATCH("project/{id}/proposals/{proposalId}/reject")
+    suspend fun rejectProposal(
+        @Path("id") id: String,
+        @Path("proposalId") proposalId: String
+    )
 
     @PATCH("project/{id}")
     suspend fun updateProject(

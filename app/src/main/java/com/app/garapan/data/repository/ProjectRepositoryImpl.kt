@@ -1,5 +1,6 @@
 package com.app.garapan.data.repository
 
+import com.app.garapan.data.mapper.submitProposalRequest
 import com.app.garapan.data.mapper.toDomain
 import com.app.garapan.data.mapper.toMultipartRequest
 import com.app.garapan.data.mapper.toRequest
@@ -10,6 +11,7 @@ import com.app.garapan.domain.model.CreateProjectParams
 import com.app.garapan.domain.model.Pesanan
 import com.app.garapan.domain.model.Project
 import com.app.garapan.domain.model.ProjectListFilters
+import com.app.garapan.domain.model.ProjectProposal
 import com.app.garapan.domain.model.UpdateProjectParams
 import com.app.garapan.domain.repository.ProjectRepository
 import kotlinx.coroutines.CancellationException
@@ -69,9 +71,38 @@ class ProjectRepositoryImpl @Inject constructor(
             }
         }
 
-    override suspend fun takeProject(id: String): Resource<Pesanan> =
+    override suspend fun submitProposal(
+        projectId: String,
+        message: String,
+        proposedPrice: Double
+    ): Resource<ProjectProposal> =
         safeApiCall {
-            projectApi.takeProject(id).toDomain()
+            projectApi.submitProposal(projectId, submitProposalRequest(message, proposedPrice)).toDomain()
+        }
+
+    override suspend fun withdrawProposal(projectId: String): Resource<Unit> =
+        safeApiCall {
+            projectApi.withdrawProposal(projectId)
+        }
+
+    override suspend fun getProjectProposals(projectId: String): Resource<List<ProjectProposal>> =
+        safeApiCall {
+            projectApi.getProjectProposals(projectId).map { it.toDomain() }
+        }
+
+    override suspend fun getMyProposals(page: Int, limit: Int): Resource<List<ProjectProposal>> =
+        safeApiCall {
+            projectApi.getMyProposals(page, limit).data.map { it.toDomain() }
+        }
+
+    override suspend fun acceptProposal(projectId: String, proposalId: String): Resource<Pesanan> =
+        safeApiCall {
+            projectApi.acceptProposal(projectId, proposalId).toDomain()
+        }
+
+    override suspend fun rejectProposal(projectId: String, proposalId: String): Resource<Unit> =
+        safeApiCall {
+            projectApi.rejectProposal(projectId, proposalId)
         }
 
     override suspend fun updateProject(id: String, params: UpdateProjectParams): Resource<Project> =
