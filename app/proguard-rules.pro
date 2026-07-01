@@ -1,21 +1,17 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Keep readable stack traces in Play Console crash reports.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# --- Gson (reflection-based) ---
+# DTOs have no @SerializedName; Gson maps JSON keys to Kotlin field names via
+# reflection, so DTO class and field names must survive obfuscation.
+-keep class com.app.garapan.data.remote.dto.** { *; }
+# Generic type information for TypeToken<List<...>> deserialization.
+-keepattributes Signature
+-keepattributes *Annotation*
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# --- Socket.io / Engine.io (reflection + org.json interop) ---
+-keep class io.socket.** { *; }
+-dontwarn io.socket.**

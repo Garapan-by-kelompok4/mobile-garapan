@@ -47,7 +47,8 @@ android {
         }
 
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -79,6 +80,10 @@ dependencies {
     implementation(libs.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+
+    // Compiles baseline profiles shipped by Compose & other AndroidX libs at
+    // install time, so first scrolls don't run on the interpreter/JIT.
+    implementation(libs.androidx.profileinstaller)
 
     // Compose BOM — manages versions for all androidx.compose.* libs
     implementation(platform(libs.androidx.compose.bom))
