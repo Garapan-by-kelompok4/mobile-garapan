@@ -10,4 +10,5 @@ interface PesananRepository {
     suspend fun getPesananDetail(id: String): Resource<Pesanan>
     suspend fun deliverPesanan(id: String): Resource<Pesanan>
     suspend fun completePesanan(id: String): Resource<Pesanan>
+    suspend fun cancelPesanan(id: String): Resource<Pesanan>
 }
