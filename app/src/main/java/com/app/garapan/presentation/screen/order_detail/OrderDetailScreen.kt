@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -70,6 +71,7 @@ fun OrderDetailScreen(
     val activity = context as? Activity
     val lifecycleOwner = LocalLifecycleOwner.current
     var paymentLaunched by remember { mutableStateOf(false) }
+    var showCancelDialog by remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -113,6 +115,27 @@ fun OrderDetailScreen(
         }
     }
 
+    if (showCancelDialog) {
+        AlertDialog(
+            onDismissRequest = { showCancelDialog = false },
+            title = { Text("Batalkan Pesanan") },
+            text = { Text("Batalkan pesanan ini? Tindakan ini tidak dapat dibatalkan.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showCancelDialog = false
+                    viewModel.onCancelClicked()
+                }) {
+                    Text("Batalkan", color = Color(0xFFE31B23))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCancelDialog = false }) {
+                    Text("Tutup")
+                }
+            }
+        )
+    }
+
     Scaffold(
         containerColor = Surface,
         topBar = {
@@ -141,7 +164,7 @@ fun OrderDetailScreen(
             }
         },
         bottomBar = {
-            if (uiState.canChat || uiState.canPay || uiState.canDeliver || uiState.canComplete || uiState.canReview || uiState.canDispute) {
+            if (uiState.canChat || uiState.canPay || uiState.canCancel || uiState.canDeliver || uiState.canComplete || uiState.canReview || uiState.canDispute) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -202,6 +225,18 @@ fun OrderDetailScreen(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text("Perbarui Status")
+                            }
+                            if (uiState.canCancel) {
+                                TextButton(
+                                    onClick = { showCancelDialog = true },
+                                    enabled = !uiState.isActionLoading,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "Batalkan Pesanan",
+                                        color = Color(0xFFE31B23)
+                                    )
+                                }
                             }
                         } else if (uiState.canReview) {
                             Button(
