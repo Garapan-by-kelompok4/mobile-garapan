@@ -1,5 +1,9 @@
 package com.app.garapan.presentation.screen.chat
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
@@ -30,18 +34,23 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.InsertDriveFile
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material.icons.outlined.RemoveRedEye
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -81,6 +90,7 @@ import com.app.garapan.ui.theme.Surface
 import com.app.garapan.ui.theme.White
 import kotlinx.coroutines.flow.first
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
     navController: NavController,
@@ -91,6 +101,17 @@ fun ChatScreen(
     val listState = rememberLazyListState()
     val lifecycleOwner = LocalLifecycleOwner.current
     var didInitialSupportScroll by remember { mutableStateOf(false) }
+
+    var showAttachSheet by remember { mutableStateOf(false) }
+    val attachSheetState = rememberModalBottomSheetState()
+    val photoPicker = rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
+        uri?.let(viewModel::onPhotoPicked)
+    }
+    val documentPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let(viewModel::onDocumentPicked)
+    }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -161,7 +182,8 @@ fun ChatScreen(
                 onValueChange = viewModel::onInputChanged,
                 onSend = viewModel::onSend,
                 enabled = !uiState.isLoading && !uiState.isSending,
-                isSending = uiState.isSending
+                isSending = uiState.isSending,
+                onAttachClick = { showAttachSheet = true }.takeIf { uiState.canAttach && !uiState.isSending }
             )
         }
     ) { innerPadding ->
@@ -228,6 +250,100 @@ fun ChatScreen(
                 }
             }
         }
+    }
+
+    if (showAttachSheet) {
+        AttachmentOptionsSheet(
+            sheetState = attachSheetState,
+            onDismiss = { showAttachSheet = false },
+            onPickPhoto = {
+                showAttachSheet = false
+                photoPicker.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
+            },
+            onPickDocument = {
+                showAttachSheet = false
+                documentPicker.launch(CHAT_DOCUMENT_MIME_TYPES)
+            }
+        )
+    }
+}
+
+private val CHAT_DOCUMENT_MIME_TYPES = arrayOf(
+    "application/pdf",
+    "application/zip",
+    "application/x-zip-compressed",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AttachmentOptionsSheet(
+    sheetState: androidx.compose.material3.SheetState,
+    onDismiss: () -> Unit,
+    onPickPhoto: () -> Unit,
+    onPickDocument: () -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = White,
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
+            Text(
+                text = "Kirim Lampiran",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = PrimaryText
+                )
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            AttachmentOptionRow(
+                icon = Icons.Filled.Image,
+                label = "Foto",
+                onClick = onPickPhoto
+            )
+            AttachmentOptionRow(
+                icon = Icons.Filled.InsertDriveFile,
+                label = "Dokumen",
+                onClick = onPickDocument
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
+@Composable
+private fun AttachmentOptionRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(AccentBlue.copy(alpha = 0.12f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(imageVector = icon, contentDescription = null, tint = AccentBlue, modifier = Modifier.size(20.dp))
+        }
+        Spacer(modifier = Modifier.width(14.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontWeight = FontWeight.SemiBold,
+                color = PrimaryText
+            )
+        )
     }
 }
 
@@ -870,7 +986,8 @@ private fun ChatInputBar(
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
     enabled: Boolean,
-    isSending: Boolean
+    isSending: Boolean,
+    onAttachClick: (() -> Unit)? = null
 ) {
     Row(
         modifier = Modifier
@@ -885,13 +1002,14 @@ private fun ChatInputBar(
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(MutedText.copy(alpha = 0.15f)),
+                .background(MutedText.copy(alpha = 0.15f))
+                .let { base -> onAttachClick?.let { base.clickable(onClick = it) } ?: base },
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = "Attach",
-                tint = PrimaryText,
+                tint = if (onAttachClick != null) PrimaryText else MutedText,
                 modifier = Modifier.size(20.dp)
             )
         }

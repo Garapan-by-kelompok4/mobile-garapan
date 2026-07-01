@@ -7,10 +7,13 @@ import com.app.garapan.data.remote.dto.OrderChatMessageDto
 import com.app.garapan.data.remote.dto.OrderChatPageDto
 import com.app.garapan.data.remote.dto.SendOrderMessageRequestDto
 import com.google.gson.JsonElement
+import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -35,6 +38,14 @@ interface ChatApi {
     suspend fun sendMessage(
         @Path("conversationId") conversationId: String,
         @Body request: SendOrderMessageRequestDto
+    ): OrderChatMessageDto
+
+    @Multipart
+    @POST("chat/{conversationId}/attachments")
+    suspend fun sendAttachment(
+        @Path("conversationId") conversationId: String,
+        @Part file: MultipartBody.Part,
+        @Query("pesananId") pesananId: String? = null
     ): OrderChatMessageDto
 
     @PATCH("chat/{conversationId}/read")
