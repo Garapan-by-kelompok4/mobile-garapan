@@ -11,7 +11,7 @@
     <!-- Splash screen theme — bridges the system splash to our Compose splash -->
     <style name="Theme.Garapan.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">#FFFFFF</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/logo_garapan</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/logo_garapan_mark</item>
         <item name="windowSplashScreenIconBackgroundColor">#FFFFFF</item>
         <item name="postSplashScreenTheme">@style/Theme.Garapan</item>
     </style>
