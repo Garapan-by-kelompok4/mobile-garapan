@@ -115,43 +115,6 @@ class OrderDetailViewModel @Inject constructor(
 
     fun refresh() = loadDetail()
 
-    fun onRefreshStatusClicked() {
-        if (pesananId.isBlank()) return
-        if (_uiState.value.statusRaw != PesananStatus.PENDING) {
-            loadDetail()
-            return
-        }
-        viewModelScope.launch {
-            _uiState.update {
-                it.copy(isActionLoading = true, actionMessage = "Memeriksa status pembayaran...", errorMessage = null)
-            }
-            when (val result = waitForPesananPaymentUseCase(pesananId, maxAttempts = 8, delayMs = 1_500L)) {
-                is Resource.Success -> {
-                    applyPesanan(result.data)
-                    if (result.data.status == PesananStatus.PENDING) {
-                        _events.emit(
-                            OrderDetailEvent.ShowMessage(
-                                "Pembayaran belum dikonfirmasi. Coba Lanjutkan Pembayaran jika belum selesai."
-                            )
-                        )
-                    } else {
-                        _events.emit(OrderDetailEvent.ShowMessage("Pembayaran berhasil dikonfirmasi."))
-                    }
-                }
-                is Resource.Error -> {
-                    _uiState.update {
-                        it.copy(
-                            isActionLoading = false,
-                            actionMessage = null,
-                            errorMessage = UserMessageLocalizer.localize(result.message)
-                        )
-                    }
-                }
-                Resource.Loading -> Unit
-            }
-        }
-    }
-
     fun onPayClicked() {
         if (pesananId.isBlank()) return
         viewModelScope.launch {
@@ -196,7 +159,7 @@ class OrderDetailViewModel @Inject constructor(
                     if (refresh.data.status == PesananStatus.PENDING) {
                         _events.emit(
                             OrderDetailEvent.ShowMessage(
-                                "Pembayaran belum dikonfirmasi. Ketuk Perbarui Status atau Lanjutkan Pembayaran."
+                                "Pembayaran belum dikonfirmasi. Coba Lanjutkan Pembayaran jika belum selesai."
                             )
                         )
                     } else {
@@ -207,7 +170,7 @@ class OrderDetailViewModel @Inject constructor(
                     _uiState.update { it.copy(isActionLoading = false, actionMessage = null) }
                     _events.emit(
                         OrderDetailEvent.ShowMessage(
-                            "Gagal memuat status. Ketuk Perbarui Status untuk mencoba lagi."
+                            "Gagal memuat status pembayaran. Buka kembali halaman ini untuk mencoba lagi."
                         )
                     )
                 }
