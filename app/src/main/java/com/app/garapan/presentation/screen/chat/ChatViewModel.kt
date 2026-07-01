@@ -55,13 +55,17 @@ sealed class ChatMessage {
 
     data class Sent(
         val text: String,
-        val time: String
+        val time: String,
+        val attachmentUrl: String? = null,
+        val attachmentName: String? = null
     ) : ChatMessage()
 
     data class Received(
         val text: String,
         val time: String,
-        val senderInitials: String
+        val senderInitials: String,
+        val attachmentUrl: String? = null,
+        val attachmentName: String? = null
     ) : ChatMessage()
 
     data class FileAndOrderConfirmation(
