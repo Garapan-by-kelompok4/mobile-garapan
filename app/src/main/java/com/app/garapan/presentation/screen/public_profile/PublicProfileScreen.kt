@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -29,9 +28,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,6 +48,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.app.garapan.domain.model.ProfileSkill
+import com.app.garapan.presentation.components.AppOutlineButton
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.presentation.util.RatingFormatter
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BrandNavy
@@ -133,30 +132,11 @@ fun PublicProfileScreen(
 
                     if (uiState.showHubungi) {
                         Spacer(modifier = Modifier.height(16.dp))
-                        OutlinedButton(
+                        AppOutlineButton(
+                            text = "Hubungi",
                             onClick = viewModel::onHubungiClicked,
-                            enabled = !uiState.isOpeningChat,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp),
-                            shape = RoundedCornerShape(50.dp)
-                        ) {
-                            if (uiState.isOpeningChat) {
-                                CircularProgressIndicator(
-                                    color = BrandNavy,
-                                    strokeWidth = 2.dp,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            } else {
-                                Text(
-                                    text = "Hubungi",
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = BrandNavy
-                                    )
-                                )
-                            }
-                        }
+                            enabled = !uiState.isOpeningChat
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(20.dp))
@@ -230,29 +210,7 @@ fun PublicProfileScreen(
 
 @Composable
 private fun PublicProfileTopBar(onBack: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(White)
-            .statusBarsPadding()
-            .padding(horizontal = 4.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Lucide.ArrowLeft,
-                contentDescription = "Back",
-                tint = PrimaryText
-            )
-        }
-        Text(
-            text = "Profil",
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.Bold,
-                color = PrimaryText
-            )
-        )
-    }
+    AppTopBar(title = "Profil", onBack = onBack)
 }
 
 @Composable

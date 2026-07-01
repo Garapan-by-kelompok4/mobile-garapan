@@ -26,8 +26,6 @@ import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.CircleDollarSign
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,7 +42,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -53,6 +50,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.app.garapan.presentation.components.AppCard
+import com.app.garapan.presentation.components.AppPrimaryButton
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
@@ -60,6 +59,7 @@ import com.app.garapan.ui.theme.LightGray
 import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
+import com.app.garapan.ui.theme.SuccessGreen
 import com.app.garapan.ui.theme.Surface
 import com.app.garapan.ui.theme.White
 
@@ -132,20 +132,10 @@ fun ProfileServicesScreen(
             }
 
             item {
-                Button(
-                    onClick = { navController.navigate(Routes.editServiceRoute("new")) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AccentBlue)
-                ) {
-                    Text(
-                        text = "Buat Layanan",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = White
-                        )
-                    )
-                }
+                AppPrimaryButton(
+                    text = "Buat Layanan",
+                    onClick = { navController.navigate(Routes.editServiceRoute("new")) }
+                )
             }
 
             if (uiState.isRefreshing) {
@@ -327,7 +317,7 @@ private fun SkillPanel(skills: List<String>) {
                     ),
                     modifier = Modifier
                         .clip(RoundedCornerShape(50.dp))
-                        .background(Color(0xFFE4E7EA))
+                        .background(Surface)
                         .padding(horizontal = 16.dp, vertical = 9.dp)
                 )
             }
@@ -343,13 +333,10 @@ private fun ProfileServiceCard(
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
-    Card(
+    AppCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            .clickable(onClick = onClick)
     ) {
         Column {
             Box(
@@ -482,7 +469,7 @@ private fun StatusChip(status: String) {
         ),
         modifier = Modifier
             .clip(RoundedCornerShape(50.dp))
-            .background(if (isDone) Color(0xFF22C55E) else AccentBlue)
+            .background(if (isDone) SuccessGreen else AccentBlue)
             .padding(horizontal = 10.dp, vertical = 4.dp)
     )
 }

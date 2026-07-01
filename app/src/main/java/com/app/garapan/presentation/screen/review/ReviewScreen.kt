@@ -14,18 +14,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Star
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -43,8 +39,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.app.garapan.ui.theme.AccentBlue
+import com.app.garapan.presentation.components.AppPrimaryButton
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.ui.theme.BrandNavy
+import com.app.garapan.ui.theme.ErrorRed
 import com.app.garapan.ui.theme.LightGray
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
@@ -82,29 +80,10 @@ fun ReviewScreen(
     Scaffold(
         containerColor = Surface,
         topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(White)
-                    .statusBarsPadding()
-                    .padding(horizontal = 4.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(
-                        imageVector = Lucide.ArrowLeft,
-                        contentDescription = "Back",
-                        tint = AccentBlue
-                    )
-                }
-                Text(
-                    text = if (uiState.isEditMode) "Edit Ulasan" else "Beri Ulasan",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = AccentBlue
-                    )
-                )
-            }
+            AppTopBar(
+                title = if (uiState.isEditMode) "Edit Ulasan" else "Beri Ulasan",
+                onBack = { navController.navigateUp() }
+            )
         },
         bottomBar = {
             if (!uiState.isLoading) {
@@ -115,31 +94,12 @@ fun ReviewScreen(
                         .navigationBarsPadding()
                         .padding(horizontal = 20.dp, vertical = 12.dp)
                 ) {
-                    Button(
+                    AppPrimaryButton(
+                        text = if (uiState.isEditMode) "Simpan Perubahan" else "Kirim Ulasan",
                         onClick = viewModel::submit,
                         enabled = uiState.isSubmitEnabled && !uiState.isSubmitting,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(54.dp),
-                        shape = RoundedCornerShape(50.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = BrandNavy,
-                            contentColor = White
-                        )
-                    ) {
-                        if (uiState.isSubmitting) {
-                            CircularProgressIndicator(
-                                color = White,
-                                strokeWidth = 2.dp,
-                                modifier = Modifier.height(22.dp)
-                            )
-                        } else {
-                            Text(
-                                text = if (uiState.isEditMode) "Simpan Perubahan" else "Kirim Ulasan",
-                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.ExtraBold)
-                            )
-                        }
-                    }
+                        isLoading = uiState.isSubmitting
+                    )
                 }
             }
         }
@@ -220,7 +180,7 @@ private fun ReviewPanel(
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.error,
+                    color = ErrorRed,
                     fontWeight = FontWeight.SemiBold
                 )
             )

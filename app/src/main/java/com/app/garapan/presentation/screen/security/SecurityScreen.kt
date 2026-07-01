@@ -18,10 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Lock
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -29,22 +26,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.app.garapan.presentation.components.AppOutlineButton
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
+import com.app.garapan.ui.theme.Surface
 import com.app.garapan.ui.theme.White
 
 @Composable
 fun SecurityScreen(
     navController: NavController
 ) {
-    Scaffold(containerColor = Color(0xFFFAF8FF)) { innerPadding ->
+    Scaffold(containerColor = Surface) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -92,27 +91,7 @@ fun SecurityScreen(
 
 @Composable
 private fun SecurityTopBar(onBack: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Lucide.ArrowLeft,
-                contentDescription = "Back",
-                tint = AccentBlue
-            )
-        }
-        Text(
-            text = "Edit Keamanan Akun",
-            style = MaterialTheme.typography.titleSmall.copy(
-                fontWeight = FontWeight.Bold,
-                color = AccentBlue
-            )
-        )
-    }
+    AppTopBar(title = "Edit Keamanan Akun", onBack = onBack)
 }
 
 @Composable
@@ -168,23 +147,10 @@ private fun SecurityActionRow(
                 )
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = onAction,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(34.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFE6E5F1),
-                    contentColor = AccentBlue
-                ),
-                shape = RoundedCornerShape(50.dp),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
-            ) {
-                Text(
-                    text = action,
-                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.ExtraBold)
-                )
-            }
+            AppOutlineButton(
+                text = action,
+                onClick = onAction
+            )
         }
     }
 }
@@ -195,7 +161,7 @@ private fun IconBadge(icon: ImageVector) {
         modifier = Modifier
             .size(42.dp)
             .clip(CircleShape)
-            .background(Color(0xFFE7ECFF)),
+            .background(AccentBlue.copy(alpha = 0.1f)),
         contentAlignment = Alignment.Center
     ) {
         Icon(

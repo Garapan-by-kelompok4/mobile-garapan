@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -63,6 +62,8 @@ import coil3.compose.AsyncImage
 import com.app.garapan.domain.model.ProjectProposal
 import com.app.garapan.domain.model.ProjectStatus
 import com.app.garapan.domain.model.ProposalStatus
+import com.app.garapan.presentation.components.AppPrimaryButton
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.util.CurrencyFormatter
@@ -385,24 +386,12 @@ private fun MahasiswaProposalSection(
                     visualTransformation = ThousandSeparatorTransformation
                 )
                 Spacer(modifier = Modifier.height(14.dp))
-                Button(
+                AppPrimaryButton(
+                    text = if (uiState.myProposalStatus == ProposalStatus.PENDING) "Perbarui Proposal" else "Ajukan Proposal",
                     onClick = viewModel::onSubmitProposal,
                     enabled = !uiState.isSubmittingProposal,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandNavy, contentColor = OnPrimary)
-                ) {
-                    if (uiState.isSubmittingProposal) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp), color = OnPrimary, strokeWidth = 2.dp)
-                    } else {
-                        Text(
-                            text = if (uiState.myProposalStatus == ProposalStatus.PENDING) "Perbarui Proposal" else "Ajukan Proposal",
-                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
-                        )
-                    }
-                }
+                    isLoading = uiState.isSubmittingProposal
+                )
                 if (uiState.myProposalStatus == ProposalStatus.PENDING) {
                     Spacer(modifier = Modifier.height(10.dp))
                     OutlinedButton(
@@ -561,47 +550,29 @@ private fun ProjectDetailTopBar(
     showEditButton: Boolean = false,
     onEdit: () -> Unit = {}
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(White)
-            .statusBarsPadding()
-            .padding(horizontal = 4.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Lucide.ArrowLeft,
-                contentDescription = "Back",
-                tint = PrimaryText
-            )
-        }
-        Text(
-            text = "Detail Proyek",
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.Bold,
-                color = AccentBlue
-            ),
-            modifier = Modifier.weight(1f)
-        )
-        if (showEditButton) {
-            IconButton(onClick = onEdit) {
-                Icon(
-                    imageVector = Lucide.Pencil,
-                    contentDescription = "Edit proyek",
-                    tint = PrimaryText
-                )
-            }
-        } else {
-            IconButton(onClick = {}) {
-                Icon(
-                    imageVector = Lucide.Share2,
-                    contentDescription = "Share",
-                    tint = PrimaryText
-                )
+    AppTopBar(
+        title = "Detail Proyek",
+        onBack = onBack,
+        trailing = {
+            if (showEditButton) {
+                IconButton(onClick = onEdit) {
+                    Icon(
+                        imageVector = Lucide.Pencil,
+                        contentDescription = "Edit proyek",
+                        tint = PrimaryText
+                    )
+                }
+            } else {
+                IconButton(onClick = {}) {
+                    Icon(
+                        imageVector = Lucide.Share2,
+                        contentDescription = "Share",
+                        tint = PrimaryText
+                    )
+                }
             }
         }
-    }
+    )
 }
 
 @Composable

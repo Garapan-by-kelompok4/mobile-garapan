@@ -30,8 +30,6 @@ import com.composables.icons.lucide.Search
 import com.composables.icons.lucide.Star
 import com.composables.icons.lucide.SlidersHorizontal
 import com.composables.icons.lucide.MessageCircle
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -67,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.app.garapan.presentation.components.AppCard
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.util.RatingFormatter
@@ -395,14 +394,10 @@ private fun SearchResultCard(
     item: SearchResultItem,
     onClick: () -> Unit
 ) {
-    Card(
+    AppCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BorderColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            .clickable(onClick = onClick)
     ) {
         Row(modifier = Modifier.padding(12.dp)) {
             Box(
