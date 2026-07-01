@@ -1,9 +1,7 @@
 package com.app.garapan.presentation.screen.change_password
 
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,13 +13,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Eye
 import com.composables.icons.lucide.EyeOff
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -34,7 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -46,14 +38,15 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.app.garapan.presentation.components.AppCard
+import com.app.garapan.presentation.components.AppPrimaryButton
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.presentation.navigation.Routes
-import com.app.garapan.ui.theme.AccentBlue
-import com.app.garapan.ui.theme.BrandNavy
+import com.app.garapan.ui.theme.ErrorRed
 import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
 import com.app.garapan.ui.theme.Surface
-import com.app.garapan.ui.theme.White
 
 @Composable
 fun ChangePasswordScreen(
@@ -111,12 +104,7 @@ fun ChangePasswordScreen(
                 )
                 Spacer(modifier = Modifier.height(20.dp))
 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                ) {
+                AppCard(modifier = Modifier.fillMaxWidth()) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -152,67 +140,28 @@ fun ChangePasswordScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = uiState.errorMessage!!,
-                        style = MaterialTheme.typography.bodySmall.copy(color = Color(0xFFD32F2F))
+                        style = MaterialTheme.typography.bodySmall.copy(color = ErrorRed)
                     )
                 }
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
-            Button(
+            AppPrimaryButton(
+                text = "Perbarui",
                 onClick = viewModel::onSubmit,
                 enabled = !uiState.isSubmitting,
+                isLoading = uiState.isSubmitting,
                 modifier = Modifier
-                    .fillMaxWidth()
                     .padding(horizontal = 16.dp)
                     .padding(bottom = 24.dp)
-                    .height(52.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = BrandNavy,
-                    contentColor = White
-                ),
-                shape = RoundedCornerShape(50.dp)
-            ) {
-                if (uiState.isSubmitting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(22.dp),
-                        color = White,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text(
-                        text = "Perbarui",
-                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
-                    )
-                }
-            }
+            )
         }
     }
 }
 
 @Composable
 private fun ChangePasswordTopBar(onBack: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(White)
-            .padding(horizontal = 4.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Lucide.ArrowLeft,
-                contentDescription = "Back",
-                tint = AccentBlue
-            )
-        }
-        Text(
-            text = "Keamanan Akun",
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.Bold,
-                color = BrandNavy
-            )
-        )
-    }
+    AppTopBar(title = "Keamanan Akun", onBack = onBack)
 }
 
 @Composable

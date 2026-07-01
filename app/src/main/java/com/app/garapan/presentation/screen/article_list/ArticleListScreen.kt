@@ -5,21 +5,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.ArrowLeft
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,17 +20,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.screen.home.BlogCard
 import com.app.garapan.ui.theme.BrandNavy
-import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
 import com.app.garapan.ui.theme.Surface
-import com.app.garapan.ui.theme.White
 
 @Composable
 fun ArticleListScreen(
@@ -51,29 +42,7 @@ fun ArticleListScreen(
             .fillMaxSize()
             .background(Surface)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(White)
-                .statusBarsPadding()
-                .padding(horizontal = 4.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = { navController.navigateUp() }) {
-                Icon(
-                    imageVector = Lucide.ArrowLeft,
-                    contentDescription = "Back",
-                    tint = PrimaryText
-                )
-            }
-            Text(
-                text = "Blog & Tips",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = PrimaryText
-                )
-            )
-        }
+        AppTopBar(title = "Blog & Tips", onBack = { navController.navigateUp() })
 
         when {
             uiState.isLoading -> {

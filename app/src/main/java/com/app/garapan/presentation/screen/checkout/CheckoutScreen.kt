@@ -14,19 +14,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.ArrowLeft
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -51,6 +45,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.app.garapan.presentation.components.AppCard
+import com.app.garapan.presentation.components.AppPrimaryButton
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.payment.SnapPaymentLauncher
 import com.app.garapan.ui.theme.AccentBlue
@@ -124,33 +121,12 @@ fun CheckoutScreen(
                         .navigationBarsPadding()
                         .padding(horizontal = 20.dp, vertical = 12.dp)
                 ) {
-                    Button(
+                    AppPrimaryButton(
+                        text = "Bayar Sekarang",
                         onClick = viewModel::onPayNowClicked,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(54.dp),
-                        shape = RoundedCornerShape(50.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = BrandNavy,
-                            contentColor = White
-                        ),
-                        enabled = !uiState.isProcessingPayment
-                    ) {
-                        if (uiState.isProcessingPayment) {
-                            CircularProgressIndicator(
-                                color = White,
-                                strokeWidth = 2.dp,
-                                modifier = Modifier.height(22.dp)
-                            )
-                        } else {
-                            Text(
-                                text = "Bayar Sekarang",
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontWeight = FontWeight.ExtraBold
-                                )
-                            )
-                        }
-                    }
+                        enabled = !uiState.isProcessingPayment,
+                        isLoading = uiState.isProcessingPayment
+                    )
                 }
             }
         }
@@ -200,13 +176,8 @@ fun CheckoutScreen(
                             modifier = Modifier.padding(bottom = 12.dp)
                         )
                     }
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(White)
-                            .padding(20.dp)
-                    ) {
+                    AppCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(20.dp)) {
                         Text(
                             text = "Ringkasan Pesanan",
                             style = MaterialTheme.typography.titleMedium.copy(
@@ -286,6 +257,7 @@ fun CheckoutScreen(
                             )
                         }
                     }
+                    }
 
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
@@ -300,29 +272,7 @@ fun CheckoutScreen(
 
 @Composable
 private fun CheckoutTopBar(onBack: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(White)
-            .statusBarsPadding()
-            .padding(horizontal = 4.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Lucide.ArrowLeft,
-                contentDescription = "Back",
-                tint = PrimaryText
-            )
-        }
-        Text(
-            text = "Checkout",
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.Bold,
-                color = AccentBlue
-            )
-        )
-    }
+    AppTopBar(title = "Checkout", onBack = onBack)
 }
 
 @Composable

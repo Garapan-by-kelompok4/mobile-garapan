@@ -1,6 +1,5 @@
 package com.app.garapan.presentation.screen.auth
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,7 +23,6 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.ArrowRight
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,7 +31,6 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -183,73 +180,57 @@ private fun StudentSetupForm(
     onComplete: () -> Unit
 ) {
     Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-        OutlinedCard(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.outlinedCardColors(containerColor = White),
-            border = BorderStroke(1.dp, BorderColor)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                ProfileField(label = "Full Name", value = state.fullName, onValueChange = onFullNameChanged, placeholder = "Haykal Rafi")
-                Spacer(modifier = Modifier.height(12.dp))
-                ProfileField(label = "Universitas", value = state.university, onValueChange = onUniversityChanged, placeholder = "e.g. UPN Veteran Jakarta")
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        ProfileField(label = "Major/Program of Study", value = state.major, onValueChange = onMajorChanged, placeholder = "e.g. Information Systems")
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Years of Experience",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = PrimaryText,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        SetupDropdown(
-                            value = state.yearsOfExperience.ifEmpty { "0-1 years" },
-                            expanded = state.isYearsDropdownExpanded,
-                            options = yearsOfExperienceOptions,
-                            onToggle = onYearsDropdownToggle,
-                            onSelect = onYearsSelected
-                        )
-                    }
-                }
-            }
-        }
-
+        ProfileField(label = "Full Name", value = state.fullName, onValueChange = onFullNameChanged, placeholder = "Haykal Rafi")
         Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedCard(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.outlinedCardColors(containerColor = White),
-            border = BorderStroke(2.dp, AccentBlue)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+        ProfileField(label = "Universitas", value = state.university, onValueChange = onUniversityChanged, placeholder = "e.g. UPN Veteran Jakarta")
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.weight(1f)) {
+                ProfileField(label = "Major/Program of Study", value = state.major, onValueChange = onMajorChanged, placeholder = "e.g. Information Systems")
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Select Main Expertise",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryText
+                    text = "Years of Experience",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        color = PrimaryText,
+                        fontWeight = FontWeight.Medium
                     )
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Choose your main expertise focus for collaborators to find you easily. (can choose more than one)",
-                    style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                SkillOptionsSection(
-                    skillOptions = skillOptions,
-                    isLoading = isSkillOptionsLoading,
-                    errorMessage = skillOptionsError,
-                    onRetry = onRetrySkillOptions,
-                    selected = state.selectedExpertise,
-                    onToggle = onToggleExpertise
+                Spacer(modifier = Modifier.height(6.dp))
+                SetupDropdown(
+                    value = state.yearsOfExperience.ifEmpty { "0-1 years" },
+                    expanded = state.isYearsDropdownExpanded,
+                    options = yearsOfExperienceOptions,
+                    onToggle = onYearsDropdownToggle,
+                    onSelect = onYearsSelected
                 )
             }
         }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Text(
+            text = "Select Main Expertise",
+            style = MaterialTheme.typography.titleSmall.copy(
+                fontWeight = FontWeight.Bold,
+                color = PrimaryText
+            )
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "Choose your main expertise focus for collaborators to find you easily. (can choose more than one)",
+            style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        SkillOptionsSection(
+            skillOptions = skillOptions,
+            isLoading = isSkillOptionsLoading,
+            errorMessage = skillOptionsError,
+            onRetry = onRetrySkillOptions,
+            selected = state.selectedExpertise,
+            onToggle = onToggleExpertise
+        )
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -446,7 +427,7 @@ private fun ProfileField(
         TextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(6.dp)),
+            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)),
             placeholder = { Text(text = placeholder, color = MutedText, style = MaterialTheme.typography.bodySmall) },
             singleLine = true,
             colors = TextFieldDefaults.colors(
@@ -458,7 +439,7 @@ private fun ProfileField(
                 focusedTextColor = PrimaryText,
                 unfocusedTextColor = PrimaryText,
             ),
-            shape = RoundedCornerShape(6.dp),
+            shape = RoundedCornerShape(8.dp),
             textStyle = MaterialTheme.typography.bodySmall
         )
     }
