@@ -211,6 +211,13 @@ fun HomeScreen(
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
+                uiState.services.isEmpty() -> {
+                    Text(
+                        text = "Belum ada layanan jasa tersedia.",
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+                    )
+                }
                 else -> {
                     LazyRow(
                         contentPadding = PaddingValues(horizontal = 16.dp),
