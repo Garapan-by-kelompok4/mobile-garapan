@@ -1,10 +1,15 @@
 package com.app.garapan.presentation.screen.chat
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.app.garapan.data.util.ChatAttachmentReader
+import com.app.garapan.data.util.PortfolioImageReader
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.ActiveOrder
+import com.app.garapan.domain.model.ChatAttachmentUpload
 import com.app.garapan.domain.model.OrderChatMessage
 import com.app.garapan.domain.model.OrderChatPage
 import com.app.garapan.domain.model.PesananStatus
@@ -15,10 +20,13 @@ import com.app.garapan.domain.usecase.GetOrderMessagesUseCase
 import com.app.garapan.domain.usecase.GetSupportThreadUseCase
 import com.app.garapan.domain.usecase.MarkOrderChatReadUseCase
 import com.app.garapan.domain.usecase.MarkSupportThreadReadUseCase
+import com.app.garapan.domain.usecase.SendOrderAttachmentUseCase
 import com.app.garapan.domain.usecase.SendOrderMessageUseCase
 import com.app.garapan.domain.usecase.SendSupportMessageUseCase
 import com.app.garapan.presentation.navigation.Routes
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -30,6 +38,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
@@ -83,7 +92,8 @@ data class ChatUiState(
     val isLoadingOlder: Boolean = false,
     val hasMore: Boolean = false,
     val errorMessage: String? = null,
-    val activeOrder: ActiveOrder? = null
+    val activeOrder: ActiveOrder? = null,
+    val canAttach: Boolean = false
 )
 
 data class ChatCurrentUserProfile(
@@ -127,8 +137,10 @@ class ChatViewModel @Inject constructor(
     private val markSupportThreadReadUseCase: MarkSupportThreadReadUseCase,
     private val getOrderMessagesUseCase: GetOrderMessagesUseCase,
     private val sendOrderMessageUseCase: SendOrderMessageUseCase,
+    private val sendOrderAttachmentUseCase: SendOrderAttachmentUseCase,
     private val markOrderChatReadUseCase: MarkOrderChatReadUseCase,
-    sessionRepository: SessionRepository
+    sessionRepository: SessionRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val conversationId: String = savedStateHandle["conversationId"] ?: ""
@@ -156,7 +168,8 @@ class ChatViewModel @Inject constructor(
             isOnline = true,
             showStatus = false,
             isLoading = true,
-            activeOrder = navActiveOrder
+            activeOrder = navActiveOrder,
+            canAttach = true
         )
         else -> ChatUiState(
             workerName = peerName.ifBlank { "Percakapan" },
@@ -435,6 +448,55 @@ class ChatViewModel @Inject constructor(
                 is Resource.Success -> {
                     fetchPeerThread(showLoading = false, surfaceError = false)
                     _uiState.update { it.copy(isSending = false, inputText = "") }
+                }
+                is Resource.Error -> {
+                    _uiState.update { it.copy(isSending = false, errorMessage = result.message) }
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    /** Called after the user picks an image from the photo picker for the attach button. */
+    fun onPhotoPicked(uri: Uri) {
+        if (!_uiState.value.canAttach || _uiState.value.isSending) return
+        viewModelScope.launch {
+            val image = withContext(Dispatchers.Default) {
+                PortfolioImageReader.readCompressed(context, uri)
+            } ?: run {
+                _uiState.update { it.copy(errorMessage = "Gagal memproses foto. Coba foto lain.") }
+                return@launch
+            }
+            sendAttachment(
+                ChatAttachmentUpload(bytes = image.bytes, fileName = image.fileName, mimeType = image.mimeType)
+            )
+        }
+    }
+
+    /** Called after the user picks a document from the document picker for the attach button. */
+    fun onDocumentPicked(uri: Uri) {
+        if (!_uiState.value.canAttach || _uiState.value.isSending) return
+        viewModelScope.launch {
+            val document = withContext(Dispatchers.Default) {
+                ChatAttachmentReader.readDocument(context, uri)
+            } ?: run {
+                _uiState.update { it.copy(errorMessage = "Gagal membaca dokumen atau ukurannya melebihi 10 MB.") }
+                return@launch
+            }
+            sendAttachment(
+                ChatAttachmentUpload(bytes = document.bytes, fileName = document.fileName, mimeType = document.mimeType)
+            )
+        }
+    }
+
+    private fun sendAttachment(attachment: ChatAttachmentUpload) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSending = true, errorMessage = null) }
+            val pesananId = _uiState.value.activeOrder?.pesananId
+            when (val result = sendOrderAttachmentUseCase(conversationId, attachment, pesananId)) {
+                is Resource.Success -> {
+                    fetchPeerThread(showLoading = false, surfaceError = false)
+                    _uiState.update { it.copy(isSending = false) }
                 }
                 is Resource.Error -> {
                     _uiState.update { it.copy(isSending = false, errorMessage = result.message) }

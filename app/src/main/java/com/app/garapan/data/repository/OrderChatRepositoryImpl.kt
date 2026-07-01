@@ -6,12 +6,16 @@ import com.app.garapan.data.remote.dto.OpenConversationRequestDto
 import com.app.garapan.data.remote.dto.SendOrderMessageRequestDto
 import com.app.garapan.data.remote.error.ApiErrorMapper
 import com.app.garapan.domain.common.Resource
+import com.app.garapan.domain.model.ChatAttachmentUpload
 import com.app.garapan.domain.model.Conversation
 import com.app.garapan.domain.model.OpenConversationResult
 import com.app.garapan.domain.model.OrderChatMessage
 import com.app.garapan.domain.model.OrderChatPage
 import com.app.garapan.domain.repository.OrderChatRepository
 import kotlinx.coroutines.CancellationException
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
 
 class OrderChatRepositoryImpl @Inject constructor(
@@ -43,6 +47,17 @@ class OrderChatRepositoryImpl @Inject constructor(
                 conversationId,
                 SendOrderMessageRequestDto(message = message, pesananId = pesananId)
             ).toDomain()
+        }
+
+    override suspend fun sendAttachment(
+        conversationId: String,
+        attachment: ChatAttachmentUpload,
+        pesananId: String?
+    ): Resource<OrderChatMessage> =
+        safeApiCall {
+            val body = attachment.bytes.toRequestBody(attachment.mimeType.toMediaType())
+            val part = MultipartBody.Part.createFormData("file", attachment.fileName, body)
+            chatApi.sendAttachment(conversationId, part, pesananId).toDomain()
         }
 
     override suspend fun markRead(conversationId: String): Resource<Unit> =

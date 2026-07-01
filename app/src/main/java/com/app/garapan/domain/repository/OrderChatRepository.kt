@@ -1,6 +1,7 @@
 package com.app.garapan.domain.repository
 
 import com.app.garapan.domain.common.Resource
+import com.app.garapan.domain.model.ChatAttachmentUpload
 import com.app.garapan.domain.model.Conversation
 import com.app.garapan.domain.model.OpenConversationResult
 import com.app.garapan.domain.model.OrderChatMessage
@@ -13,6 +14,11 @@ interface OrderChatRepository {
     suspend fun sendMessage(
         conversationId: String,
         message: String,
+        pesananId: String? = null
+    ): Resource<OrderChatMessage>
+    suspend fun sendAttachment(
+        conversationId: String,
+        attachment: ChatAttachmentUpload,
         pesananId: String? = null
     ): Resource<OrderChatMessage>
     suspend fun markRead(conversationId: String): Resource<Unit>
