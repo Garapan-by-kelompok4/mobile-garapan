@@ -17,11 +17,11 @@ class MainShellTest {
     }
 
     @Test
-    fun mahasiswaTabsStayUnchanged() {
+    fun mahasiswaTabsIncludeCreateActionAndChat() {
         val labels = mainTabLabelsForRole(Role.MAHASISWA)
 
         assertEquals(
-            listOf("Home", "My Jasa", "Pesanan", "Chat", "Profile"),
+            listOf("Home", "Pesanan", "New", "Chat", "Profile"),
             labels
         )
     }

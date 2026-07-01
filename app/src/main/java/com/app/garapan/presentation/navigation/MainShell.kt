@@ -15,13 +15,11 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Store
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material.icons.outlined.Store
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -49,12 +47,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.app.garapan.domain.model.Role
+import com.app.garapan.presentation.screen.edit_service.EditServiceScreen
 import com.app.garapan.presentation.screen.home.HomeScreen
 import com.app.garapan.presentation.screen.order_history.OrderHistoryScreen
 import com.app.garapan.presentation.screen.pesan.PesanScreen
 import com.app.garapan.presentation.screen.post_project.PostProjectScreen
 import com.app.garapan.presentation.screen.profile.ProfileScreen
-import com.app.garapan.presentation.screen.profile_services.ProfileServicesScreen
 import com.app.garapan.presentation.screen.search.SearchScreen
 import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
@@ -152,11 +150,15 @@ fun MainShell(
                     showBackButton = false
                 )
             }
-            composable(Routes.PROFILE_SERVICES) {
-                ProfileServicesScreen(
-                    navController = rootNavController,
-                    showBackButton = false
-                )
+            composable(Routes.editServiceRoute("new")) {
+                RoleGuard(
+                    allowedRoles = setOf(Role.MAHASISWA),
+                    navController = tabNavController,
+                    authNavController = rootNavController,
+                    fallbackRoute = Routes.HOME
+                ) {
+                    EditServiceScreen(navController = tabNavController)
+                }
             }
             composable(Routes.ORDER_HISTORY) {
                 OrderHistoryScreen(
@@ -293,12 +295,18 @@ private fun tabsForRole(role: Role): List<MainTabItem> =
         )
         Role.MAHASISWA -> listOf(
             MainTabItem(Routes.HOME, "Home", Icons.Filled.Home, Icons.Outlined.Home),
-            MainTabItem(Routes.PROFILE_SERVICES, "My Jasa", Icons.Filled.Store, Icons.Outlined.Store),
             MainTabItem(
                 Routes.ORDER_HISTORY,
                 "Pesanan",
                 Icons.Outlined.ReceiptLong,
                 Icons.Outlined.ReceiptLong
+            ),
+            MainTabItem(
+                Routes.editServiceRoute("new"),
+                "New",
+                Icons.Default.Add,
+                Icons.Default.Add,
+                isCenterAction = true
             ),
             MainTabItem(
                 Routes.PESAN,
