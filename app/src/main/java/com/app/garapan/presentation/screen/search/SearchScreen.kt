@@ -103,14 +103,14 @@ fun SearchScreen(
         handle.getStateFlow(NavResults.PROJECT_REFRESH, false).collect { shouldRefresh ->
             if (!shouldRefresh) return@collect
             NavResults.clearProjectRefresh(handle)
-            viewModel.refreshResults()
+            viewModel.refreshResults(silent = true)
         }
     }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.refreshResults()
+                viewModel.refreshResults(silent = true)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
