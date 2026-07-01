@@ -47,24 +47,34 @@ import java.util.Locale
 import javax.inject.Inject
 
 sealed class ChatMessage {
+    abstract val id: String
+
     data class JasaCard(
+        override val id: String,
         val title: String,
         val price: String,
         val time: String
     ) : ChatMessage()
 
     data class Sent(
+        override val id: String,
         val text: String,
-        val time: String
+        val time: String,
+        val attachmentUrl: String? = null,
+        val attachmentName: String? = null
     ) : ChatMessage()
 
     data class Received(
+        override val id: String,
         val text: String,
         val time: String,
-        val senderInitials: String
+        val senderInitials: String,
+        val attachmentUrl: String? = null,
+        val attachmentName: String? = null
     ) : ChatMessage()
 
     data class FileAndOrderConfirmation(
+        override val id: String,
         val fileName: String,
         val fileSize: String,
         val serviceName: String,
@@ -394,7 +404,7 @@ class ChatViewModel @Inject constructor(
         }
         when (val result = fetchNewestOrderPage()) {
             is Resource.Success -> {
-                orderMessages = result.data.messages
+                orderMessages = result.data.messages.distinctBy { it.id }
                 _uiState.update { it.copy(isLoading = false, errorMessage = null) }
                 rebuildOrderThread()
                 reconcileOrderRead()
@@ -510,12 +520,21 @@ class ChatViewModel @Inject constructor(
         val text = if (isFile) "📎 " + (fileName ?: "Lampiran") else message
         val time = formatMessageTime(createdAt)
         return if (currentUserId != null && senderId == currentUserId) {
-            ChatMessage.Sent(text = text, time = time)
-        } else {
-            ChatMessage.Received(
+            ChatMessage.Sent(
+                id = id,
                 text = text,
                 time = time,
-                senderInitials = _uiState.value.workerInitials.ifBlank { initialsOf(peerName) }
+                attachmentUrl = fileUrl.takeIf { isFile },
+                attachmentName = fileName.takeIf { isFile }
+            )
+        } else {
+            ChatMessage.Received(
+                id = id,
+                text = text,
+                time = time,
+                senderInitials = _uiState.value.workerInitials.ifBlank { initialsOf(peerName) },
+                attachmentUrl = fileUrl.takeIf { isFile },
+                attachmentName = fileName.takeIf { isFile }
             )
         }
     }
@@ -532,11 +551,13 @@ class ChatViewModel @Inject constructor(
     private fun SupportMessage.toChatMessage(): ChatMessage =
         if (isFromUser) {
             ChatMessage.Sent(
+                id = id,
                 text = message,
                 time = formatMessageTime(createdAt)
             )
         } else {
             ChatMessage.Received(
+                id = id,
                 text = message,
                 time = formatMessageTime(createdAt),
                 senderInitials = "LS"
