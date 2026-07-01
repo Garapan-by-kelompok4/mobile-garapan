@@ -114,7 +114,7 @@ class HomeViewModel @Inject constructor(
 
     fun retryProjects() = loadFeaturedProjects()
 
-    fun refreshProjects() = loadFeaturedProjects()
+    fun refreshProjects() = loadFeaturedProjects(refresh = true)
 
     fun refreshServices() = loadFeaturedServices(refresh = true)
 
@@ -158,9 +158,9 @@ class HomeViewModel @Inject constructor(
                 is Resource.Error -> {
                     _uiState.update {
                         it.copy(
-                            projects = emptyList(),
+                            projects = if (hasCachedProjects) it.projects else emptyList(),
                             isProjectsLoading = false,
-                            projectsError = result.message
+                            projectsError = if (hasCachedProjects) null else result.message
                         )
                     }
                 }
@@ -193,9 +193,9 @@ class HomeViewModel @Inject constructor(
                 is Resource.Error -> {
                     _uiState.update {
                         it.copy(
-                            services = emptyList(),
+                            services = if (hasCachedServices) it.services else emptyList(),
                             isServicesLoading = false,
-                            servicesError = result.message
+                            servicesError = if (hasCachedServices) null else result.message
                         )
                     }
                 }
