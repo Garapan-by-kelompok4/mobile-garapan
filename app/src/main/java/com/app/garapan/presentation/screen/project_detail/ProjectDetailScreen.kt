@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -19,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -36,6 +36,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,15 +51,21 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.app.garapan.domain.model.ProjectProposal
+import com.app.garapan.domain.model.ProjectStatus
+import com.app.garapan.domain.model.ProposalStatus
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
+import com.app.garapan.presentation.util.CurrencyFormatter
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
+import com.app.garapan.ui.theme.ErrorRed
 import com.app.garapan.ui.theme.LightGray
 import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.OnPrimary
@@ -104,45 +112,6 @@ fun ProjectDetailScreen(
                 onEdit = { navController.navigate(Routes.editProjectRoute(uiState.id)) }
             )
         },
-        bottomBar = {
-            if (uiState.showTakeButton) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(White)
-                        .navigationBarsPadding()
-                        .padding(horizontal = 20.dp, vertical = 12.dp)
-                ) {
-                    Button(
-                        onClick = viewModel::onTakeProject,
-                        enabled = uiState.canTake && !uiState.isTaking,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        shape = RoundedCornerShape(50.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = BrandNavy,
-                            contentColor = OnPrimary
-                        )
-                    ) {
-                        if (uiState.isTaking) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(22.dp),
-                                color = OnPrimary,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text(
-                                text = "Ambil Proyek Ini",
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-        },
         containerColor = Surface
     ) { innerPadding ->
         when {
@@ -177,6 +146,7 @@ fun ProjectDetailScreen(
             }
             else -> ProjectDetailContent(
                 uiState = uiState,
+                viewModel = viewModel,
                 modifier = Modifier.padding(innerPadding)
             )
         }
@@ -186,6 +156,7 @@ fun ProjectDetailScreen(
 @Composable
 private fun ProjectDetailContent(
     uiState: ProjectDetailUiState,
+    viewModel: ProjectDetailViewModel,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -331,6 +302,251 @@ private fun ProjectDetailContent(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
+
+            if (uiState.isMahasiswa && (uiState.canPropose || uiState.myProposalStatus != null)) {
+                MahasiswaProposalSection(uiState = uiState, viewModel = viewModel)
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            if (uiState.isKlienOwner && uiState.status == ProjectStatus.OPEN) {
+                KlienProposalsSection(uiState = uiState, viewModel = viewModel)
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+    }
+}
+
+@Composable
+private fun MahasiswaProposalSection(
+    uiState: ProjectDetailUiState,
+    viewModel: ProjectDetailViewModel
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(White)
+            .padding(horizontal = 20.dp, vertical = 20.dp)
+    ) {
+        Text(
+            text = "Proposal Saya",
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                color = PrimaryText
+            )
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        HorizontalDivider(color = BorderColor)
+        Spacer(modifier = Modifier.height(14.dp))
+
+        when (uiState.myProposalStatus) {
+            ProposalStatus.ACCEPTED -> {
+                ProposalStatusBanner(
+                    label = "Proposal Diterima",
+                    detail = "Klien menerima proposal Anda. Cek Riwayat Pesanan untuk melanjutkan.",
+                    color = AccentBlue
+                )
+            }
+            ProposalStatus.REJECTED -> {
+                ProposalStatusBanner(
+                    label = "Proposal Ditolak",
+                    detail = "Klien memilih proposal lain untuk proyek ini.",
+                    color = ErrorRed
+                )
+            }
+            else -> {
+                if (uiState.myProposalStatus == ProposalStatus.PENDING) {
+                    ProposalStatusBanner(
+                        label = "Menunggu Respons Klien",
+                        detail = "Anda dapat mengubah proposal ini selama klien belum meresponsnya.",
+                        color = AccentBlue
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                }
+                OutlinedTextField(
+                    value = uiState.proposalMessageInput,
+                    onValueChange = viewModel::onProposalMessageChanged,
+                    label = { Text("Pesan untuk klien") },
+                    placeholder = { Text("Jelaskan mengapa Anda cocok untuk proyek ini") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = uiState.proposalPriceInput,
+                    onValueChange = viewModel::onProposalPriceChanged,
+                    label = { Text("Harga yang diajukan (Rp)") },
+                    placeholder = { Text("500000") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+                Button(
+                    onClick = viewModel::onSubmitProposal,
+                    enabled = !uiState.isSubmittingProposal,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = RoundedCornerShape(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandNavy, contentColor = OnPrimary)
+                ) {
+                    if (uiState.isSubmittingProposal) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), color = OnPrimary, strokeWidth = 2.dp)
+                    } else {
+                        Text(
+                            text = if (uiState.myProposalStatus == ProposalStatus.PENDING) "Perbarui Proposal" else "Ajukan Proposal",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                        )
+                    }
+                }
+                if (uiState.myProposalStatus == ProposalStatus.PENDING) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedButton(
+                        onClick = viewModel::onWithdrawProposal,
+                        enabled = !uiState.isWithdrawingProposal,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        if (uiState.isWithdrawingProposal) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), color = ErrorRed, strokeWidth = 2.dp)
+                        } else {
+                            Text("Tarik Proposal", color = ErrorRed)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProposalStatusBanner(label: String, detail: String, color: androidx.compose.ui.graphics.Color) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(color.copy(alpha = 0.08f))
+            .padding(14.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, color = color)
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = detail,
+            style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+        )
+    }
+}
+
+@Composable
+private fun KlienProposalsSection(
+    uiState: ProjectDetailUiState,
+    viewModel: ProjectDetailViewModel
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(White)
+            .padding(horizontal = 20.dp, vertical = 20.dp)
+    ) {
+        Text(
+            text = "Proposal Masuk (${uiState.proposals.size})",
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                color = PrimaryText
+            )
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        HorizontalDivider(color = BorderColor)
+        Spacer(modifier = Modifier.height(14.dp))
+
+        when {
+            uiState.isLoadingProposals -> {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = BrandNavy, modifier = Modifier.size(24.dp))
+                }
+            }
+            uiState.proposals.isEmpty() -> {
+                Text(
+                    text = "Belum ada proposal masuk untuk proyek ini.",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
+                )
+            }
+            else -> {
+                uiState.proposals.forEachIndexed { index, proposal ->
+                    ProposalCard(
+                        proposal = proposal,
+                        isResponding = uiState.respondingProposalId == proposal.id,
+                        respondingDisabled = uiState.respondingProposalId != null,
+                        onAccept = { viewModel.onAcceptProposal(proposal.id) },
+                        onReject = { viewModel.onRejectProposal(proposal.id) }
+                    )
+                    if (index != uiState.proposals.lastIndex) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProposalCard(
+    proposal: ProjectProposal,
+    isResponding: Boolean,
+    respondingDisabled: Boolean,
+    onAccept: () -> Unit,
+    onReject: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .border(1.dp, BorderColor, RoundedCornerShape(12.dp))
+            .padding(14.dp)
+    ) {
+        Text(
+            text = proposal.mahasiswaName.ifBlank { "Mahasiswa" },
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold, color = PrimaryText)
+        )
+        if (proposal.mahasiswaUniversity.isNotBlank()) {
+            Text(
+                text = proposal.mahasiswaUniversity,
+                style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = proposal.message,
+            style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Harga diajukan: ${CurrencyFormatter.formatRupiah(proposal.proposedPrice)}",
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold, color = AccentBlue)
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Button(
+                onClick = onAccept,
+                enabled = !respondingDisabled,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = BrandNavy, contentColor = OnPrimary)
+            ) {
+                if (isResponding) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = OnPrimary, strokeWidth = 2.dp)
+                } else {
+                    Text("Terima")
+                }
+            }
+            OutlinedButton(
+                onClick = onReject,
+                enabled = !respondingDisabled,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Tolak", color = ErrorRed)
+            }
+        }
     }
 }
 

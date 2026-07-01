@@ -4,8 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.Pesanan
+import com.app.garapan.domain.model.ProjectProposal
+import com.app.garapan.domain.model.ProposalStatus
 import com.app.garapan.domain.model.Role
 import com.app.garapan.domain.usecase.GetMyPesananUseCase
+import com.app.garapan.domain.usecase.GetMyProposalsUseCase
 import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
 import com.app.garapan.presentation.util.CurrencyFormatter
 import com.app.garapan.presentation.util.PesananDisplayMapper
@@ -28,15 +31,35 @@ data class OrderHistoryItem(
     val isIncome: Boolean
 )
 
+enum class OrderHistoryTab {
+    PESANAN,
+    PROPOSAL
+}
+
+data class ProposalHistoryItem(
+    val id: String,
+    val projectId: String,
+    val projectTitle: String,
+    val proposedPrice: String,
+    val status: ProposalStatus,
+    val statusLabel: String
+)
+
 data class OrderHistoryUiState(
     val items: List<OrderHistoryItem> = emptyList(),
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val isMahasiswa: Boolean = false,
+    val selectedTab: OrderHistoryTab = OrderHistoryTab.PESANAN,
+    val proposals: List<ProposalHistoryItem> = emptyList(),
+    val isLoadingProposals: Boolean = false,
+    val proposalsErrorMessage: String? = null
 )
 
 @HiltViewModel
 class OrderHistoryViewModel @Inject constructor(
     private val getMyPesananUseCase: GetMyPesananUseCase,
+    private val getMyProposalsUseCase: GetMyProposalsUseCase,
     observeCurrentUserUseCase: ObserveCurrentUserUseCase
 ) : ViewModel() {
 
@@ -51,6 +74,7 @@ class OrderHistoryViewModel @Inject constructor(
             observeCurrentUserUseCase().collect { user ->
                 currentRole = user?.role
                 currentUserId = user?.id
+                _uiState.update { it.copy(isMahasiswa = user?.role == Role.MAHASISWA) }
                 if (user != null) {
                     loadOrders()
                 }
@@ -60,7 +84,15 @@ class OrderHistoryViewModel @Inject constructor(
 
     fun retry() = loadOrders()
 
-    fun refresh() = loadOrders()
+    fun refresh() {
+        loadOrders()
+        if (_uiState.value.selectedTab == OrderHistoryTab.PROPOSAL) loadProposals()
+    }
+
+    fun onTabSelected(tab: OrderHistoryTab) {
+        _uiState.update { it.copy(selectedTab = tab) }
+        if (tab == OrderHistoryTab.PROPOSAL && _uiState.value.proposals.isEmpty()) loadProposals()
+    }
 
     private fun loadOrders() {
         viewModelScope.launch {
@@ -80,6 +112,31 @@ class OrderHistoryViewModel @Inject constructor(
                         it.copy(
                             isLoading = false,
                             errorMessage = UserMessageLocalizer.localize(result.message)
+                        )
+                    }
+                }
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    private fun loadProposals() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingProposals = true, proposalsErrorMessage = null) }
+            when (val result = getMyProposalsUseCase(page = 1, limit = 50)) {
+                is Resource.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            proposals = result.data.map { proposal -> proposal.toHistoryItem() },
+                            isLoadingProposals = false
+                        )
+                    }
+                }
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoadingProposals = false,
+                            proposalsErrorMessage = UserMessageLocalizer.localize(result.message)
                         )
                     }
                 }
@@ -110,4 +167,20 @@ class OrderHistoryViewModel @Inject constructor(
     private fun Pesanan.isProviderFor(userId: String?, role: Role?): Boolean =
         !userId.isNullOrBlank() && workerUserId == userId ||
             (userId.isNullOrBlank() && role == Role.MAHASISWA)
+
+    private fun ProjectProposal.toHistoryItem(): ProposalHistoryItem = ProposalHistoryItem(
+        id = id,
+        projectId = projectId,
+        projectTitle = projectTitle.ifBlank { "Proyek" },
+        proposedPrice = CurrencyFormatter.formatRupiah(proposedPrice),
+        status = status,
+        statusLabel = status.toLabel()
+    )
+
+    private fun ProposalStatus.toLabel(): String = when (this) {
+        ProposalStatus.PENDING -> "Menunggu"
+        ProposalStatus.ACCEPTED -> "Diterima"
+        ProposalStatus.REJECTED -> "Ditolak"
+        ProposalStatus.WITHDRAWN -> "Ditarik"
+    }
 }
