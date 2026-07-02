@@ -15,7 +15,10 @@ data class NotificationMetaDto(
     val pesananId: String? = null,
     val reviewId: String? = null,
     val jasaId: String? = null,
-    val senderId: String? = null
+    val senderId: String? = null,
+    val projectId: String? = null,
+    val proposalId: String? = null,
+    val laporanId: String? = null
 )
 
 data class NotificationListResponseDto(
