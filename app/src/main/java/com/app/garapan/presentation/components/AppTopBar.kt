@@ -1,11 +1,16 @@
 package com.app.garapan.presentation.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -13,8 +18,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.app.garapan.R
+import com.app.garapan.ui.theme.BrandNavy
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.White
 import com.composables.icons.lucide.ArrowLeft
@@ -32,6 +40,7 @@ fun AppTopBar(
             .fillMaxWidth()
             .background(White)
             .statusBarsPadding()
+            .heightIn(min = 64.dp)
             .padding(horizontal = 4.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -47,6 +56,39 @@ fun AppTopBar(
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Bold,
                 color = PrimaryText
+            ),
+            modifier = Modifier.weight(1f)
+        )
+        trailing()
+    }
+}
+
+@Composable
+fun AppLogoTopBar(
+    title: String,
+    modifier: Modifier = Modifier,
+    trailing: @Composable RowScope.() -> Unit = {}
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(White)
+            .statusBarsPadding()
+            .heightIn(min = 64.dp)
+            .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Image(
+            painter = painterResource(R.drawable.logo_garapan),
+            contentDescription = "Garapan Logo",
+            modifier = Modifier.size(32.dp)
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.ExtraBold,
+                color = BrandNavy
             ),
             modifier = Modifier.weight(1f)
         )

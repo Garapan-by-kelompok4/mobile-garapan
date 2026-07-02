@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,17 +16,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.ArrowUpRight
 import com.composables.icons.lucide.ArrowDownLeft
 import com.composables.icons.lucide.Calendar
@@ -37,7 +35,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -48,15 +45,14 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.DisposableEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -65,7 +61,9 @@ import androidx.navigation.NavController
 import com.app.garapan.domain.model.PesananStatus
 import com.app.garapan.domain.model.ProposalStatus
 import com.app.garapan.presentation.components.AppCard
+import com.app.garapan.presentation.components.AppLogoTopBar
 import com.app.garapan.presentation.components.AppPrimaryButton
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.presentation.components.PesananStatusBadge
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
@@ -115,11 +113,16 @@ fun OrderHistoryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
         ) {
-            OrderHistoryTopBar(
-                onBack = { navController.navigateUp() },
-                showBackButton = showBackButton
-            )
+            if (showBackButton) {
+                AppTopBar(
+                    title = "Riwayat Pesanan",
+                    onBack = { navController.navigateUp() }
+                )
+            } else {
+                AppLogoTopBar(title = "Riwayat Pesanan")
+            }
             if (uiState.isMahasiswa) {
                 OrderHistoryTabRow(
                     selectedTab = uiState.selectedTab,
@@ -201,42 +204,6 @@ fun OrderHistoryScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun OrderHistoryTopBar(
-    onBack: () -> Unit,
-    showBackButton: Boolean = true
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .statusBarsPadding()
-            .padding(horizontal = 4.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (showBackButton) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Lucide.ArrowLeft,
-                    contentDescription = "Back",
-                    tint = AccentBlue
-                )
-            }
-        } else {
-            Spacer(modifier = Modifier.size(48.dp))
-        }
-        Text(
-            text = "Riwayat Pesanan",
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.ExtraBold,
-                color = AccentBlue
-            ),
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.size(48.dp))
     }
 }
 
@@ -387,7 +354,7 @@ private fun OrderHistoryFilterChip(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .padding(horizontal = 20.dp)
+            .padding(start = 20.dp, end = 20.dp, top = 16.dp)
             .heightIn(min = 44.dp)
             .clip(RoundedCornerShape(50.dp))
             .border(1.dp, BorderColor, RoundedCornerShape(50.dp))

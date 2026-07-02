@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -66,6 +67,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.app.garapan.presentation.components.AppCard
+import com.app.garapan.presentation.components.AppLogoTopBar
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.util.RatingFormatter
@@ -140,11 +143,16 @@ fun SearchScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
         ) {
-            SearchTopBar(
-                onBack = { navController.navigateUp() },
-                showBackButton = showBackButton
-            )
+            if (showBackButton) {
+                AppTopBar(
+                    title = "Cari Layanan",
+                    onBack = { navController.navigateUp() }
+                )
+            } else {
+                AppLogoTopBar(title = "Cari Layanan")
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -230,40 +238,6 @@ fun SearchScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun SearchTopBar(
-    onBack: () -> Unit,
-    showBackButton: Boolean = true
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(White)
-            .padding(horizontal = 4.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (showBackButton) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Lucide.ArrowLeft,
-                    contentDescription = "Back",
-                    tint = PrimaryText
-                )
-            }
-        } else {
-            Spacer(modifier = Modifier.width(8.dp))
-        }
-        Text(
-            text = "Cari Layanan",
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.Bold,
-                color = PrimaryText
-            ),
-            modifier = Modifier.weight(1f)
-        )
     }
 }
 

@@ -1,6 +1,7 @@
 package com.app.garapan.presentation.screen.change_password
 
 import android.widget.Toast
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -81,6 +82,7 @@ fun ChangePasswordScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
         ) {
             ChangePasswordTopBar(onBack = { navController.navigateUp() })
             Column(

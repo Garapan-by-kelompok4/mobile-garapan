@@ -1,15 +1,14 @@
 package com.app.garapan.presentation.navigation
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Plus
 import com.composables.icons.lucide.House
@@ -26,8 +25,8 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,7 +50,6 @@ import com.app.garapan.presentation.screen.pesan.PesanScreen
 import com.app.garapan.presentation.screen.post_project.PostProjectScreen
 import com.app.garapan.presentation.screen.profile.ProfileScreen
 import com.app.garapan.presentation.screen.search.SearchScreen
-import com.app.garapan.ui.theme.BorderColor
 import com.app.garapan.ui.theme.BrandNavy
 import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.Surface
@@ -113,7 +111,7 @@ fun MainShell(
     }
 
     Scaffold(
-        containerColor = Surface,
+        containerColor = White,
         bottomBar = {
             MainBottomBar(
                 tabs = tabs,
@@ -125,7 +123,9 @@ fun MainShell(
         NavHost(
             navController = tabNavController,
             startDestination = Routes.HOME,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
         ) {
             composable(Routes.HOME) {
                 HomeScreen(
@@ -197,12 +197,7 @@ private fun MainBottomBar(
 ) {
     NavigationBar(
         containerColor = White,
-        tonalElevation = 0.dp,
-        modifier = Modifier.border(
-            width = 1.dp,
-            color = BorderColor,
-            shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp)
-        )
+        tonalElevation = 0.dp
     ) {
         tabs.forEach { tab ->
             if (tab.isCenterAction) {
