@@ -354,7 +354,7 @@ private fun OrderHistoryFilterChip(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .padding(horizontal = 20.dp)
+            .padding(start = 20.dp, end = 20.dp, top = 16.dp)
             .heightIn(min = 44.dp)
             .clip(RoundedCornerShape(50.dp))
             .border(1.dp, BorderColor, RoundedCornerShape(50.dp))
