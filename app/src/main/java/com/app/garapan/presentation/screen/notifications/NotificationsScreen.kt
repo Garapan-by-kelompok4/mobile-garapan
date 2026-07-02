@@ -70,6 +70,9 @@ fun NotificationsScreen(
                 is NotificationsEvent.NavigateToChat -> {
                     navController.navigate(event.route)
                 }
+                is NotificationsEvent.NavigateToProjectDetail -> {
+                    navController.navigate(Routes.projectDetailRoute(event.projectId))
+                }
                 is NotificationsEvent.ShowMessage -> {
                     snackbarHostState.showSnackbar(event.message)
                 }

@@ -46,4 +46,73 @@ class GarapanNotificationRouterTest {
 
         assertNull(route)
     }
+
+    @Test
+    fun orderTypesRouteToOrderDetail() {
+        listOf(
+            "ORDER_PAID",
+            "ORDER_DELIVERED",
+            "ORDER_COMPLETED",
+            "ORDER_CANCELLED",
+            "PROPOSAL_ACCEPTED",
+            "DISPUTE_CREATED",
+            "DISPUTE_RESOLVED"
+        ).forEach { type ->
+            val route = GarapanNotificationRouter.routeFromData(
+                type = type,
+                pesananId = "pesanan-1"
+            )
+
+            assertEquals(Routes.orderDetailRoute("pesanan-1"), route)
+        }
+    }
+
+    @Test
+    fun orderTypeWithoutPesananIdFallsBackToNotifications() {
+        val route = GarapanNotificationRouter.routeFromData(
+            type = "ORDER_PAID",
+            pesananId = ""
+        )
+
+        assertEquals(Routes.NOTIFICATIONS, route)
+    }
+
+    @Test
+    fun proposalReceivedRoutesToProjectDetail() {
+        val route = GarapanNotificationRouter.routeFromData(
+            type = "PROPOSAL_RECEIVED",
+            projectId = "project-9"
+        )
+
+        assertEquals(Routes.projectDetailRoute("project-9"), route)
+    }
+
+    @Test
+    fun proposalRejectedRoutesToProjectDetail() {
+        val route = GarapanNotificationRouter.routeFromData(
+            type = "PROPOSAL_REJECTED",
+            projectId = "project-9"
+        )
+
+        assertEquals(Routes.projectDetailRoute("project-9"), route)
+    }
+
+    @Test
+    fun proposalReceivedWithoutProjectIdFallsBackToNotifications() {
+        val route = GarapanNotificationRouter.routeFromData(
+            type = "PROPOSAL_RECEIVED",
+            projectId = null
+        )
+
+        assertEquals(Routes.NOTIFICATIONS, route)
+    }
+
+    @Test
+    fun unknownTypeRoutesToNotifications() {
+        val route = GarapanNotificationRouter.routeFromData(
+            type = "SOME_FUTURE_TYPE"
+        )
+
+        assertEquals(Routes.NOTIFICATIONS, route)
+    }
 }
