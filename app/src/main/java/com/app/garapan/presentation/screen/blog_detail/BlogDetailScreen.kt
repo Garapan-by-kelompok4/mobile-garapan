@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -49,6 +50,7 @@ import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
 import com.app.garapan.ui.theme.Surface
 import com.app.garapan.ui.theme.White
+import coil3.compose.AsyncImage
 
 @Composable
 fun BlogDetailScreen(
@@ -209,16 +211,25 @@ private fun BlogHeroSection(uiState: BlogDetailUiState) {
             .fillMaxWidth()
             .height(220.dp)
     ) {
-        // Background gradient — BrandNavy to a deep indigo feel
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(BrandNavy, AccentBlue)
+        val imageUrl = uiState.imageUrl
+        if (!imageUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = uiState.title,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(BrandNavy, AccentBlue)
+                        )
                     )
-                )
-        )
+            )
+        }
 
         // Bottom gradient fade for text legibility
         Box(
@@ -228,7 +239,10 @@ private fun BlogHeroSection(uiState: BlogDetailUiState) {
                 .align(Alignment.BottomCenter)
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, BrandNavy.copy(alpha = 0.85f))
+                        colors = listOf(
+                            Color.Transparent,
+                            if (!imageUrl.isNullOrBlank()) Color.Black.copy(alpha = 0.65f) else BrandNavy.copy(alpha = 0.85f)
+                        )
                     )
                 )
         )
@@ -399,8 +413,19 @@ private fun RecommendationCard(item: RecommendationItem) {
                         Brush.linearGradient(
                             colors = listOf(BrandNavy.copy(alpha = 0.15f), AccentBlue.copy(alpha = 0.08f))
                         )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                val imageUrl = item.imageUrl
+                if (!imageUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = item.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
                     )
-            )
+                }
+            }
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(
                     text = item.category,

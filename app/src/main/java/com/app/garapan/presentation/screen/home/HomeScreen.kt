@@ -685,8 +685,26 @@ fun BlogCard(blog: BlogItem, onClick: () -> Unit = {}) {
                 modifier = Modifier
                     .size(64.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(LightGray)
-            )
+                    .background(LightGray),
+                contentAlignment = Alignment.Center
+            ) {
+                val imageUrl = blog.imageUrl
+                if (!imageUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = blog.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Lucide.ImageOff,
+                        contentDescription = null,
+                        tint = MutedText,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Box(

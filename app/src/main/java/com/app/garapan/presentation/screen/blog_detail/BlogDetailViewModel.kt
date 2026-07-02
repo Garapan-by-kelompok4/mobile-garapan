@@ -29,7 +29,8 @@ data class RecommendationItem(
     val id: String,
     val category: String,
     val title: String,
-    val excerpt: String
+    val excerpt: String,
+    val imageUrl: String? = null
 )
 
 data class BlogDetailUiState(
@@ -43,6 +44,7 @@ data class BlogDetailUiState(
     val authorRole: String = "Tech & Career Editor",
     val readTime: String = "",
     val heroSubtitle: String = "",
+    val imageUrl: String? = null,
     val body: List<BlogBodyBlock> = emptyList(),
     val recommendations: List<RecommendationItem> = emptyList()
 )
@@ -91,6 +93,7 @@ class BlogDetailViewModel @Inject constructor(
                                 ?.let { block -> (block as? BlogBodyBlock.Paragraph)?.text }
                                 ?.take(120)
                                 .orEmpty(),
+                            imageUrl = artikel.imageUrl,
                             body = body
                         )
                     }
@@ -130,7 +133,8 @@ class BlogDetailViewModel @Inject constructor(
         id = artikel.id,
         category = "BLOG",
         title = artikel.title,
-        excerpt = artikel.content.lines().firstOrNull { it.isNotBlank() }?.take(100).orEmpty()
+        excerpt = artikel.content.lines().firstOrNull { it.isNotBlank() }?.take(100).orEmpty(),
+        imageUrl = artikel.imageUrl
     )
 
     private fun parseContent(content: String): List<BlogBodyBlock> {
