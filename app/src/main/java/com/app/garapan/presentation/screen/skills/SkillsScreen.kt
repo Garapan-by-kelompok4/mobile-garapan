@@ -62,81 +62,84 @@ fun SkillsScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
-                .padding(horizontal = 20.dp)
         ) {
-            SkillsTopBar(onBack = { navController.navigateUp() })
-            Spacer(modifier = Modifier.height(20.dp))
-            Text(
-                text = "Keahlian Profil",
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    color = PrimaryText
+            AppTopBar(
+                title = "Edit Keahlian",
+                onBack = { navController.navigateUp() }
+            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp)
+            ) {
+                Spacer(modifier = Modifier.height(20.dp))
+                Text(
+                    text = "Keahlian Profil",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = PrimaryText
+                    )
                 )
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Pilih keahlian profil Anda. Ini terpisah dari kategori jasa/proyek di marketplace.",
-                style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            when {
-                uiState.isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = BrandNavy)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Pilih keahlian profil Anda. Ini terpisah dari kategori jasa/proyek di marketplace.",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+                when {
+                    uiState.isLoading -> {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = BrandNavy)
+                        }
                     }
-                }
-                uiState.errorMessage != null && uiState.options.isEmpty() -> {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = uiState.errorMessage.orEmpty(),
-                            style = MaterialTheme.typography.bodySmall.copy(color = ErrorRed)
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Button(onClick = viewModel::retry) {
-                            Text("Coba Lagi")
+                    uiState.errorMessage != null && uiState.options.isEmpty() -> {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = uiState.errorMessage.orEmpty(),
+                                style = MaterialTheme.typography.bodySmall.copy(color = ErrorRed)
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Button(onClick = viewModel::retry) {
+                                Text("Coba Lagi")
+                            }
+                        }
+                    }
+                    else -> {
+                        if (uiState.options.isEmpty()) {
+                            Text(
+                                text = "Belum ada keahlian yang bisa dipilih.",
+                                style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
+                            )
+                        } else {
+                            SkillChipGroup(
+                                options = uiState.options,
+                                selected = uiState.selectedSkills,
+                                onToggle = viewModel::onToggleSkill
+                            )
                         }
                     }
                 }
-                else -> {
-                    if (uiState.options.isEmpty()) {
-                        Text(
-                            text = "Belum ada keahlian yang bisa dipilih.",
-                            style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
-                        )
-                    } else {
-                        SkillChipGroup(
-                            options = uiState.options,
-                            selected = uiState.selectedSkills,
-                            onToggle = viewModel::onToggleSkill
-                        )
-                    }
+                if (uiState.errorMessage != null && uiState.options.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = uiState.errorMessage.orEmpty(),
+                        style = MaterialTheme.typography.bodySmall.copy(color = ErrorRed)
+                    )
                 }
-            }
-            if (uiState.errorMessage != null && uiState.options.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = uiState.errorMessage.orEmpty(),
-                    style = MaterialTheme.typography.bodySmall.copy(color = ErrorRed)
+                Spacer(modifier = Modifier.weight(1f))
+                AppPrimaryButton(
+                    text = "Simpan Keahlian",
+                    onClick = viewModel::onSave,
+                    enabled = uiState.selectedSkills.isNotEmpty() && !uiState.isSaving,
+                    isLoading = uiState.isSaving
                 )
+                Spacer(modifier = Modifier.height(24.dp))
             }
-            Spacer(modifier = Modifier.weight(1f))
-            AppPrimaryButton(
-                text = "Simpan Keahlian",
-                onClick = viewModel::onSave,
-                enabled = uiState.selectedSkills.isNotEmpty() && !uiState.isSaving,
-                isLoading = uiState.isSaving
-            )
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
-}
-
-@Composable
-private fun SkillsTopBar(onBack: () -> Unit) {
-    AppTopBar(title = "Edit Keahlian", onBack = onBack)
 }
 
 @Composable
