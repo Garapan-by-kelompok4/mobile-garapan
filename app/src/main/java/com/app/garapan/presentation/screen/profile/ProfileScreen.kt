@@ -1,12 +1,12 @@
 package com.app.garapan.presentation.screen.profile
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,11 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.ScrollText
 import com.composables.icons.lucide.LogOut
 import com.composables.icons.lucide.ChevronRight
@@ -31,30 +29,28 @@ import com.composables.icons.lucide.Store
 import com.composables.icons.lucide.Briefcase
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.app.garapan.R
 import com.app.garapan.domain.model.Role
 import com.app.garapan.presentation.components.AppCard
+import com.app.garapan.presentation.components.AppLogoTopBar
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
@@ -64,7 +60,6 @@ import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
 import com.app.garapan.ui.theme.Surface
-import com.app.garapan.ui.theme.White
 import kotlinx.coroutines.flow.collectLatest
 
 private data class ProfileMenuItem(
@@ -104,14 +99,19 @@ fun ProfileScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding),
             contentPadding = PaddingValues(bottom = 24.dp)
         ) {
             item {
-                ProfileHeader(
-                    showBackButton = showBackButton,
-                    onBack = { navController.navigateUp() }
-                )
+                if (showBackButton) {
+                    AppTopBar(
+                        title = "Profile",
+                        onBack = { navController.navigateUp() }
+                    )
+                } else {
+                    AppLogoTopBar(title = "Profile")
+                }
             }
 
             item {
@@ -210,59 +210,6 @@ fun ProfileScreen(
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun ProfileHeader(
-    showBackButton: Boolean,
-    onBack: () -> Unit
-) {
-    if (showBackButton) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(White)
-                .padding(horizontal = 4.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Lucide.ArrowLeft,
-                    contentDescription = "Back",
-                    tint = AccentBlue
-                )
-            }
-            Text(
-                text = "Profile",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = BrandNavy
-                )
-            )
-        }
-    } else {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(White)
-                .padding(horizontal = 20.dp, vertical = 18.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                painter = painterResource(R.drawable.logo_garapan),
-                contentDescription = "Garapan Logo",
-                modifier = Modifier.size(34.dp)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = "Profile",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    color = BrandNavy
-                )
-            )
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.app.garapan.presentation.screen.terms_and_conditions
 
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -67,6 +68,7 @@ fun TermsAndConditionsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
             AppTopBar(title = "Syarat & Ketentuan", onBack = { navController.navigateUp() })

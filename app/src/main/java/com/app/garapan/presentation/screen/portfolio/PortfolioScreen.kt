@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,7 +19,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Plus
 import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.Pencil
@@ -28,9 +28,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,6 +44,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.app.garapan.presentation.components.AppCard
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
@@ -75,71 +76,54 @@ fun PortfolioScreen(
     }
 
     Scaffold(containerColor = Surface) { innerPadding ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(start = 18.dp, top = 8.dp, end = 18.dp, bottom = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
         ) {
-            item {
-                PortfolioTopBar(onBack = { navController.navigateUp() })
-                Spacer(modifier = Modifier.height(24.dp))
-                PortfolioHero(onAddClick = { navController.navigate(Routes.ADD_PORTFOLIO) })
-            }
-
-            if (uiState.isLoading) {
+            AppTopBar(
+                title = "Manajemen Portofolio",
+                onBack = { navController.navigateUp() }
+            )
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 18.dp, top = 16.dp, end = 18.dp, bottom = 28.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
                 item {
-                    Text(
-                        text = "Memuat portofolio...",
-                        style = MaterialTheme.typography.bodyMedium.copy(color = MutedText)
+                    PortfolioHero(onAddClick = { navController.navigate(Routes.ADD_PORTFOLIO) })
+                }
+
+                if (uiState.isLoading) {
+                    item {
+                        Text(
+                            text = "Memuat portofolio...",
+                            style = MaterialTheme.typography.bodyMedium.copy(color = MutedText)
+                        )
+                    }
+                }
+
+                uiState.errorMessage?.let { message ->
+                    item {
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.bodyMedium.copy(color = ErrorRed)
+                        )
+                    }
+                }
+
+                items(uiState.items, key = { it.id }) { item ->
+                    PortfolioCard(
+                        item = item,
+                        onEditClick = {
+                            navController.navigate(Routes.editPortfolioRoute(item.id))
+                        },
+                        onDeleteClick = { viewModel.onDeletePortfolio(item.id) }
                     )
                 }
             }
-
-            uiState.errorMessage?.let { message ->
-                item {
-                    Text(
-                        text = message,
-                        style = MaterialTheme.typography.bodyMedium.copy(color = ErrorRed)
-                    )
-                }
-            }
-
-            items(uiState.items, key = { it.id }) { item ->
-                PortfolioCard(
-                    item = item,
-                    onEditClick = {
-                        navController.navigate(Routes.editPortfolioRoute(item.id))
-                    },
-                    onDeleteClick = { viewModel.onDeletePortfolio(item.id) }
-                )
-            }
         }
-    }
-}
-
-@Composable
-private fun PortfolioTopBar(onBack: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBack, modifier = Modifier.size(34.dp)) {
-            Icon(
-                imageVector = Lucide.ArrowLeft,
-                contentDescription = "Back",
-                tint = AccentBlue,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-        Text(
-            text = "Manajemen Portofolio",
-            style = MaterialTheme.typography.labelMedium.copy(
-                color = AccentBlue,
-                fontWeight = FontWeight.ExtraBold
-            )
-        )
     }
 }
 

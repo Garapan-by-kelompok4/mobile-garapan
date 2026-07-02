@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,7 +19,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.Users
@@ -35,9 +35,9 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +51,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.app.garapan.presentation.components.AppCard
+import com.app.garapan.presentation.components.AppLogoTopBar
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.presentation.components.AppPrimaryButton
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
@@ -101,152 +103,132 @@ fun ProfileServicesScreen(
         containerColor = Surface,
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(start = 20.dp, top = 8.dp, end = 20.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp)
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
         ) {
-            item {
-                ProfileServicesTopBar(
-                    onBack = { navController.navigateUp() },
-                    showBackButton = showBackButton
+            if (showBackButton) {
+                AppTopBar(
+                    title = "Layanan Saya",
+                    onBack = { navController.navigateUp() }
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = "Layanan Saya",
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        color = PrimaryText
-                    )
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "Kelola layanan yang Anda tawarkan di marketplace.",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = SecondaryText,
-                        lineHeight = MaterialTheme.typography.bodyMedium.lineHeight
-                    )
-                )
+            } else {
+                AppLogoTopBar(title = "Layanan Saya")
             }
-
-            item {
-                AppPrimaryButton(
-                    text = "Buat Layanan",
-                    onClick = { navController.navigate(Routes.editServiceRoute("new")) }
-                )
-            }
-
-            if (uiState.isRefreshing) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 20.dp, top = 16.dp, end = 20.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp)
+            ) {
                 item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            color = AccentBlue,
-                            strokeWidth = 2.dp
+                    Text(
+                        text = "Layanan Saya",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            color = PrimaryText
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Memperbarui layanan...",
-                            style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Kelola layanan yang Anda tawarkan di marketplace.",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = SecondaryText,
+                            lineHeight = MaterialTheme.typography.bodyMedium.lineHeight
                         )
-                    }
+                    )
                 }
-            }
 
-            when {
-                uiState.isLoading -> {
+                item {
+                    AppPrimaryButton(
+                        text = "Buat Layanan",
+                        onClick = { navController.navigate(Routes.editServiceRoute("new")) }
+                    )
+                }
+
+                if (uiState.isRefreshing) {
                     item {
-                        Box(
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 32.dp),
-                            contentAlignment = Alignment.Center
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
                         ) {
-                            CircularProgressIndicator(color = AccentBlue)
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = AccentBlue,
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Memperbarui layanan...",
+                                style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+                            )
                         }
                     }
                 }
-                uiState.loadErrorMessage != null && uiState.services.isEmpty() -> {
-                    item {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = uiState.loadErrorMessage.orEmpty(),
-                                style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
-                            )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Button(
-                                onClick = { viewModel.loadMyJasa() },
-                                colors = ButtonDefaults.buttonColors(containerColor = AccentBlue)
+
+                when {
+                    uiState.isLoading -> {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 32.dp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Text(text = "Coba Lagi")
+                                CircularProgressIndicator(color = AccentBlue)
+                            }
+                        }
+                    }
+                    uiState.loadErrorMessage != null && uiState.services.isEmpty() -> {
+                        item {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = uiState.loadErrorMessage.orEmpty(),
+                                    style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText)
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Button(
+                                    onClick = { viewModel.loadMyJasa() },
+                                    colors = ButtonDefaults.buttonColors(containerColor = AccentBlue)
+                                ) {
+                                    Text(text = "Coba Lagi")
+                                }
+                            }
+                        }
+                    }
+                    else -> {
+                        if (uiState.services.isEmpty()) {
+                            item {
+                                Text(
+                                    text = "Belum ada layanan. Ketuk Buat Layanan untuk mulai.",
+                                    style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText),
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
+                            }
+                        } else {
+                            items(uiState.services, key = { it.id }) { service ->
+                                ProfileServiceCard(
+                                    service = service,
+                                    isDeleting = uiState.isDeleting,
+                                    onClick = { navController.navigate(Routes.editServiceRoute(service.id)) },
+                                    onEditClick = { navController.navigate(Routes.editServiceRoute(service.id)) },
+                                    onDeleteClick = { viewModel.onDeleteService(service.id) }
+                                )
                             }
                         }
                     }
                 }
-                else -> {
-                    if (uiState.services.isEmpty()) {
-                        item {
-                            Text(
-                                text = "Belum ada layanan. Ketuk Buat Layanan untuk mulai.",
-                                style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText),
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                        }
-                    } else {
-                        items(uiState.services, key = { it.id }) { service ->
-                            ProfileServiceCard(
-                                service = service,
-                                isDeleting = uiState.isDeleting,
-                                onClick = { navController.navigate(Routes.editServiceRoute(service.id)) },
-                                onEditClick = { navController.navigate(Routes.editServiceRoute(service.id)) },
-                                onDeleteClick = { viewModel.onDeleteService(service.id) }
-                            )
-                        }
-                    }
-                }
             }
         }
-    }
-}
-
-@Composable
-private fun ProfileServicesTopBar(
-    onBack: () -> Unit,
-    showBackButton: Boolean = true
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (showBackButton) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Lucide.ArrowLeft,
-                    contentDescription = "Back",
-                    tint = AccentBlue
-                )
-            }
-        }
-        Text(
-            text = "Layanan Saya",
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.ExtraBold,
-                color = AccentBlue
-            )
-        )
     }
 }
 

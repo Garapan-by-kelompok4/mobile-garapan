@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,7 +19,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.Clock
@@ -34,14 +34,13 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -49,6 +48,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.app.garapan.presentation.components.AppCard
+import com.app.garapan.presentation.components.AppLogoTopBar
+import com.app.garapan.presentation.components.AppTopBar
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
@@ -97,90 +98,66 @@ fun MyProjectsScreen(
         containerColor = Surface,
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(start = 20.dp, top = 8.dp, end = 20.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp)
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
         ) {
-            item {
-                MyProjectsTopBar(
+            if (showBackButton) {
+                AppTopBar(
                     title = uiState.screenTitle,
-                    onBack = { navController.navigateUp() },
-                    showBackButton = showBackButton
+                    onBack = { navController.navigateUp() }
                 )
+            } else {
+                AppLogoTopBar(title = uiState.screenTitle)
             }
-
-            when {
-                uiState.isLoading -> {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 48.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(color = BrandNavy)
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 20.dp, top = 16.dp, end = 20.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp)
+            ) {
+                when {
+                    uiState.isLoading -> {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 48.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(color = BrandNavy)
+                            }
+                        }
+                    }
+                    uiState.loadErrorMessage != null -> {
+                        item {
+                            ErrorState(
+                                message = uiState.loadErrorMessage.orEmpty(),
+                                onRetry = { viewModel.loadProjects() }
+                            )
+                        }
+                    }
+                    uiState.projects.isEmpty() -> {
+                        item {
+                            EmptyState(title = uiState.screenTitle)
+                        }
+                    }
+                    else -> {
+                        items(uiState.projects, key = { it.id }) { project ->
+                            MyProjectCard(
+                                project = project,
+                                canDelete = uiState.canDelete,
+                                isDeleting = uiState.isDeleting,
+                                onClick = { navController.navigate(Routes.projectDetailRoute(project.id)) },
+                                onEdit = { navController.navigate(Routes.editProjectRoute(project.id)) },
+                                onDelete = { viewModel.onDeleteProject(project.id) }
+                            )
                         }
                     }
                 }
-                uiState.loadErrorMessage != null -> {
-                    item {
-                        ErrorState(
-                            message = uiState.loadErrorMessage.orEmpty(),
-                            onRetry = { viewModel.loadProjects() }
-                        )
-                    }
-                }
-                uiState.projects.isEmpty() -> {
-                    item {
-                        EmptyState(title = uiState.screenTitle)
-                    }
-                }
-                else -> {
-                    items(uiState.projects, key = { it.id }) { project ->
-                        MyProjectCard(
-                            project = project,
-                            canDelete = uiState.canDelete,
-                            isDeleting = uiState.isDeleting,
-                            onClick = { navController.navigate(Routes.projectDetailRoute(project.id)) },
-                            onEdit = { navController.navigate(Routes.editProjectRoute(project.id)) },
-                            onDelete = { viewModel.onDeleteProject(project.id) }
-                        )
-                    }
-                }
             }
         }
-    }
-}
-
-@Composable
-private fun MyProjectsTopBar(
-    title: String,
-    onBack: () -> Unit,
-    showBackButton: Boolean
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (showBackButton) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Lucide.ArrowLeft,
-                    contentDescription = "Back",
-                    tint = AccentBlue
-                )
-            }
-        }
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineSmall.copy(
-                fontWeight = FontWeight.ExtraBold,
-                color = BrandNavy
-            )
-        )
     }
 }
 
