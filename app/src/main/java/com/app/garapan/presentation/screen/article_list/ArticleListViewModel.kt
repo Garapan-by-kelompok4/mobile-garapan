@@ -70,7 +70,8 @@ class ArticleListViewModel @Inject constructor(
         title = artikel.title,
         category = "BLOG",
         readTime = estimateReadTime(artikel.content),
-        date = formatPublishedDate(artikel.publishedAt)
+        date = formatPublishedDate(artikel.publishedAt),
+        imageUrl = artikel.imageUrl
     )
 
     private fun estimateReadTime(content: String): String {

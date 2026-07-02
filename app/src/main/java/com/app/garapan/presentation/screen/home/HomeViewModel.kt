@@ -62,7 +62,8 @@ data class BlogItem(
     val title: String,
     val category: String,
     val readTime: String,
-    val date: String = ""
+    val date: String = "",
+    val imageUrl: String? = null
 )
 
 data class HomeUiState(
@@ -295,7 +296,8 @@ class HomeViewModel @Inject constructor(
         title = artikel.title,
         category = "BLOG",
         readTime = estimateReadTime(artikel.content),
-        date = formatPublishedDate(artikel.publishedAt)
+        date = formatPublishedDate(artikel.publishedAt),
+        imageUrl = artikel.imageUrl
     )
 
     private fun estimateReadTime(content: String): String {
