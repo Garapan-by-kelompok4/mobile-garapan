@@ -21,5 +21,8 @@ private fun NotificationMetaDto.toDomain() = NotificationMeta(
     pesananId = pesananId,
     reviewId = reviewId,
     jasaId = jasaId,
-    senderId = senderId
+    senderId = senderId,
+    projectId = projectId,
+    proposalId = proposalId,
+    laporanId = laporanId
 )

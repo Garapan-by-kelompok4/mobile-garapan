@@ -49,6 +49,7 @@ sealed interface NotificationsEvent {
     data class NavigateToOrderDetail(val pesananId: String) : NotificationsEvent
     data class NavigateToAllReviews(val jasaId: String) : NotificationsEvent
     data class NavigateToChat(val route: String) : NotificationsEvent
+    data class NavigateToProjectDetail(val projectId: String) : NotificationsEvent
     data class ShowMessage(val message: String) : NotificationsEvent
     data object NavigateToOrderHistory : NotificationsEvent
 }
@@ -128,7 +129,6 @@ class NotificationsViewModel @Inject constructor(
         if (!jasaId.isNullOrBlank() && item.type == NotificationType.REVIEW_RECEIVED) {
             return NotificationsEvent.NavigateToAllReviews(jasaId)
         }
-        val pesananId = meta?.pesananId
         if (item.type == NotificationType.CHAT_MESSAGE) {
             val conversationId = meta?.conversationId
             return if (!conversationId.isNullOrBlank()) {
@@ -137,12 +137,27 @@ class NotificationsViewModel @Inject constructor(
                 NotificationsEvent.NavigateToChat(Routes.supportChatRoute())
             }
         }
+        val projectId = meta?.projectId
+        if (
+            !projectId.isNullOrBlank() &&
+            (
+                item.type == NotificationType.PROPOSAL_RECEIVED ||
+                    item.type == NotificationType.PROPOSAL_REJECTED
+                )
+        ) {
+            return NotificationsEvent.NavigateToProjectDetail(projectId)
+        }
+        val pesananId = meta?.pesananId
         if (!pesananId.isNullOrBlank()) {
             return NotificationsEvent.NavigateToOrderDetail(pesananId)
         }
         return when (item.type) {
             NotificationType.REVIEW_RECEIVED -> NotificationsEvent.ShowMessage(
                 "Ulasan tidak dapat dibuka dari notifikasi ini."
+            )
+            NotificationType.PROPOSAL_RECEIVED,
+            NotificationType.PROPOSAL_REJECTED -> NotificationsEvent.ShowMessage(
+                "Proyek tidak dapat dibuka dari notifikasi ini."
             )
             else -> NotificationsEvent.NavigateToOrderHistory
         }
