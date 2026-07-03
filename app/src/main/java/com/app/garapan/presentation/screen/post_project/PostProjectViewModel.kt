@@ -224,13 +224,19 @@ class PostProjectViewModel @Inject constructor(
         }
     }
 
-    private fun validateForm(state: PostProjectUiState): String? = when {
-        state.title.isBlank() -> "Judul proyek wajib diisi."
-        state.selectedCategory.isBlank() -> "Kategori proyek wajib dipilih."
-        state.description.isBlank() -> "Deskripsi proyek wajib diisi."
-        resolveBudget(state) <= 0.0 -> "Anggaran proyek wajib diisi."
-        state.deadline.isBlank() -> "Deadline proyek wajib dipilih."
-        else -> null
+    private fun validateForm(state: PostProjectUiState): String? {
+        val minBudget = state.minimumBudget.toDoubleOrNull()
+        val maxBudget = state.maximumBudget.toDoubleOrNull()
+        return when {
+            state.title.isBlank() -> "Judul proyek wajib diisi."
+            state.selectedCategory.isBlank() -> "Kategori proyek wajib dipilih."
+            state.description.isBlank() -> "Deskripsi proyek wajib diisi."
+            minBudget == null || minBudget <= 0.0 -> "Anggaran minimum wajib diisi."
+            maxBudget == null || maxBudget <= 0.0 -> "Anggaran maksimum wajib diisi."
+            maxBudget < minBudget -> "Anggaran maksimum tidak boleh lebih kecil dari anggaran minimum."
+            state.deadline.isBlank() -> "Deadline proyek wajib dipilih."
+            else -> null
+        }
     }
 
     private fun resolveBudget(state: PostProjectUiState): Double {
