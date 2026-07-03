@@ -382,6 +382,7 @@ private fun MahasiswaProposalSection(
                     onValueChange = viewModel::onProposalPriceChanged,
                     label = { Text("Harga yang diajukan (Rp)") },
                     placeholder = { Text("500000") },
+                    supportingText = { Text(uiState.proposalPriceRangeHint) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),

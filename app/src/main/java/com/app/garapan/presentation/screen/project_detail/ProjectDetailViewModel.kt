@@ -57,6 +57,7 @@ data class ProjectDetailUiState(
     val myProposalStatus: ProposalStatus? = null,
     val proposalMessageInput: String = "",
     val proposalPriceInput: String = "",
+    val proposalPriceRangeHint: String = "",
     val isSubmittingProposal: Boolean = false,
     val isWithdrawingProposal: Boolean = false,
     val isKlienOwner: Boolean = false,
@@ -132,6 +133,19 @@ class ProjectDetailViewModel @Inject constructor(
         if (price == null || price <= 0.0) {
             _events.tryEmit(ProjectDetailEvent.ShowMessage("Harga yang diajukan tidak valid."))
             return
+        }
+        val budget = loadedProject?.budget
+        if (budget != null) {
+            val minAllowed = budget * MIN_PROPOSAL_RATIO
+            if (price < minAllowed || price > budget) {
+                _events.tryEmit(
+                    ProjectDetailEvent.ShowMessage(
+                        "Harga yang diajukan harus antara ${CurrencyFormatter.formatRupiah(minAllowed)} " +
+                            "dan ${CurrencyFormatter.formatRupiah(budget)} (sesuai anggaran proyek)."
+                    )
+                )
+                return
+            }
         }
 
         viewModelScope.launch {
@@ -319,6 +333,8 @@ class ProjectDetailViewModel @Inject constructor(
             title = title,
             deadline = formatDeadline(deadline),
             budget = CurrencyFormatter.formatRupiah(budget),
+            proposalPriceRangeHint = "Rentang harga: ${CurrencyFormatter.formatRupiah(budget * MIN_PROPOSAL_RATIO)} " +
+                "- ${CurrencyFormatter.formatRupiah(budget)}",
             clientName = clientName.ifBlank { "Klien" },
             clientType = kategoriName.ifBlank { "Klien" },
             description = description,
@@ -339,5 +355,9 @@ class ProjectDetailViewModel @Inject constructor(
             val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("id", "ID"))
             Instant.parse(deadline).atZone(ZoneId.systemDefault()).format(formatter)
         }.getOrDefault(deadline.take(10))
+    }
+
+    private companion object {
+        const val MIN_PROPOSAL_RATIO = 0.5
     }
 }
