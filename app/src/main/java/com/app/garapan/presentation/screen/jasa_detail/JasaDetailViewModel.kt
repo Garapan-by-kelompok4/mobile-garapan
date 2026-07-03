@@ -36,6 +36,7 @@ data class JasaFeatureItem(
 )
 
 data class JasaPortfolioItem(
+    val id: String,
     val title: String,
     val category: String,
     val year: String,
@@ -273,6 +274,7 @@ class JasaDetailViewModel @Inject constructor(
             description = description,
             portfolios = portfolios.map { item ->
                 JasaPortfolioItem(
+                    id = item.id,
                     title = item.title,
                     category = kategoriName.ifBlank { "Portofolio" },
                     year = "",
