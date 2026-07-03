@@ -237,7 +237,7 @@ class HomeViewModel @Inject constructor(
     private fun loadBlogs() {
         viewModelScope.launch {
             _uiState.update { it.copy(isBlogsLoading = true, blogsError = null) }
-            when (val result = getArtikelListUseCase(limit = 5)) {
+            when (val result = getArtikelListUseCase(limit = 3)) {
                 is Resource.Success -> {
                     _uiState.update {
                         it.copy(
