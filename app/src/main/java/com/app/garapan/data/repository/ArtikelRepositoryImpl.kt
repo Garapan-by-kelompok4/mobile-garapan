@@ -5,6 +5,7 @@ import com.app.garapan.data.remote.api.ArtikelApi
 import com.app.garapan.data.remote.error.ApiErrorMapper
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.Artikel
+import com.app.garapan.domain.model.ArtikelRecommendation
 import com.app.garapan.domain.repository.ArtikelRepository
 import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
@@ -21,6 +22,11 @@ class ArtikelRepositoryImpl @Inject constructor(
     override suspend fun getArtikelDetail(id: String): Resource<Artikel> =
         safeApiCall {
             artikelApi.getArtikelDetail(id).toDomain()
+        }
+
+    override suspend fun getArtikelRecommendations(id: String, limit: Int): Resource<List<ArtikelRecommendation>> =
+        safeApiCall {
+            artikelApi.getArtikelRecommendations(id = id, limit = limit).data.map { it.toDomain() }
         }
 
     private suspend fun <T> safeApiCall(block: suspend () -> T): Resource<T> =

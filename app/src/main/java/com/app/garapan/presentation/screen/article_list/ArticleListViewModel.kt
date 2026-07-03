@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.Artikel
 import com.app.garapan.domain.usecase.GetArtikelListUseCase
+import com.app.garapan.presentation.screen.blog_detail.BlogArticleDefaults
 import com.app.garapan.presentation.screen.home.BlogItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,16 +69,10 @@ class ArticleListViewModel @Inject constructor(
     private fun toBlogItem(artikel: Artikel) = BlogItem(
         id = artikel.id,
         title = artikel.title,
-        category = "BLOG",
-        readTime = estimateReadTime(artikel.content),
+        category = artikel.category.takeIf { !it.isNullOrBlank() } ?: BlogArticleDefaults.CATEGORY,
         date = formatPublishedDate(artikel.publishedAt),
         imageUrl = artikel.imageUrl
     )
-
-    private fun estimateReadTime(content: String): String {
-        val minutes = (content.split(Regex("\\s+")).count { it.isNotBlank() } / 200).coerceAtLeast(1)
-        return "$minutes menit"
-    }
 
     private fun formatPublishedDate(publishedAt: String?): String {
         if (publishedAt.isNullOrBlank()) return ""

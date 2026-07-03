@@ -1,6 +1,7 @@
 package com.app.garapan.presentation.screen.blog_detail
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,14 +18,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Share2
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,6 +40,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.app.garapan.presentation.components.AppCard
 import com.app.garapan.presentation.components.AppTopBar
+import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.BrandNavy
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BorderColor
@@ -172,7 +170,12 @@ fun BlogDetailScreen(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         uiState.recommendations.forEachIndexed { index, item ->
-                            RecommendationCard(item = item)
+                            RecommendationCard(
+                                item = item,
+                                onClick = {
+                                    navController.navigate(Routes.blogDetailRoute(item.id))
+                                }
+                            )
                             if (index < uiState.recommendations.lastIndex) {
                                 Spacer(modifier = Modifier.height(12.dp))
                             }
@@ -190,17 +193,8 @@ fun BlogDetailScreen(
 @Composable
 private fun BlogDetailTopBar(onBack: () -> Unit) {
     AppTopBar(
-        title = "BLOG",
-        onBack = onBack,
-        trailing = {
-            IconButton(onClick = {}) {
-                Icon(
-                    imageVector = Lucide.Share2,
-                    contentDescription = "Share",
-                    tint = PrimaryText
-                )
-            }
-        }
+        title = BlogArticleDefaults.CATEGORY,
+        onBack = onBack
     )
 }
 
@@ -277,24 +271,6 @@ private fun BlogHeroSection(uiState: BlogDetailUiState) {
                 maxLines = 2
             )
         }
-
-        // Read time badge — top right
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp)
-                .clip(RoundedCornerShape(50.dp))
-                .background(White.copy(alpha = 0.15f))
-                .padding(horizontal = 10.dp, vertical = 5.dp)
-        ) {
-            Text(
-                text = uiState.readTime,
-                style = MaterialTheme.typography.labelSmall.copy(
-                    color = White,
-                    fontWeight = FontWeight.Medium
-                )
-            )
-        }
     }
 }
 
@@ -308,13 +284,23 @@ private fun AuthorRow(uiState: BlogDetailUiState) {
                 .background(AccentBlue),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "AG",
-                style = MaterialTheme.typography.labelMedium.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    color = White
+            val avatarUrl = uiState.authorAvatarUrl
+            if (!avatarUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = avatarUrl,
+                    contentDescription = uiState.authorName,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
                 )
-            )
+            } else {
+                Text(
+                    text = authorInitials(uiState.authorName),
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = White
+                    )
+                )
+            }
         }
         Spacer(modifier = Modifier.width(10.dp))
         Column {
@@ -331,6 +317,15 @@ private fun AuthorRow(uiState: BlogDetailUiState) {
             )
         }
     }
+}
+
+private fun authorInitials(name: String): String {
+    val parts = name.split(Regex("\\s+")).filter { it.isNotBlank() }
+    return parts
+        .take(2)
+        .mapNotNull { it.firstOrNull()?.uppercaseChar()?.toString() }
+        .joinToString("")
+        .ifBlank { BlogArticleDefaults.AUTHOR_INITIALS }
 }
 
 @Composable
@@ -401,8 +396,11 @@ private fun BlogBlock(block: BlogBodyBlock) {
 }
 
 @Composable
-private fun RecommendationCard(item: RecommendationItem) {
-    AppCard(modifier = Modifier.fillMaxWidth()) {
+private fun RecommendationCard(
+    item: RecommendationItem,
+    onClick: () -> Unit
+) {
+    AppCard(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Column {
             Box(
                 modifier = Modifier
