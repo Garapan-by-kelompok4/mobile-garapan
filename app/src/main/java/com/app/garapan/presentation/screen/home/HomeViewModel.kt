@@ -11,9 +11,9 @@ import com.app.garapan.domain.model.ProjectListFilters
 import com.app.garapan.domain.model.TopWorker
 import com.app.garapan.domain.usecase.GetArtikelListUseCase
 import com.app.garapan.domain.usecase.GetJasaListUseCase
-import com.app.garapan.domain.usecase.GetNotificationsUseCase
 import com.app.garapan.domain.usecase.GetProjectListUseCase
 import com.app.garapan.domain.usecase.GetTopWorkersUseCase
+import com.app.garapan.domain.usecase.GetUnreadNotificationCountUseCase
 import com.app.garapan.presentation.screen.blog_detail.BlogArticleDefaults
 import com.app.garapan.presentation.util.CurrencyFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -89,7 +89,7 @@ class HomeViewModel @Inject constructor(
     private val getArtikelListUseCase: GetArtikelListUseCase,
     private val getJasaListUseCase: GetJasaListUseCase,
     private val getProjectListUseCase: GetProjectListUseCase,
-    private val getNotificationsUseCase: GetNotificationsUseCase
+    private val getUnreadNotificationCountUseCase: GetUnreadNotificationCountUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -123,10 +123,10 @@ class HomeViewModel @Inject constructor(
 
     private fun loadUnreadNotificationCount() {
         viewModelScope.launch {
-            when (val result = getNotificationsUseCase(limit = 50)) {
+            when (val result = getUnreadNotificationCountUseCase()) {
                 is Resource.Success -> {
                     _uiState.update {
-                        it.copy(unreadNotificationCount = result.data.count { notification -> !notification.read })
+                        it.copy(unreadNotificationCount = result.data)
                     }
                 }
                 is Resource.Error, Resource.Loading -> Unit

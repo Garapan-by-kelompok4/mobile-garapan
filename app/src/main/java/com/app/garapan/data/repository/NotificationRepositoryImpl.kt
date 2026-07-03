@@ -18,6 +18,11 @@ class NotificationRepositoryImpl @Inject constructor(
             notificationApi.getNotifications(page = page, limit = limit).data.map { it.toDomain() }
         }
 
+    override suspend fun getUnreadCount(): Resource<Int> =
+        safeApiCall {
+            notificationApi.getUnreadCount().unreadCount
+        }
+
     override suspend fun markRead(id: String): Resource<Notification> =
         safeApiCall {
             notificationApi.markRead(id).toDomain()
