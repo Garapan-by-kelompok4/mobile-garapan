@@ -209,6 +209,9 @@ class ChatViewModel @Inject constructor(
 
     // Newest page of an order thread, kept fresh by polling.
     private var orderMessages: List<OrderChatMessage> = emptyList()
+    // Message total from the last order-thread response, used to jump straight
+    // to the newest page on the next poll instead of asking page 1 for it first.
+    private var knownOrderTotal: Int = 0
     // Last message id we've reconciled, so we only send a read receipt when a
     // genuinely new incoming message arrives (not on every 4s poll).
     private var lastSeenOrderMessageId: String? = null
@@ -423,17 +426,24 @@ class ChatViewModel @Inject constructor(
 
     /**
      * The history endpoint paginates oldest-first, so the latest messages live on
-     * the last page. Read [total] from page 1, then fetch the last page to show the
-     * newest tail.
+     * the last page. The total from the previous response predicts where that
+     * page is, so steady-state polling costs a single request; a second fetch
+     * only happens on the first load or when the thread crossed a page boundary.
      */
     private suspend fun fetchNewestOrderPage(): Resource<OrderChatPage> {
-        val first = getOrderMessagesUseCase(conversationId = conversationId, page = 1, limit = ORDER_PAGE_SIZE)
+        val guessedPage = lastPageFor(knownOrderTotal)
+        val first = getOrderMessagesUseCase(conversationId = conversationId, page = guessedPage, limit = ORDER_PAGE_SIZE)
         if (first !is Resource.Success) return first
-        val total = first.data.total
-        if (total <= ORDER_PAGE_SIZE) return first
-        val lastPage = (total + ORDER_PAGE_SIZE - 1) / ORDER_PAGE_SIZE
-        return getOrderMessagesUseCase(conversationId = conversationId, page = lastPage, limit = ORDER_PAGE_SIZE)
+        knownOrderTotal = first.data.total
+        val lastPage = lastPageFor(knownOrderTotal)
+        if (lastPage == guessedPage) return first
+        val second = getOrderMessagesUseCase(conversationId = conversationId, page = lastPage, limit = ORDER_PAGE_SIZE)
+        if (second is Resource.Success) knownOrderTotal = second.data.total
+        return second
     }
+
+    private fun lastPageFor(total: Int): Int =
+        if (total <= 0) 1 else (total + ORDER_PAGE_SIZE - 1) / ORDER_PAGE_SIZE
 
     private fun rebuildOrderThread() {
         val mapped = orderMessages.map { it.toChatMessage() }
@@ -566,12 +576,12 @@ class ChatViewModel @Inject constructor(
 
     private fun formatMessageTime(createdAt: String?): String {
         if (createdAt.isNullOrBlank()) {
-            return LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
+            return LocalTime.now().format(MESSAGE_TIME_FORMATTER)
         }
         return runCatching {
             Instant.parse(createdAt)
                 .atZone(ZoneId.systemDefault())
-                .format(DateTimeFormatter.ofPattern("HH:mm", Locale("id", "ID")))
+                .format(MESSAGE_TIME_FORMATTER)
         }.getOrDefault(createdAt.take(5))
     }
 
@@ -579,6 +589,9 @@ class ChatViewModel @Inject constructor(
         const val POLL_INTERVAL_MS = 4_000L
         const val PAGE_SIZE = 20
         const val ORDER_PAGE_SIZE = 30
+
+        val MESSAGE_TIME_FORMATTER: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("HH:mm", Locale("id", "ID"))
 
         fun parseNavActiveOrder(savedStateHandle: SavedStateHandle): ActiveOrder? {
             val pesananId = savedStateHandle.get<String>("activePesananId").orEmpty()
