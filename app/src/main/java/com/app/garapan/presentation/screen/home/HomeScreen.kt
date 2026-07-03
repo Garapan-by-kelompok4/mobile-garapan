@@ -731,11 +731,6 @@ fun BlogCard(blog: BlogItem, onClick: () -> Unit = {}) {
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "${blog.readTime} baca",
-                    style = MaterialTheme.typography.labelSmall.copy(color = MutedText)
-                )
             }
         }
     }

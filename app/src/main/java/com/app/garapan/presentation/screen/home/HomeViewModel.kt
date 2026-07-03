@@ -14,6 +14,7 @@ import com.app.garapan.domain.usecase.GetJasaListUseCase
 import com.app.garapan.domain.usecase.GetNotificationsUseCase
 import com.app.garapan.domain.usecase.GetProjectListUseCase
 import com.app.garapan.domain.usecase.GetTopWorkersUseCase
+import com.app.garapan.presentation.screen.blog_detail.BlogArticleDefaults
 import com.app.garapan.presentation.util.CurrencyFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,7 +62,6 @@ data class BlogItem(
     val id: String,
     val title: String,
     val category: String,
-    val readTime: String,
     val date: String = "",
     val imageUrl: String? = null
 )
@@ -294,16 +294,10 @@ class HomeViewModel @Inject constructor(
     private fun toBlogItem(artikel: Artikel) = BlogItem(
         id = artikel.id,
         title = artikel.title,
-        category = "BLOG",
-        readTime = estimateReadTime(artikel.content),
+        category = artikel.category.takeIf { !it.isNullOrBlank() } ?: BlogArticleDefaults.CATEGORY,
         date = formatPublishedDate(artikel.publishedAt),
         imageUrl = artikel.imageUrl
     )
-
-    private fun estimateReadTime(content: String): String {
-        val minutes = (content.split(Regex("\\s+")).count { it.isNotBlank() } / 200).coerceAtLeast(1)
-        return "$minutes menit"
-    }
 
     private fun formatPublishedDate(publishedAt: String?): String {
         if (publishedAt.isNullOrBlank()) return ""
