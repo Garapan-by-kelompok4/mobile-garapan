@@ -47,9 +47,18 @@ class AuthTokenStore @Inject constructor(
         getTokenSnapshot().refreshToken
 
     suspend fun saveTokens(tokens: AuthTokens) {
+        val encryptedAccess = TokenCrypto.encrypt(tokens.accessToken)
+        val encryptedRefresh = TokenCrypto.encrypt(tokens.refreshToken)
         dataStore.edit {
-            it[ACCESS_TOKEN_KEY] = TokenCrypto.encrypt(tokens.accessToken)
-            it[REFRESH_TOKEN_KEY] = TokenCrypto.encrypt(tokens.refreshToken)
+            if (encryptedAccess != null && encryptedRefresh != null) {
+                it[ACCESS_TOKEN_KEY] = encryptedAccess
+                it[REFRESH_TOKEN_KEY] = encryptedRefresh
+            } else {
+                // Keystore unusable on this device: keep the session in memory
+                // only rather than writing plaintext tokens to disk.
+                it.remove(ACCESS_TOKEN_KEY)
+                it.remove(REFRESH_TOKEN_KEY)
+            }
         }
         cachedTokens = TokenSnapshot(tokens.accessToken, tokens.refreshToken)
         cacheLoaded = true
@@ -101,8 +110,9 @@ private object TokenCrypto {
     private const val ENCRYPTED_PREFIX = "v1"
     private const val GCM_TAG_LENGTH_BITS = 128
 
-    fun encrypt(plainText: String): String {
-        val secretKey = getOrCreateSecretKey() ?: return plainText
+    /** Returns null when the Keystore is unusable; callers must not persist the plaintext. */
+    fun encrypt(plainText: String): String? {
+        val secretKey = getOrCreateSecretKey() ?: return null
         return runCatching {
             val cipher = Cipher.getInstance(TRANSFORMATION)
             cipher.init(Cipher.ENCRYPT_MODE, secretKey)
@@ -111,7 +121,7 @@ private object TokenCrypto {
                 cipher.doFinal(plainText.toByteArray(Charsets.UTF_8))
             )
             "$ENCRYPTED_PREFIX:$iv:$cipherText"
-        }.getOrElse { plainText }
+        }.getOrNull()
     }
 
     fun decrypt(storedValue: String): String? {
