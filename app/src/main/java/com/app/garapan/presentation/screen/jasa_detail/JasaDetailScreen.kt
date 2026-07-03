@@ -435,7 +435,7 @@ fun JasaDetailScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp)
                     ) {
-                        items(uiState.portfolios) { portfolio ->
+                        items(uiState.portfolios, key = { it.id }) { portfolio ->
                             PortfolioCard(portfolio = portfolio)
                         }
                     }

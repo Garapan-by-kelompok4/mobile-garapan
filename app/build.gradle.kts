@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.google.services) apply false
@@ -114,16 +113,8 @@ dependencies {
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.gson)
 
-    // Kotlin Serialization
-    implementation(libs.kotlinx.serialization.json)
-
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
-
-    // Room
-    implementation(libs.room.runtime)
-    implementation(libs.room.ktx)
-    ksp(libs.room.compiler)
 
     // DataStore (JWT token storage)
     implementation(libs.datastore.preferences)
@@ -136,11 +127,6 @@ dependencies {
     // Coil (image loading from Cloudinary URLs)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
-
-    // Socket.io (real-time chat — exclude org.json to avoid duplicate class conflict with Android)
-    implementation(libs.socketio.client) {
-        exclude(group = "org.json", module = "json")
-    }
 
     // Firebase (BOM manages all firebase lib versions). The google-services
     // plugin still requires app/google-services.json before it can be enabled.

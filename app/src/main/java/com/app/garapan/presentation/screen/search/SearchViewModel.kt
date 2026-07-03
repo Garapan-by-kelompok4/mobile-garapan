@@ -444,8 +444,7 @@ class SearchViewModel @Inject constructor(
     private fun formatDeadline(deadline: String): String {
         if (deadline.isBlank()) return "-"
         return runCatching {
-            val formatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale("id", "ID"))
-            Instant.parse(deadline).atZone(ZoneId.systemDefault()).format(formatter)
+            Instant.parse(deadline).atZone(ZoneId.systemDefault()).format(DEADLINE_FORMATTER)
         }.getOrDefault(deadline.take(10))
     }
 
@@ -453,5 +452,10 @@ class SearchViewModel @Inject constructor(
         SortOption.PALING_POPULER -> "newest"
         SortOption.RATING_TERTINGGI -> "rating_desc"
         SortOption.HARGA_TERENDAH -> "price_asc"
+    }
+
+    private companion object {
+        val DEADLINE_FORMATTER: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("d MMM yyyy", Locale("id", "ID"))
     }
 }

@@ -302,16 +302,20 @@ class HomeViewModel @Inject constructor(
     private fun formatPublishedDate(publishedAt: String?): String {
         if (publishedAt.isNullOrBlank()) return ""
         return runCatching {
-            val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("id", "ID"))
-            Instant.parse(publishedAt).atZone(ZoneId.systemDefault()).format(formatter)
+            Instant.parse(publishedAt).atZone(ZoneId.systemDefault()).format(LONG_DATE_FORMATTER)
         }.getOrDefault("")
     }
 
     private fun formatProjectDeadline(deadline: String): String {
         if (deadline.isBlank()) return "-"
         return runCatching {
-            val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("id", "ID"))
-            Instant.parse(deadline).atZone(ZoneId.systemDefault()).format(formatter)
+            Instant.parse(deadline).atZone(ZoneId.systemDefault()).format(LONG_DATE_FORMATTER)
         }.getOrDefault(deadline.take(10))
+    }
+
+    private companion object {
+        // DateTimeFormatter is immutable and thread-safe; building it per item is wasted work.
+        val LONG_DATE_FORMATTER: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("id", "ID"))
     }
 }

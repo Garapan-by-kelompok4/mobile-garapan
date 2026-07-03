@@ -3,6 +3,8 @@ package com.app.garapan.presentation.navigation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -31,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -43,6 +46,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.app.garapan.domain.model.Role
+import com.app.garapan.presentation.components.AppPrimaryButton
 import com.app.garapan.presentation.screen.edit_service.EditServiceScreen
 import com.app.garapan.presentation.screen.home.HomeScreen
 import com.app.garapan.presentation.screen.order_history.OrderHistoryScreen
@@ -70,6 +74,7 @@ fun MainShell(
 ) {
     val tabNavController = rememberNavController()
     val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val role = currentUser?.role
 
     LaunchedEffect(Unit) {
@@ -90,6 +95,17 @@ fun MainShell(
         }
     }
 
+    // The splash no longer waits for the profile, so users who quit mid-setup
+    // land here first; send them back to finish once the session resolves.
+    LaunchedEffect(currentUser) {
+        val user = currentUser ?: return@LaunchedEffect
+        if (user.requiresProfileSetup()) {
+            rootNavController.navigate(user.authDestination()) {
+                popUpTo(Routes.MAIN) { inclusive = true }
+            }
+        }
+    }
+
     if (role == null) {
         Box(
             modifier = Modifier
@@ -97,7 +113,11 @@ fun MainShell(
                 .background(Surface),
             contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator(color = BrandNavy)
+            if (uiState.sessionUnavailable) {
+                SessionUnavailableContent(onRetry = viewModel::retrySessionResolve)
+            } else {
+                CircularProgressIndicator(color = BrandNavy)
+            }
         }
         return
     }
@@ -186,6 +206,26 @@ fun MainShell(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun SessionUnavailableContent(onRetry: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(horizontal = 32.dp)
+    ) {
+        Text(
+            text = "Tidak dapat terhubung ke server. Periksa koneksi internetmu.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MutedText,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        AppPrimaryButton(
+            text = "Coba Lagi",
+            onClick = onRetry
+        )
     }
 }
 

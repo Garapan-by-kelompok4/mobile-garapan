@@ -65,6 +65,8 @@ class AuthTokenAuthenticatorTest {
 
         override fun setUser(user: com.app.garapan.domain.model.User) = Unit
 
+        override suspend fun restoreCachedUser(): com.app.garapan.domain.model.User? = null
+
         override fun clear() = Unit
     }
 }

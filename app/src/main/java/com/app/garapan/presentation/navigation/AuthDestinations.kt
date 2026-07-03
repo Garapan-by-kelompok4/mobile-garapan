@@ -4,9 +4,9 @@ import com.app.garapan.domain.model.Role
 import com.app.garapan.domain.model.User
 
 fun User.authDestination(): String =
-    if (isProfileIncomplete()) Routes.setupRoute(role.setupRouteParam()) else Routes.MAIN
+    if (requiresProfileSetup()) Routes.setupRoute(role.setupRouteParam()) else Routes.MAIN
 
-private fun User.isProfileIncomplete(): Boolean =
+fun User.requiresProfileSetup(): Boolean =
     when (role) {
         Role.MAHASISWA -> mahasiswa == null || mahasiswa.university.isBlank() || mahasiswa.bio.isBlank()
         Role.KLIEN -> klien == null || klien.bio.isBlank()

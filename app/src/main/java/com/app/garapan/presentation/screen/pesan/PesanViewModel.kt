@@ -213,15 +213,20 @@ class PesanViewModel @Inject constructor(
         val today = LocalDate.now(zone)
         val date = dateTime.toLocalDate()
         return when {
-            date.isEqual(today) -> dateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
+            date.isEqual(today) -> dateTime.format(TIME_FORMATTER)
             date.isEqual(today.minusDays(1)) -> "Kemarin"
             Duration.between(instant, Instant.now()).toDays() < 7 ->
-                dateTime.format(DateTimeFormatter.ofPattern("EEEE", Locale("id", "ID")))
-            else -> dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yy"))
+                dateTime.format(WEEKDAY_FORMATTER)
+            else -> dateTime.format(SHORT_DATE_FORMATTER)
         }
     }
 
     private companion object {
         const val POLL_INTERVAL_MS = 5_000L
+
+        val TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+        val WEEKDAY_FORMATTER: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("EEEE", Locale("id", "ID"))
+        val SHORT_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yy")
     }
 }

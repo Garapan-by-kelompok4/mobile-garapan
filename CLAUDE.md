@@ -27,11 +27,10 @@ Android app for the GARAPAN IT Freelancer Marketplace — connecting Indonesian 
 | Architecture | MVVM + Clean Architecture |
 | DI | Hilt |
 | HTTP | Retrofit + OkHttp + Coroutines |
-| Local DB | Room |
 | Image | Coil 3.x |
 | Navigation | Jetpack Navigation Compose |
 | Token Storage | DataStore |
-| Chat | Socket.io client |
+| Chat | REST polling (Socket.io per design doc, not yet wired) |
 | Push Notifications | Firebase FCM |
 | Payments | Midtrans SDK |
 

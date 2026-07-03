@@ -68,6 +68,8 @@ class LoadSessionUseCaseTest {
             _currentUser.value = user
         }
 
+        override suspend fun restoreCachedUser(): User? = _currentUser.value
+
         override fun clear() {
             _currentUser.value = null
         }
