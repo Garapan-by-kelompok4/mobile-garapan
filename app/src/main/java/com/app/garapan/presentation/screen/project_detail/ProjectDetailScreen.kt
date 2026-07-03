@@ -27,7 +27,6 @@ import com.composables.icons.lucide.Code
 import com.composables.icons.lucide.Users
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Pencil
-import com.composables.icons.lucide.Share2
 import com.composables.icons.lucide.CircleDollarSign
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -562,14 +561,6 @@ private fun ProjectDetailTopBar(
                     Icon(
                         imageVector = Lucide.Pencil,
                         contentDescription = "Edit proyek",
-                        tint = PrimaryText
-                    )
-                }
-            } else {
-                IconButton(onClick = {}) {
-                    Icon(
-                        imageVector = Lucide.Share2,
-                        contentDescription = "Share",
                         tint = PrimaryText
                     )
                 }

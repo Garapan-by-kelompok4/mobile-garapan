@@ -28,7 +28,6 @@ import androidx.compose.foundation.verticalScroll
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.CircleCheckBig
 import com.composables.icons.lucide.Zap
-import com.composables.icons.lucide.Share2
 import com.composables.icons.lucide.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -864,15 +863,6 @@ private fun JasaDetailBottomBar(
 private fun JasaDetailTopBar(onBack: () -> Unit) {
     AppTopBar(
         title = "Detail Jasa",
-        onBack = onBack,
-        trailing = {
-            IconButton(onClick = {}) {
-                Icon(
-                    imageVector = Lucide.Share2,
-                    contentDescription = "Share",
-                    tint = PrimaryText
-                )
-            }
-        }
+        onBack = onBack
     )
 }
