@@ -3,11 +3,14 @@ package com.app.garapan.data.mapper
 import com.app.garapan.data.remote.dto.CreatePesananRequest
 import com.app.garapan.data.remote.dto.CreatePaymentTokenRequest
 import com.app.garapan.data.remote.dto.PembayaranDto
+import com.app.garapan.data.remote.dto.LaporanDto
 import com.app.garapan.data.remote.dto.PesananDto
 import com.app.garapan.domain.model.CreatePaymentTokenParams
 import com.app.garapan.domain.model.CreatePesananParams
 import com.app.garapan.domain.model.PaymentMethod
 import com.app.garapan.domain.model.PaymentStatus
+import com.app.garapan.domain.model.Laporan
+import com.app.garapan.domain.model.LaporanStatus
 import com.app.garapan.domain.model.Pembayaran
 import com.app.garapan.domain.model.Pesanan
 import com.app.garapan.domain.model.PesananPaymentSummary
@@ -29,7 +32,19 @@ fun PesananDto.toDomain(): Pesanan = Pesanan(
     clientLabel = klien.resolveDisplayName(),
     workerUserId = mahasiswa?.user?.id,
     clientUserId = klien?.user?.id,
-    payment = pembayaran?.toSummary()
+    payment = pembayaran?.toSummary(),
+    laporan = laporan?.firstOrNull()?.toDomain()
+)
+
+fun LaporanDto.toDomain(): Laporan = Laporan(
+    id = id,
+    reporterId = reporterId,
+    reason = reason,
+    status = LaporanStatus.fromApiValue(status),
+    resolutionNote = resolutionNote,
+    refundAmount = refundAmount,
+    createdAt = createdAt,
+    resolvedAt = resolvedAt
 )
 
 private fun com.app.garapan.data.remote.dto.PesananMahasiswaDto?.resolveDisplayName(): String {

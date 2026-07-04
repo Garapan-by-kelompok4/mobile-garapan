@@ -14,7 +14,8 @@ data class PesananDto(
     val jasa: PesananJasaDto? = null,
     val klien: PesananKlienDto? = null,
     val mahasiswa: PesananMahasiswaDto? = null,
-    val pembayaran: PesananPembayaranDto? = null
+    val pembayaran: PesananPembayaranDto? = null,
+    val laporan: List<LaporanDto>? = null
 )
 
 data class PesananJasaDto(
@@ -58,4 +59,15 @@ data class PesananListResponseDto(
 
 data class CreatePesananRequest(
     val jasaId: String
+)
+
+data class LaporanDto(
+    val id: String,
+    val reporterId: String,
+    val reason: String,
+    val status: String,
+    val resolutionNote: String? = null,
+    val refundAmount: Double? = null,
+    val createdAt: String,
+    val resolvedAt: String? = null
 )

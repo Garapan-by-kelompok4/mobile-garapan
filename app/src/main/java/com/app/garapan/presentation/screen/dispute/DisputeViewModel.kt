@@ -23,7 +23,10 @@ data class DisputeUiState(
     val isLoading: Boolean = false,
     val isSubmitted: Boolean = false,
     val errorMessage: String? = null
-)
+) {
+    val reasonLength: Int get() = reason.length
+    val canSubmit: Boolean get() = reason.trim().length >= DisputeValidation.MIN_REASON_LENGTH && !isLoading
+}
 
 sealed interface DisputeEvent {
     data class ShowMessage(val message: String) : DisputeEvent
@@ -45,13 +48,16 @@ class DisputeViewModel @Inject constructor(
     val events: SharedFlow<DisputeEvent> = _events.asSharedFlow()
 
     fun onReasonChanged(value: String) {
-        _uiState.update { it.copy(reason = value, errorMessage = null) }
+        if (value.length <= DisputeValidation.MAX_REASON_LENGTH) {
+            _uiState.update { it.copy(reason = value, errorMessage = null) }
+        }
     }
 
     fun onSubmitDispute() {
         val reason = _uiState.value.reason.trim()
-        if (reason.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "Alasan dispute tidak boleh kosong.") }
+        val validationError = DisputeValidation.validateReason(reason)
+        if (validationError != null) {
+            _uiState.update { it.copy(errorMessage = validationError) }
             return
         }
 
@@ -60,7 +66,11 @@ class DisputeViewModel @Inject constructor(
             when (val result = submitDisputeUseCase(pesananId, reason)) {
                 is Resource.Success -> {
                     _uiState.update { it.copy(isLoading = false, isSubmitted = true) }
-                    _events.emit(DisputeEvent.ShowMessage("Dispute berhasil diajukan."))
+                    _events.emit(
+                        DisputeEvent.ShowMessage(
+                            "Dispute berhasil diajukan. Admin akan meninjau dan dana escrow ditahan sementara."
+                        )
+                    )
                     _events.emit(DisputeEvent.NavigateBack)
                 }
                 is Resource.Error -> {

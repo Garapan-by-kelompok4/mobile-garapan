@@ -264,7 +264,22 @@ fun OrderDetailScreen(
                         )
                     }
                     if (uiState.showDisputedInfoBanner) {
-                        DisputedInfoBanner()
+                        DisputedInfoBanner(
+                            title = uiState.disputedBannerTitle,
+                            message = uiState.disputedBannerMessage
+                        )
+                    }
+                    if (uiState.showDisputeStatusCard) {
+                        DisputeStatusCard(
+                            title = uiState.disputeCardTitle,
+                            reason = uiState.disputeCardReason,
+                            statusLabel = uiState.disputeCardStatusLabel,
+                            resolutionNote = uiState.disputeCardResolutionNote,
+                            outcomeLabel = uiState.disputeCardOutcomeLabel,
+                            resolvedAt = uiState.disputeCardResolvedAt,
+                            showWalletLink = uiState.showWalletLink,
+                            onWalletClick = { navController.navigate(Routes.WALLET) }
+                        )
                     }
                     DetailCard {
                         PesananStatusBadge(status = uiState.status)
@@ -339,7 +354,7 @@ private fun ChatIconButton(onClick: () -> Unit) {
 }
 
 @Composable
-private fun DisputedInfoBanner() {
+private fun DisputedInfoBanner(title: String, message: String) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -349,16 +364,105 @@ private fun DisputedInfoBanner() {
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
-            text = "Pesanan dalam sengketa",
+            text = title,
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontWeight = FontWeight.Bold,
                 color = ErrorRed
             )
         )
         Text(
-            text = "Klien mengajukan komplain. Menunggu keputusan admin.",
+            text = message,
             style = MaterialTheme.typography.bodySmall.copy(color = PrimaryText)
         )
+    }
+}
+
+@Composable
+private fun DisputeStatusCard(
+    title: String,
+    reason: String,
+    statusLabel: String,
+    resolutionNote: String?,
+    outcomeLabel: String?,
+    resolvedAt: String?,
+    showWalletLink: Boolean,
+    onWalletClick: () -> Unit
+) {
+    DetailCard {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall.copy(
+                fontWeight = FontWeight.Bold,
+                color = PrimaryText
+            )
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = statusLabel,
+            style = MaterialTheme.typography.labelLarge.copy(
+                fontWeight = FontWeight.SemiBold,
+                color = ErrorRed
+            )
+        )
+        if (reason.isNotBlank()) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "Alasan",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = SecondaryText
+                )
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = reason,
+                style = MaterialTheme.typography.bodyMedium.copy(color = PrimaryText)
+            )
+        }
+        outcomeLabel?.let { outcome ->
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = outcome,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = AccentBlue
+                )
+            )
+        }
+        resolutionNote?.takeIf { it.isNotBlank() }?.let { note ->
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "Catatan Admin",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = SecondaryText
+                )
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = note,
+                style = MaterialTheme.typography.bodyMedium.copy(color = PrimaryText)
+            )
+        }
+        resolvedAt?.let { date ->
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Diselesaikan: $date",
+                style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText)
+            )
+        }
+        if (showWalletLink) {
+            Spacer(modifier = Modifier.height(12.dp))
+            TextButton(onClick = onWalletClick) {
+                Text(
+                    text = "Lihat Dompet",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = AccentBlue
+                    )
+                )
+            }
+        }
     }
 }
 

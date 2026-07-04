@@ -25,6 +25,7 @@ data class WalletTransaction(
     val direction: WalletTransactionDirection,
     val amount: String,
     val status: WalletTransactionStatus,
+    val orderStatus: PesananStatus? = null,
     val createdAt: String
 )
 

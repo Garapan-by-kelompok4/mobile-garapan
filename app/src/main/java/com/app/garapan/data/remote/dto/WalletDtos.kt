@@ -18,6 +18,7 @@ data class WalletTransactionDto(
     val direction: String,
     val amount: String,
     val status: String,
+    val orderStatus: String? = null,
     val createdAt: String
 )
 

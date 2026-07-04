@@ -5,6 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.ActiveOrder
+import com.app.garapan.domain.model.DisputeOutcome
+import com.app.garapan.domain.model.DisputeOutcomeResolver
+import com.app.garapan.domain.model.Laporan
+import com.app.garapan.domain.model.LaporanStatus
 import com.app.garapan.domain.model.Pesanan
 import com.app.garapan.domain.model.PesananStatus
 import com.app.garapan.domain.model.Role
@@ -53,6 +57,16 @@ data class OrderDetailUiState(
     val canChat: Boolean = false,
     val conversationId: String? = null,
     val showDisputedInfoBanner: Boolean = false,
+    val disputedBannerTitle: String = "",
+    val disputedBannerMessage: String = "",
+    val showDisputeStatusCard: Boolean = false,
+    val disputeCardTitle: String = "",
+    val disputeCardReason: String = "",
+    val disputeCardStatusLabel: String = "",
+    val disputeCardResolutionNote: String? = null,
+    val disputeCardOutcomeLabel: String? = null,
+    val disputeCardResolvedAt: String? = null,
+    val showWalletLink: Boolean = false,
     val isLoading: Boolean = false,
     val isActionLoading: Boolean = false,
     val errorMessage: String? = null,
@@ -340,10 +354,30 @@ class OrderDetailViewModel @Inject constructor(
                 reviewButtonLabel = "Beri Ulasan",
                 canPay = canPay(pesanan.status, isBuyer),
                 canCancel = canCancel(pesanan.status, isBuyer),
-                canDispute = canDispute(pesanan.status, isBuyer),
+                canDispute = OrderDisputeEligibility.canDispute(
+                    status = pesanan.status,
+                    isParticipant = isBuyer || isProvider
+                ),
                 canChat = !pesanan.conversationId.isNullOrBlank(),
                 conversationId = pesanan.conversationId,
-                showDisputedInfoBanner = showDisputedInfoBanner(pesanan.status, isProvider),
+                showDisputedInfoBanner = OrderDisputeEligibility.showDisputedInfoBanner(pesanan.status),
+                disputedBannerTitle = DisputeDisplayMapper.bannerTitle(pesanan.status),
+                disputedBannerMessage = DisputeDisplayMapper.bannerMessage(
+                    laporan = pesanan.laporan,
+                    currentUserId = currentUserId
+                ),
+                showDisputeStatusCard = DisputeDisplayMapper.showStatusCard(pesanan.status, pesanan.laporan),
+                disputeCardTitle = DisputeDisplayMapper.cardTitle(pesanan.laporan, currentUserId),
+                disputeCardReason = pesanan.laporan?.reason.orEmpty(),
+                disputeCardStatusLabel = DisputeDisplayMapper.statusLabel(pesanan.laporan?.status),
+                disputeCardResolutionNote = pesanan.laporan?.resolutionNote,
+                disputeCardOutcomeLabel = DisputeDisplayMapper.outcomeLabel(
+                    laporan = pesanan.laporan,
+                    orderStatus = pesanan.status,
+                    isBuyer = isBuyer
+                ),
+                disputeCardResolvedAt = pesanan.laporan?.resolvedAt?.let(PesananDisplayMapper::formatOrderDate),
+                showWalletLink = DisputeDisplayMapper.showWalletLink(pesanan.laporan, pesanan.status),
                 isLoading = false,
                 isActionLoading = false,
                 errorMessage = null
@@ -368,12 +402,6 @@ class OrderDetailViewModel @Inject constructor(
 
     private fun canCancel(status: PesananStatus, isBuyer: Boolean): Boolean =
         isBuyer && status == PesananStatus.PENDING
-
-    private fun canDispute(status: PesananStatus, isBuyer: Boolean): Boolean =
-        isBuyer && (status == PesananStatus.IN_PROGRESS || status == PesananStatus.DELIVERED)
-
-    private fun showDisputedInfoBanner(status: PesananStatus, isProvider: Boolean): Boolean =
-        isProvider && status == PesananStatus.DISPUTED
 
     private fun Pesanan.isBuyerForCurrentUser(): Boolean {
         return OrderParticipantResolver.isBuyer(
@@ -423,4 +451,74 @@ object OrderParticipantResolver {
 object OrderReviewEligibility {
     fun canReview(status: PesananStatus, isBuyer: Boolean): Boolean =
         isBuyer && status == PesananStatus.COMPLETED
+}
+
+object OrderDisputeEligibility {
+    fun canDispute(status: PesananStatus, isParticipant: Boolean): Boolean =
+        isParticipant && (status == PesananStatus.IN_PROGRESS || status == PesananStatus.DELIVERED)
+
+    fun showDisputedInfoBanner(status: PesananStatus): Boolean =
+        status == PesananStatus.DISPUTED
+}
+
+object DisputeDisplayMapper {
+    fun bannerTitle(status: PesananStatus): String =
+        if (status == PesananStatus.DISPUTED) "Pesanan dalam sengketa" else ""
+
+    fun bannerMessage(laporan: Laporan?, currentUserId: String?): String {
+        if (laporan == null) {
+            return "Menunggu keputusan admin."
+        }
+        return when {
+            laporan.reporterId == currentUserId ->
+                "Sengketa Anda sedang ditinjau admin. Dana escrow ditahan sementara."
+            else ->
+                "Pihak lain mengajukan sengketa. Menunggu keputusan admin."
+        }
+    }
+
+    fun showStatusCard(status: PesananStatus, laporan: Laporan?): Boolean =
+        laporan != null || status == PesananStatus.DISPUTED
+
+    fun cardTitle(laporan: Laporan?, currentUserId: String?): String {
+        if (laporan == null) return "Status Sengketa"
+        return when {
+            laporan.reporterId == currentUserId -> "Anda mengajukan sengketa"
+            else -> "Pihak lain mengajukan sengketa"
+        }
+    }
+
+    fun statusLabel(status: LaporanStatus?): String = when (status) {
+        LaporanStatus.PENDING -> "Menunggu tinjauan admin"
+        LaporanStatus.RESOLVED -> "Selesai"
+        LaporanStatus.REJECTED -> "Ditolak admin"
+        null -> "Menunggu tinjauan admin"
+    }
+
+    fun outcomeLabel(laporan: Laporan?, orderStatus: PesananStatus, isBuyer: Boolean): String? {
+        val outcome = DisputeOutcomeResolver.resolveOutcome(
+            laporanStatus = laporan?.status,
+            orderStatus = orderStatus,
+            refundAmount = laporan?.refundAmount
+        ) ?: return null
+        return when (outcome) {
+            DisputeOutcome.RELEASE ->
+                if (isBuyer) "Pesanan selesai — dana dicairkan ke freelancer"
+                else "Dana masuk dompet Anda"
+            DisputeOutcome.REFUND ->
+                if (isBuyer) "Refund penuh ke dompet Anda"
+                else "Pesanan dibatalkan — dana dikembalikan ke klien"
+            DisputeOutcome.PARTIAL_REFUND -> {
+                val refund = laporan?.refundAmount?.let { CurrencyFormatter.formatRupiah(it) }.orEmpty()
+                if (isBuyer) "Refund sebagian $refund ke dompet Anda"
+                else "Sisa dana dicairkan ke dompet Anda"
+            }
+            DisputeOutcome.REJECT -> "Sengketa ditolak — lanjutkan pesanan"
+        }
+    }
+
+    fun showWalletLink(laporan: Laporan?, orderStatus: PesananStatus): Boolean {
+        if (laporan?.status != LaporanStatus.RESOLVED) return false
+        return orderStatus == PesananStatus.COMPLETED || orderStatus == PesananStatus.CANCELLED
+    }
 }

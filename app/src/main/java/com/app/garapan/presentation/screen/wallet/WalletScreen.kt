@@ -56,6 +56,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.app.garapan.domain.model.PesananStatus
 import com.app.garapan.domain.model.WalletSummary
 import com.app.garapan.domain.model.WalletTransaction
 import com.app.garapan.domain.model.WalletTransactionDirection
@@ -383,7 +384,12 @@ private fun TransactionCard(transaction: WalletTransaction, onClick: () -> Unit)
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                StatusChip(transaction.status)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    StatusChip(transaction.status)
+                    if (transaction.type == WalletTransactionType.ESCROW) {
+                        EscrowOrderStatusChip(transaction.orderStatus)
+                    }
+                }
             }
             Spacer(modifier = Modifier.width(8.dp))
             Column(horizontalAlignment = Alignment.End) {
@@ -427,6 +433,25 @@ private fun WalletIcon(icon: ImageVector, color: Color) {
     ) {
         Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(22.dp))
     }
+}
+
+@Composable
+private fun EscrowOrderStatusChip(orderStatus: PesananStatus?) {
+    val (label, color) = when (orderStatus) {
+        PesananStatus.DISPUTED -> "Sengketa" to ErrorRed
+        PesananStatus.DELIVERED -> "Menunggu terima" to StarYellow
+        PesananStatus.IN_PROGRESS -> "Dikerjakan" to AccentBlue
+        else -> "Escrow" to SecondaryText
+    }
+    Text(
+        text = label,
+        modifier = Modifier
+            .clip(RoundedCornerShape(50.dp))
+            .background(color.copy(alpha = 0.12f))
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        color = color,
+        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold)
+    )
 }
 
 @Composable

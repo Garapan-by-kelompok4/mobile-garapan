@@ -6,6 +6,7 @@ import com.app.garapan.data.remote.dto.WalletTransactionPageDto
 import com.app.garapan.data.remote.dto.WithdrawalDto
 import com.app.garapan.data.remote.dto.WithdrawalPageDto
 import com.app.garapan.data.remote.dto.WithdrawalRequestDto
+import com.app.garapan.domain.model.PesananStatus
 import com.app.garapan.domain.model.WalletSummary
 import com.app.garapan.domain.model.WalletTransaction
 import com.app.garapan.domain.model.WalletTransactionDirection
@@ -41,6 +42,7 @@ fun WalletTransactionDto.toDomain() = WalletTransaction(
     direction = direction.toWalletDirection(),
     amount = amount,
     status = status.toWalletStatus(),
+    orderStatus = orderStatus?.let { PesananStatus.fromApiValue(it) },
     createdAt = createdAt
 )
 

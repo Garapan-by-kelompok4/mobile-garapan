@@ -16,7 +16,8 @@ data class Pesanan(
     val clientLabel: String,
     val workerUserId: String?,
     val clientUserId: String?,
-    val payment: PesananPaymentSummary?
+    val payment: PesananPaymentSummary?,
+    val laporan: Laporan? = null
 )
 
 data class PesananPaymentSummary(

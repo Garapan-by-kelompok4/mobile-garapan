@@ -193,12 +193,22 @@ class NotificationsViewModel @Inject constructor(
     private fun toNotificationItem(notification: Notification) = NotificationItem(
         id = notification.id,
         title = notification.title,
-        body = notification.body,
+        body = formatNotificationBody(notification),
         type = notification.type,
         read = notification.read,
         timeLabel = formatRelativeTime(notification.createdAt),
         meta = notification.meta
     )
+
+    private fun formatNotificationBody(notification: Notification): String {
+        return when (notification.type) {
+            NotificationType.DISPUTE_CREATED ->
+                notification.body.ifBlank { "Pesanan disengketakan. Ketuk untuk melihat detail." }
+            NotificationType.DISPUTE_RESOLVED ->
+                notification.body.ifBlank { "Sengketa diselesaikan — lihat detail pesanan." }
+            else -> notification.body
+        }
+    }
 
     private fun formatRelativeTime(createdAt: String): String {
         return runCatching {
