@@ -14,6 +14,7 @@ import com.app.garapan.domain.usecase.GetWalletTransactionsUseCase
 import com.app.garapan.domain.usecase.GetWithdrawalsUseCase
 import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
 import com.app.garapan.domain.usecase.RequestWithdrawalUseCase
+import com.app.garapan.presentation.util.CurrencyFormatter
 import com.app.garapan.presentation.util.UserMessageLocalizer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
@@ -114,7 +115,8 @@ class WalletViewModel @Inject constructor(
         _uiState.update { it.copy(showWithdrawalSheet = false) }
     }
 
-    fun onWithdrawalAmountChanged(value: String) = updateForm { it.copy(amount = value, errorMessage = null) }
+    fun onWithdrawalAmountChanged(value: String) =
+        updateForm { it.copy(amount = CurrencyFormatter.formatRupiahInput(value), errorMessage = null) }
     fun onBankNameChanged(value: String) = updateForm { it.copy(bankName = value, errorMessage = null) }
     fun onAccountNumberChanged(value: String) = updateForm { it.copy(accountNumber = value, errorMessage = null) }
     fun onAccountHolderNameChanged(value: String) = updateForm { it.copy(accountHolderName = value, errorMessage = null) }
@@ -216,7 +218,7 @@ class WalletViewModel @Inject constructor(
     }
 
     private fun validateWithdrawal(form: WithdrawalFormState, available: String?): String? {
-        val amount = form.amount.trim().toBigDecimalOrNull()
+        val amount = CurrencyFormatter.parseRupiahAmount(form.amount)
             ?: return "Masukkan jumlah penarikan yang valid."
         if (amount <= BigDecimal.ZERO || amount.scale() > 2) return "Masukkan jumlah penarikan yang valid."
         val availableAmount = available?.toBigDecimalOrNull()
@@ -229,7 +231,8 @@ class WalletViewModel @Inject constructor(
         return null
     }
 
-    private fun normalizeAmount(value: String): String = value.trim().toBigDecimal().setScale(2).toPlainString()
+    private fun normalizeAmount(value: String): String =
+        CurrencyFormatter.parseRupiahAmount(value)?.setScale(2)?.toPlainString().orEmpty()
 
     private fun localizeWithdrawalError(message: String): String {
         val lower = message.lowercase()
