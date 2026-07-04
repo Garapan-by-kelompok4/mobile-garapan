@@ -19,12 +19,25 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import javax.inject.Inject
 
+data class BlogInlineStyle(
+    val start: Int,
+    val end: Int,
+    val bold: Boolean = false,
+    val italic: Boolean = false
+)
+
 sealed class BlogBodyBlock {
-    data class Paragraph(val text: String) : BlogBodyBlock()
-    data class Heading(val level: Int, val text: String) : BlogBodyBlock()
-    data class Quote(val text: String) : BlogBodyBlock()
-    data class BulletList(val items: List<String>) : BlogBodyBlock()
-    data class OrderedList(val items: List<String>) : BlogBodyBlock()
+    data class Paragraph(val text: String, val styles: List<BlogInlineStyle> = emptyList()) : BlogBodyBlock()
+    data class Heading(val level: Int, val text: String, val styles: List<BlogInlineStyle> = emptyList()) : BlogBodyBlock()
+    data class Quote(val text: String, val styles: List<BlogInlineStyle> = emptyList()) : BlogBodyBlock()
+    data class BulletList(
+        val items: List<String>,
+        val itemStyles: List<List<BlogInlineStyle>> = emptyList()
+    ) : BlogBodyBlock()
+    data class OrderedList(
+        val items: List<String>,
+        val itemStyles: List<List<BlogInlineStyle>> = emptyList()
+    ) : BlogBodyBlock()
 }
 
 data class RecommendationItem(
