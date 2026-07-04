@@ -127,7 +127,8 @@ class EditProjectViewModel @Inject constructor(
             when (val result = getProjectDetailUseCase(projectId)) {
                 is Resource.Success -> {
                     val project = result.data
-                    val budgetText = project.budget.toLong().toString()
+                    val minimumBudgetText = (project.minBudget ?: project.budget).toLong().toString()
+                    val maximumBudgetText = (project.maxBudget ?: project.budget).toLong().toString()
                     _uiState.update { state ->
                         state.copy(
                             title = project.title,
@@ -135,8 +136,8 @@ class EditProjectViewModel @Inject constructor(
                                 kategoriItems.firstOrNull { it.id == project.kategoriId }?.name.orEmpty()
                             },
                             description = project.description,
-                            minimumBudget = budgetText,
-                            maximumBudget = budgetText,
+                            minimumBudget = minimumBudgetText,
+                            maximumBudget = maximumBudgetText,
                             deadline = formatIsoToDisplay(project.deadline),
                             existingImageUrl = project.imageUrl,
                             isLoading = false,
@@ -232,6 +233,8 @@ class EditProjectViewModel @Inject constructor(
         }
 
         val budget = resolveBudget(state)
+        val minBudget = state.minimumBudget.toDoubleOrNull()
+        val maxBudget = state.maximumBudget.toDoubleOrNull()
         val deadlineIso = parseDeadlineToIso(state.deadline)
         if (deadlineIso == null) {
             viewModelScope.launch {
@@ -249,6 +252,8 @@ class EditProjectViewModel @Inject constructor(
                         title = state.title.trim(),
                         description = state.description.trim(),
                         budget = budget,
+                        minBudget = minBudget,
+                        maxBudget = maxBudget,
                         deadline = deadlineIso,
                         kategoriId = kategoriId,
                         image = state.preparedImage

@@ -58,6 +58,8 @@ interface ProjectApi {
         @Part("title") title: RequestBody,
         @Part("description") description: RequestBody,
         @Part("budget") budget: RequestBody,
+        @Part("minBudget") minBudget: RequestBody? = null,
+        @Part("maxBudget") maxBudget: RequestBody? = null,
         @Part("deadline") deadline: RequestBody,
         @Part image: MultipartBody.Part
     ): ProjectDto
@@ -105,6 +107,8 @@ interface ProjectApi {
         @Part("title") title: RequestBody? = null,
         @Part("description") description: RequestBody? = null,
         @Part("budget") budget: RequestBody? = null,
+        @Part("minBudget") minBudget: RequestBody? = null,
+        @Part("maxBudget") maxBudget: RequestBody? = null,
         @Part("deadline") deadline: RequestBody? = null,
         @Part("kategoriId") kategoriId: RequestBody? = null,
         @Part("status") status: RequestBody? = null,

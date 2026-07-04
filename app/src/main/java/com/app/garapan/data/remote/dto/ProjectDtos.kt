@@ -8,6 +8,8 @@ data class ProjectDto(
     val title: String,
     val description: String,
     val budget: String,
+    val minBudget: String? = null,
+    val maxBudget: String? = null,
     val deadline: String,
     val imageUrl: String? = null,
     val status: String,
@@ -49,6 +51,8 @@ data class CreateProjectRequest(
     val title: String,
     val description: String,
     val budget: String,
+    val minBudget: String? = null,
+    val maxBudget: String? = null,
     val deadline: String,
     val kategoriId: String
 )
@@ -57,6 +61,8 @@ data class UpdateProjectRequest(
     val title: String? = null,
     val description: String? = null,
     val budget: String? = null,
+    val minBudget: String? = null,
+    val maxBudget: String? = null,
     val deadline: String? = null,
     val kategoriId: String? = null,
     val status: String? = null,

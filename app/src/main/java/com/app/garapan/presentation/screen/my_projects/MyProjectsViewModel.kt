@@ -157,7 +157,7 @@ class MyProjectsViewModel @Inject constructor(
     private fun toMyProjectItem(project: Project) = MyProjectItem(
         id = project.id,
         title = project.title,
-        budget = CurrencyFormatter.formatRupiah(project.budget),
+        budget = CurrencyFormatter.formatRupiahRange(project.minBudget, project.maxBudget, project.budget),
         category = project.kategoriName.ifBlank { "Proyek" },
         deadline = formatDeadline(project.deadline),
         status = when (project.status) {

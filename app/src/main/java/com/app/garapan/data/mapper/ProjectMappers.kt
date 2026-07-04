@@ -21,6 +21,8 @@ fun ProjectDto.toDomain(): Project = Project(
     title = title,
     description = description,
     budget = budget.toDoubleOrNull() ?: 0.0,
+    minBudget = minBudget?.toDoubleOrNull(),
+    maxBudget = maxBudget?.toDoubleOrNull(),
     deadline = deadline,
     status = ProjectStatus.fromApiValue(status),
     imageUrl = imageUrl.orEmpty(),
@@ -49,6 +51,8 @@ fun CreateProjectParams.toRequest(): CreateProjectRequest = CreateProjectRequest
     title = title,
     description = description,
     budget = budget.toProjectBudgetString(),
+    minBudget = minBudget?.toProjectBudgetString(),
+    maxBudget = maxBudget?.toProjectBudgetString(),
     deadline = deadline,
     kategoriId = kategoriId
 )
@@ -57,6 +61,8 @@ fun UpdateProjectParams.toRequest(): UpdateProjectRequest = UpdateProjectRequest
     title = title,
     description = description,
     budget = budget?.toProjectBudgetString(),
+    minBudget = minBudget?.toProjectBudgetString(),
+    maxBudget = maxBudget?.toProjectBudgetString(),
     deadline = deadline,
     kategoriId = kategoriId,
     status = status?.name
@@ -67,6 +73,8 @@ data class ProjectMultipartRequest(
     val title: RequestBody,
     val description: RequestBody,
     val budget: RequestBody,
+    val minBudget: RequestBody? = null,
+    val maxBudget: RequestBody? = null,
     val deadline: RequestBody,
     val image: MultipartBody.Part
 )
@@ -83,6 +91,8 @@ fun CreateProjectParams.toMultipartRequest(): ProjectMultipartRequest {
         title = title.toRequestBody("text/plain".toMediaType()),
         description = description.toRequestBody("text/plain".toMediaType()),
         budget = budget.toProjectBudgetString().toRequestBody("text/plain".toMediaType()),
+        minBudget = minBudget?.toProjectBudgetString()?.toRequestBody("text/plain".toMediaType()),
+        maxBudget = maxBudget?.toProjectBudgetString()?.toRequestBody("text/plain".toMediaType()),
         deadline = deadline.toRequestBody("text/plain".toMediaType()),
         image = imagePart
     )
@@ -100,6 +110,8 @@ fun UpdateProjectParams.toMultipartRequest(): Pair<ProjectMultipartFields, Multi
         title = title?.toRequestBody("text/plain".toMediaType()),
         description = description?.toRequestBody("text/plain".toMediaType()),
         budget = budget?.toProjectBudgetString()?.toRequestBody("text/plain".toMediaType()),
+        minBudget = minBudget?.toProjectBudgetString()?.toRequestBody("text/plain".toMediaType()),
+        maxBudget = maxBudget?.toProjectBudgetString()?.toRequestBody("text/plain".toMediaType()),
         deadline = deadline?.toRequestBody("text/plain".toMediaType()),
         kategoriId = kategoriId?.toRequestBody("text/plain".toMediaType()),
         status = status?.name?.toRequestBody("text/plain".toMediaType())
@@ -110,6 +122,8 @@ data class ProjectMultipartFields(
     val title: RequestBody? = null,
     val description: RequestBody? = null,
     val budget: RequestBody? = null,
+    val minBudget: RequestBody? = null,
+    val maxBudget: RequestBody? = null,
     val deadline: RequestBody? = null,
     val kategoriId: RequestBody? = null,
     val status: RequestBody? = null

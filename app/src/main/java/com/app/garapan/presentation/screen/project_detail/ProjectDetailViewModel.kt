@@ -134,14 +134,15 @@ class ProjectDetailViewModel @Inject constructor(
             _events.tryEmit(ProjectDetailEvent.ShowMessage("Harga yang diajukan tidak valid."))
             return
         }
-        val budget = loadedProject?.budget
-        if (budget != null) {
-            val minAllowed = budget * MIN_PROPOSAL_RATIO
-            if (price < minAllowed || price > budget) {
+        val project = loadedProject
+        if (project != null) {
+            val minAllowed = project.minBudget ?: (project.budget * MIN_PROPOSAL_RATIO)
+            val maxAllowed = project.maxBudget ?: project.budget
+            if (price < minAllowed || price > maxAllowed) {
                 _events.tryEmit(
                     ProjectDetailEvent.ShowMessage(
                         "Harga yang diajukan harus antara ${CurrencyFormatter.formatRupiah(minAllowed)} " +
-                            "dan ${CurrencyFormatter.formatRupiah(budget)} (sesuai anggaran proyek)."
+                            "dan ${CurrencyFormatter.formatRupiah(maxAllowed)} (sesuai anggaran proyek)."
                     )
                 )
                 return
@@ -332,9 +333,9 @@ class ProjectDetailViewModel @Inject constructor(
             category = kategoriName.ifBlank { "Proyek" },
             title = title,
             deadline = formatDeadline(deadline),
-            budget = CurrencyFormatter.formatRupiah(budget),
-            proposalPriceRangeHint = "Rentang harga: ${CurrencyFormatter.formatRupiah(budget * MIN_PROPOSAL_RATIO)} " +
-                "- ${CurrencyFormatter.formatRupiah(budget)}",
+            budget = CurrencyFormatter.formatRupiahRange(minBudget, maxBudget, budget),
+            proposalPriceRangeHint = "Rentang harga: ${CurrencyFormatter.formatRupiah(minBudget ?: (budget * MIN_PROPOSAL_RATIO))} " +
+                "- ${CurrencyFormatter.formatRupiah(maxBudget ?: budget)}",
             clientName = clientName.ifBlank { "Klien" },
             clientType = kategoriName.ifBlank { "Klien" },
             description = description,

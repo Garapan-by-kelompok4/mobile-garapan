@@ -186,6 +186,8 @@ class PostProjectViewModel @Inject constructor(
         }
 
         val budget = resolveBudget(state)
+        val minBudget = state.minimumBudget.toDoubleOrNull()
+        val maxBudget = state.maximumBudget.toDoubleOrNull()
         val deadlineIso = parseDeadlineToIso(state.deadline)
         if (deadlineIso == null) {
             viewModelScope.launch {
@@ -202,6 +204,8 @@ class PostProjectViewModel @Inject constructor(
                         title = state.title.trim(),
                         description = state.description.trim(),
                         budget = budget,
+                        minBudget = minBudget,
+                        maxBudget = maxBudget,
                         deadline = deadlineIso,
                         kategoriId = kategoriId,
                         image = state.preparedImage

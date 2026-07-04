@@ -435,7 +435,7 @@ class SearchViewModel @Inject constructor(
         workerName = project.clientName.ifBlank { "Klien" },
         rating = 0f,
         reviewCount = 0,
-        price = CurrencyFormatter.formatRupiah(project.budget),
+        price = CurrencyFormatter.formatRupiahRange(project.minBudget, project.maxBudget, project.budget),
         duration = formatDeadline(project.deadline),
         imageUrl = project.imageUrl,
         type = SearchResultType.PROYEK

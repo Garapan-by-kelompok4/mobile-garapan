@@ -274,7 +274,7 @@ class HomeViewModel @Inject constructor(
     private fun toProjectItem(project: Project) = ProjectItem(
         id = project.id,
         title = project.title,
-        budget = CurrencyFormatter.formatRupiah(project.budget),
+        budget = CurrencyFormatter.formatRupiahRange(project.minBudget, project.maxBudget, project.budget),
         category = project.kategoriName.ifBlank { "Proyek" },
         deadline = formatProjectDeadline(project.deadline),
         clientName = project.clientName.ifBlank { "Klien" },
