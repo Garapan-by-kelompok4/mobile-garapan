@@ -26,6 +26,11 @@ class ReviewRepositoryImpl @Inject constructor(
             parseReviewList(reviewApi.getReviews(jasaId)).map { it.toDomain() }
         }
 
+    override suspend fun getReviewByPesanan(pesananId: String): Resource<Review> =
+        safeApiCall {
+            parseReview(reviewApi.getReviewByPesanan(pesananId)).toDomain()
+        }
+
     override suspend fun submitReview(params: CreateReviewParams): Resource<Review> =
         safeApiCall {
             parseReview(reviewApi.submitReview(params.toRequest())).toDomain()

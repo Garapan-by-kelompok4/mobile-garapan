@@ -14,7 +14,7 @@ import com.app.garapan.domain.usecase.CompletePesananUseCase
 import com.app.garapan.domain.usecase.CreatePaymentTokenUseCase
 import com.app.garapan.domain.usecase.DeliverPesananUseCase
 import com.app.garapan.domain.usecase.GetPesananDetailUseCase
-import com.app.garapan.domain.usecase.GetReviewsUseCase
+import com.app.garapan.domain.usecase.GetReviewByPesananUseCase
 import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
 import com.app.garapan.domain.usecase.WaitForPesananPaymentUseCase
 import com.app.garapan.presentation.navigation.Routes
@@ -75,15 +75,13 @@ class OrderDetailViewModel @Inject constructor(
     private val cancelPesananUseCase: CancelPesananUseCase,
     private val createPaymentTokenUseCase: CreatePaymentTokenUseCase,
     private val waitForPesananPaymentUseCase: WaitForPesananPaymentUseCase,
-    private val getReviewsUseCase: GetReviewsUseCase,
+    private val getReviewByPesananUseCase: GetReviewByPesananUseCase,
     observeCurrentUserUseCase: ObserveCurrentUserUseCase
 ) : ViewModel() {
 
     private val pesananId: String = savedStateHandle["pesananId"] ?: ""
     private var currentRole: Role? = null
     private var currentUserId: String? = null
-    private var currentUserEmail: String? = null
-    private var currentClientName: String? = null
     private var currentPesanan: Pesanan? = null
     private var awaitingPaymentReturn: Boolean = false
 
@@ -98,12 +96,10 @@ class OrderDetailViewModel @Inject constructor(
             observeCurrentUserUseCase().collect { user ->
                 currentRole = user?.role
                 currentUserId = user?.id
-                currentUserEmail = user?.email
-                currentClientName = user?.klien?.companyName
                 currentPesanan?.let { pesanan ->
                     applyPesanan(pesanan)
-                    if (canReview(pesanan.status, pesanan.jasaId, pesanan)) {
-                        loadExistingReview(pesanan.jasaId, pesanan.id, pesanan.status)
+                    if (canReview(pesanan.status, pesanan)) {
+                        loadExistingReview(pesanan.id, pesanan.status)
                     }
                 }
             }
@@ -209,9 +205,7 @@ class OrderDetailViewModel @Inject constructor(
                 is Resource.Success -> {
                     applyPesanan(result.data)
                     _events.emit(OrderDetailEvent.ShowMessage("Pesanan selesai. Dana telah dilepas."))
-                    if (!result.data.jasaId.isNullOrBlank()) {
-                        _events.emit(OrderDetailEvent.NavigateToReview(result.data.id))
-                    }
+                    _events.emit(OrderDetailEvent.NavigateToReview(result.data.id))
                 }
                 is Resource.Error -> {
                     _uiState.update {
@@ -270,7 +264,7 @@ class OrderDetailViewModel @Inject constructor(
             when (val result = getPesananDetailUseCase(pesananId)) {
                 is Resource.Success -> {
                     applyPesanan(result.data)
-                    loadExistingReview(result.data.jasaId, result.data.id, result.data.status)
+                    loadExistingReview(result.data.id, result.data.status)
                 }
                 is Resource.Error -> {
                     _uiState.update {
@@ -285,22 +279,14 @@ class OrderDetailViewModel @Inject constructor(
         }
     }
 
-    private suspend fun loadExistingReview(jasaId: String?, pesananId: String, status: PesananStatus) {
-        if (!canReview(status, jasaId, currentPesanan)) return
-        when (val result = getReviewsUseCase(jasaId.orEmpty())) {
+    private suspend fun loadExistingReview(pesananId: String, status: PesananStatus) {
+        if (!canReview(status, currentPesanan)) return
+        when (val result = getReviewByPesananUseCase(pesananId)) {
             is Resource.Success -> {
-                val userId = currentUserId
-                val reviewerLabels = listOfNotNull(currentUserEmail, currentClientName)
-                    .filter { it.isNotBlank() }
-                val existingReview = result.data.firstOrNull { review ->
-                    review.pesananId == pesananId ||
-                        (!userId.isNullOrBlank() && review.reviewerId == userId) ||
-                        reviewerLabels.any { it == review.reviewerName }
-                }
                 _uiState.update {
                     it.copy(
-                        existingReviewId = existingReview?.id,
-                        reviewButtonLabel = if (existingReview != null) "Edit Ulasan" else "Beri Ulasan"
+                        existingReviewId = result.data.id,
+                        reviewButtonLabel = "Edit Ulasan"
                     )
                 }
             }
@@ -349,7 +335,7 @@ class OrderDetailViewModel @Inject constructor(
                 createdAt = PesananDisplayMapper.formatOrderDate(pesanan.createdAt),
                 canDeliver = canDeliver(pesanan.status, isProvider),
                 canComplete = canComplete(pesanan.status, isBuyer),
-                canReview = canReview(pesanan.status, pesanan.jasaId, pesanan),
+                canReview = canReview(pesanan.status, pesanan),
                 existingReviewId = null,
                 reviewButtonLabel = "Beri Ulasan",
                 canPay = canPay(pesanan.status, isBuyer),
@@ -371,8 +357,11 @@ class OrderDetailViewModel @Inject constructor(
     private fun canComplete(status: PesananStatus, isBuyer: Boolean): Boolean =
         isBuyer && status == PesananStatus.DELIVERED
 
-    private fun canReview(status: PesananStatus, jasaId: String?, pesanan: Pesanan?): Boolean =
-        pesanan?.isBuyerForCurrentUser() == true && status == PesananStatus.COMPLETED && !jasaId.isNullOrBlank()
+    private fun canReview(status: PesananStatus, pesanan: Pesanan?): Boolean =
+        OrderReviewEligibility.canReview(
+            status = status,
+            isBuyer = pesanan?.isBuyerForCurrentUser() == true
+        )
 
     private fun canPay(status: PesananStatus, isBuyer: Boolean): Boolean =
         isBuyer && status == PesananStatus.PENDING
@@ -387,14 +376,51 @@ class OrderDetailViewModel @Inject constructor(
         isProvider && status == PesananStatus.DISPUTED
 
     private fun Pesanan.isBuyerForCurrentUser(): Boolean {
-        val userId = currentUserId
-        return !userId.isNullOrBlank() && clientUserId == userId ||
-            (userId.isNullOrBlank() && currentRole == Role.KLIEN)
+        return OrderParticipantResolver.isBuyer(
+            currentUserId = currentUserId,
+            currentRole = currentRole,
+            clientUserId = clientUserId,
+            workerUserId = workerUserId
+        )
     }
 
     private fun Pesanan.isProviderForCurrentUser(): Boolean {
-        val userId = currentUserId
-        return !userId.isNullOrBlank() && workerUserId == userId ||
-            (userId.isNullOrBlank() && currentRole == Role.MAHASISWA)
+        return OrderParticipantResolver.isProvider(
+            currentUserId = currentUserId,
+            currentRole = currentRole,
+            clientUserId = clientUserId,
+            workerUserId = workerUserId
+        )
     }
+}
+
+object OrderParticipantResolver {
+    fun isBuyer(
+        currentUserId: String?,
+        currentRole: Role?,
+        clientUserId: String?,
+        workerUserId: String?
+    ): Boolean {
+        if (currentUserId.isNullOrBlank()) return currentRole == Role.KLIEN
+        if (clientUserId == currentUserId) return true
+        if (workerUserId == currentUserId) return false
+        return currentRole == Role.KLIEN && clientUserId.isNullOrBlank()
+    }
+
+    fun isProvider(
+        currentUserId: String?,
+        currentRole: Role?,
+        clientUserId: String?,
+        workerUserId: String?
+    ): Boolean {
+        if (currentUserId.isNullOrBlank()) return currentRole == Role.MAHASISWA
+        if (workerUserId == currentUserId) return true
+        if (clientUserId == currentUserId) return false
+        return currentRole == Role.MAHASISWA && workerUserId.isNullOrBlank()
+    }
+}
+
+object OrderReviewEligibility {
+    fun canReview(status: PesananStatus, isBuyer: Boolean): Boolean =
+        isBuyer && status == PesananStatus.COMPLETED
 }

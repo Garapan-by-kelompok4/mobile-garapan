@@ -8,8 +8,7 @@ import com.app.garapan.domain.model.CreateReviewParams
 import com.app.garapan.domain.model.PesananStatus
 import com.app.garapan.domain.model.UpdateReviewParams
 import com.app.garapan.domain.usecase.GetPesananDetailUseCase
-import com.app.garapan.domain.usecase.GetReviewsUseCase
-import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
+import com.app.garapan.domain.usecase.GetReviewByPesananUseCase
 import com.app.garapan.domain.usecase.SubmitReviewUseCase
 import com.app.garapan.domain.usecase.UpdateReviewUseCase
 import com.app.garapan.presentation.util.PesananDisplayMapper
@@ -21,7 +20,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -51,8 +49,7 @@ sealed interface ReviewEvent {
 class ReviewViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getPesananDetailUseCase: GetPesananDetailUseCase,
-    private val getReviewsUseCase: GetReviewsUseCase,
-    private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
+    private val getReviewByPesananUseCase: GetReviewByPesananUseCase,
     private val submitReviewUseCase: SubmitReviewUseCase,
     private val updateReviewUseCase: UpdateReviewUseCase
 ) : ViewModel() {
@@ -87,7 +84,7 @@ class ReviewViewModel @Inject constructor(
     fun submit() {
         val state = _uiState.value
         val trimmedComment = state.comment.trim()
-        if (state.pesananId.isBlank() || state.jasaId.isBlank()) {
+        if (state.pesananId.isBlank()) {
             _uiState.update { it.copy(errorMessage = "Pesanan tidak valid untuk diulas.") }
             return
         }
@@ -148,11 +145,11 @@ class ReviewViewModel @Inject constructor(
             when (val result = getPesananDetailUseCase(pesananId)) {
                 is Resource.Success -> {
                     val pesanan = result.data
-                    val canReview = pesanan.status == PesananStatus.COMPLETED && !pesanan.jasaId.isNullOrBlank()
+                    val canReview = pesanan.status == PesananStatus.COMPLETED
                     val baseState = ReviewUiState(
                         pesananId = pesanan.id,
                         jasaId = pesanan.jasaId.orEmpty(),
-                        jasaTitle = pesanan.jasaTitle.ifBlank { "Pesanan Jasa" },
+                        jasaTitle = PesananDisplayMapper.orderTitle(pesanan.jasaTitle, pesanan.projectId),
                         workerName = pesanan.workerName,
                         orderDate = PesananDisplayMapper.formatOrderDate(pesanan.createdAt),
                         isLoading = false,
@@ -179,27 +176,18 @@ class ReviewViewModel @Inject constructor(
     }
 
     private suspend fun loadExistingReview(baseState: ReviewUiState) {
-        when (val result = getReviewsUseCase(baseState.jasaId)) {
+        when (val result = getReviewByPesananUseCase(baseState.pesananId)) {
             is Resource.Success -> {
-                val currentUser = observeCurrentUserUseCase().first()
-                val reviewerLabels = listOfNotNull(currentUser?.email, currentUser?.klien?.companyName)
-                    .filter { it.isNotBlank() }
-                val existingReview = result.data.firstOrNull { review ->
-                    review.pesananId == baseState.pesananId ||
-                        (!currentUser?.id.isNullOrBlank() && review.reviewerId == currentUser?.id) ||
-                        reviewerLabels.any { it == review.reviewerName }
-                }
-                if (existingReview != null) {
-                    _uiState.update {
-                        it.copy(
-                            existingReviewId = existingReview.id,
-                            isEditMode = true,
-                            rating = existingReview.rating,
-                            comment = existingReview.comment,
-                            isLoading = false,
-                            errorMessage = null
-                        )
-                    }
+                val existingReview = result.data
+                _uiState.update {
+                    it.copy(
+                        existingReviewId = existingReview.id,
+                        isEditMode = true,
+                        rating = existingReview.rating,
+                        comment = existingReview.comment,
+                        isLoading = false,
+                        errorMessage = null
+                    )
                 }
             }
             is Resource.Error -> Unit
