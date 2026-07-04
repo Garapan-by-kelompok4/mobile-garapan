@@ -33,6 +33,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -333,14 +336,14 @@ private fun BlogBlock(block: BlogBodyBlock) {
     when (block) {
         is BlogBodyBlock.Paragraph -> {
             Text(
-                text = block.text,
+                text = styledText(block.text, block.styles),
                 style = MaterialTheme.typography.bodyMedium.copy(color = PrimaryText)
             )
             Spacer(modifier = Modifier.height(14.dp))
         }
         is BlogBodyBlock.Heading -> {
             Text(
-                text = block.text,
+                text = styledText(block.text, block.styles),
                 style = when (block.level) {
                     1 -> MaterialTheme.typography.headlineSmall
                     2 -> MaterialTheme.typography.titleLarge
@@ -367,7 +370,7 @@ private fun BlogBlock(block: BlogBodyBlock) {
                         .background(AccentBlue)
                 )
                 Text(
-                    text = block.text,
+                    text = styledText(block.text, block.styles),
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = SecondaryText,
                         fontStyle = FontStyle.Italic
@@ -380,10 +383,10 @@ private fun BlogBlock(block: BlogBodyBlock) {
             Spacer(modifier = Modifier.height(14.dp))
         }
         is BlogBodyBlock.BulletList -> {
-            BlogList(items = block.items, ordered = false)
+            BlogList(items = block.items, itemStyles = block.itemStyles, ordered = false)
         }
         is BlogBodyBlock.OrderedList -> {
-            BlogList(items = block.items, ordered = true)
+            BlogList(items = block.items, itemStyles = block.itemStyles, ordered = true)
         }
     }
 }
@@ -391,6 +394,7 @@ private fun BlogBlock(block: BlogBodyBlock) {
 @Composable
 private fun BlogList(
     items: List<String>,
+    itemStyles: List<List<BlogInlineStyle>>,
     ordered: Boolean
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -408,7 +412,7 @@ private fun BlogList(
                     modifier = Modifier.width(28.dp)
                 )
                 Text(
-                    text = item,
+                    text = styledText(item, itemStyles.getOrElse(index) { emptyList() }),
                     style = MaterialTheme.typography.bodyMedium.copy(color = PrimaryText),
                     modifier = Modifier.weight(1f)
                 )
@@ -417,6 +421,25 @@ private fun BlogList(
     }
     Spacer(modifier = Modifier.height(14.dp))
 }
+
+private fun styledText(text: String, styles: List<BlogInlineStyle>): AnnotatedString =
+    buildAnnotatedString {
+        append(text)
+        styles.forEach { style ->
+            val start = style.start.coerceIn(0, text.length)
+            val end = style.end.coerceIn(start, text.length)
+            if (start < end) {
+                addStyle(
+                    style = SpanStyle(
+                        fontWeight = if (style.bold) FontWeight.Bold else null,
+                        fontStyle = if (style.italic) FontStyle.Italic else null
+                    ),
+                    start = start,
+                    end = end
+                )
+            }
+        }
+    }
 
 @Composable
 private fun RecommendationCard(
