@@ -3,6 +3,7 @@ package com.app.garapan.data.remote.api
 import com.app.garapan.data.remote.dto.MarkAllNotificationsReadResponseDto
 import com.app.garapan.data.remote.dto.NotificationDto
 import com.app.garapan.data.remote.dto.NotificationListResponseDto
+import com.app.garapan.data.remote.dto.UnreadNotificationCountResponseDto
 import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.Path
@@ -14,6 +15,9 @@ interface NotificationApi {
         @Query("page") page: Int = 1,
         @Query("limit") limit: Int = 20
     ): NotificationListResponseDto
+
+    @GET("notification/unread-count")
+    suspend fun getUnreadCount(): UnreadNotificationCountResponseDto
 
     @PATCH("notification/{id}/read")
     suspend fun markRead(@Path("id") id: String): NotificationDto

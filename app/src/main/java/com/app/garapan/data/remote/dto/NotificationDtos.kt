@@ -28,6 +28,10 @@ data class NotificationListResponseDto(
     val limit: Int
 )
 
+data class UnreadNotificationCountResponseDto(
+    val unreadCount: Int
+)
+
 data class MarkAllNotificationsReadResponseDto(
     val updated: Int
 )
