@@ -63,6 +63,8 @@ class ProjectRepositoryImpl @Inject constructor(
                     title = request.title,
                     description = request.description,
                     budget = request.budget,
+                    minBudget = request.minBudget,
+                    maxBudget = request.maxBudget,
                     deadline = request.deadline,
                     image = request.image
                 ).toDomain()
@@ -114,6 +116,8 @@ class ProjectRepositoryImpl @Inject constructor(
                     title = fields.title,
                     description = fields.description,
                     budget = fields.budget,
+                    minBudget = fields.minBudget,
+                    maxBudget = fields.maxBudget,
                     deadline = fields.deadline,
                     kategoriId = fields.kategoriId,
                     status = fields.status,
