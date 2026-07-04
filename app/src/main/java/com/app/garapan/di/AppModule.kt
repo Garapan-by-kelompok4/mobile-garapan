@@ -21,7 +21,9 @@ import com.app.garapan.data.repository.SkillRepositoryImpl
 import com.app.garapan.data.repository.SupportChatRepositoryImpl
 import com.app.garapan.data.repository.TopWorkerRepositoryImpl
 import com.app.garapan.data.repository.UsersRepositoryImpl
+import com.app.garapan.data.repository.WalletRepositoryImpl
 import com.app.garapan.domain.repository.UsersRepository
+import com.app.garapan.domain.repository.WalletRepository
 import com.app.garapan.domain.repository.ArtikelRepository
 import com.app.garapan.domain.repository.AuthRepository
 import com.app.garapan.domain.repository.JasaRepository
@@ -137,4 +139,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindNotificationRepository(impl: NotificationRepositoryImpl): NotificationRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindWalletRepository(impl: WalletRepositoryImpl): WalletRepository
 }

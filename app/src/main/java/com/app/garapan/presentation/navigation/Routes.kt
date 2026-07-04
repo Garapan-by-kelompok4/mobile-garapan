@@ -28,6 +28,7 @@ object Routes {
     const val EDIT_PROFILE = "edit_profile"
     const val EDIT_SERVICE = "edit_service/{serviceId}"
     const val ORDER_HISTORY = "order_history"
+    const val WALLET = "wallet"
     const val ORDER_DETAIL = "order_detail/{pesananId}"
     const val REVIEW = "review/{pesananId}"
     const val ALL_REVIEWS = "all_reviews/{jasaId}"

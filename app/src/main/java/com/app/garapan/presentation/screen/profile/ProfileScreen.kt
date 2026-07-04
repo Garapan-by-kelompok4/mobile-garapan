@@ -21,6 +21,7 @@ import com.composables.icons.lucide.ScrollText
 import com.composables.icons.lucide.LogOut
 import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.ClipboardList
+import com.composables.icons.lucide.CircleDollarSign
 import com.composables.icons.lucide.Computer
 import com.composables.icons.lucide.ShieldCheck
 import com.composables.icons.lucide.Shield
@@ -171,6 +172,16 @@ fun ProfileScreen(
                                     icon = Lucide.ClipboardList
                                 ) {
                                     navController.navigate(Routes.MY_PROJECTS)
+                                }
+                            )
+                        }
+                        if (uiState.role == Role.KLIEN || uiState.role == Role.MAHASISWA) {
+                            add(
+                                ProfileMenuItem(
+                                    label = if (uiState.role == Role.MAHASISWA) "Dompet Saya" else "Saldo Refund",
+                                    icon = Lucide.CircleDollarSign
+                                ) {
+                                    navController.navigate(Routes.WALLET)
                                 }
                             )
                         }

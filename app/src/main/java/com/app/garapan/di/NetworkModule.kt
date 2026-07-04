@@ -17,6 +17,7 @@ import com.app.garapan.data.remote.api.SkillApi
 import com.app.garapan.data.remote.api.SupportChatApi
 import com.app.garapan.data.remote.api.TopWorkerApi
 import com.app.garapan.data.remote.api.UsersApi
+import com.app.garapan.data.remote.api.WalletApi
 import com.app.garapan.data.remote.interceptor.AuthInterceptor
 import com.app.garapan.data.remote.interceptor.AuthTokenAuthenticator
 import com.app.garapan.data.remote.interceptor.MultipartUploadBufferInterceptor
@@ -157,4 +158,9 @@ object NetworkModule {
     @Singleton
     fun provideNotificationApi(retrofit: Retrofit): NotificationApi =
         retrofit.create(NotificationApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideWalletApi(retrofit: Retrofit): WalletApi =
+        retrofit.create(WalletApi::class.java)
 }

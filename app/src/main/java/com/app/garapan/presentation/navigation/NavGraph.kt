@@ -44,6 +44,7 @@ import com.app.garapan.presentation.screen.skills.SkillsScreen
 import com.app.garapan.presentation.screen.terms_and_conditions.TermsAndConditionsScreen
 import com.app.garapan.presentation.screen.two_factor.TwoFactorScreen
 import com.app.garapan.presentation.screen.verify_email.VerifyEmailScreen
+import com.app.garapan.presentation.screen.wallet.WalletScreen
 import com.app.garapan.domain.model.Role
 import kotlinx.coroutines.flow.first
 
@@ -220,6 +221,15 @@ fun NavGraph(
         }
         composable(Routes.ORDER_HISTORY) {
             OrderHistoryScreen(navController = navController)
+        }
+        composable(Routes.WALLET) {
+            RoleGuard(
+                allowedRoles = setOf(Role.KLIEN, Role.MAHASISWA),
+                navController = navController,
+                fallbackRoute = Routes.MAIN
+            ) {
+                WalletScreen(navController = navController)
+            }
         }
         composable(
             route = Routes.ORDER_DETAIL,
