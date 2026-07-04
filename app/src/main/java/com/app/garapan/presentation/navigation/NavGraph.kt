@@ -48,6 +48,18 @@ import com.app.garapan.presentation.screen.wallet.WalletScreen
 import com.app.garapan.domain.model.Role
 import kotlinx.coroutines.flow.first
 
+private fun isNotificationNavigationBlocked(route: String?): Boolean {
+    if (route == null) return true
+    return route == Routes.SPLASH ||
+        route == Routes.LOGIN ||
+        route == Routes.REGISTER ||
+        route == Routes.FORGOT_PASSWORD ||
+        route.startsWith("verify_email") ||
+        route.startsWith("reset_password") ||
+        route.startsWith("two_factor") ||
+        route.startsWith("setup")
+}
+
 @Composable
 fun NavGraph(
     navController: NavHostController,
@@ -56,19 +68,10 @@ fun NavGraph(
 ) {
     LaunchedEffect(notificationRoute) {
         val route = notificationRoute ?: return@LaunchedEffect
-        val currentRoute = navController.currentBackStackEntry
-            ?.destination
-            ?.route
-            ?.takeIf { it != Routes.SPLASH }
-            ?: navController.currentBackStackEntryFlow
-                .first { entry -> entry.destination.route != Routes.SPLASH }
-                .destination
-                .route
-
-        if (currentRoute != Routes.LOGIN && currentRoute != Routes.REGISTER) {
-            navController.navigate(route) {
-                launchSingleTop = true
-            }
+        navController.currentBackStackEntryFlow
+            .first { entry -> !isNotificationNavigationBlocked(entry.destination.route) }
+        navController.navigate(route) {
+            launchSingleTop = true
         }
         onNotificationRouteConsumed()
     }

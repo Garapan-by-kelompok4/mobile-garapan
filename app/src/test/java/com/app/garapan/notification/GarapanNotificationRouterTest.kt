@@ -54,6 +54,7 @@ class GarapanNotificationRouterTest {
             "ORDER_DELIVERED",
             "ORDER_COMPLETED",
             "ORDER_CANCELLED",
+            "PROJECT_CLAIMED",
             "PROPOSAL_ACCEPTED",
             "DISPUTE_CREATED",
             "DISPUTE_RESOLVED"
@@ -74,7 +75,47 @@ class GarapanNotificationRouterTest {
             pesananId = ""
         )
 
+        assertEquals(Routes.ORDER_HISTORY, route)
+    }
+
+    @Test
+    fun reviewReceivedWithJasaIdRoutesToAllReviews() {
+        val route = GarapanNotificationRouter.routeFromData(
+            type = "REVIEW_RECEIVED",
+            jasaId = "jasa-7",
+            pesananId = "pesanan-1"
+        )
+
+        assertEquals(Routes.allReviewsRoute("jasa-7"), route)
+    }
+
+    @Test
+    fun reviewReceivedWithoutJasaIdFallsBackToOrderDetail() {
+        val route = GarapanNotificationRouter.routeFromData(
+            type = "REVIEW_RECEIVED",
+            pesananId = "pesanan-1"
+        )
+
+        assertEquals(Routes.orderDetailRoute("pesanan-1"), route)
+    }
+
+    @Test
+    fun reviewReceivedWithoutMetaFallsBackToNotifications() {
+        val route = GarapanNotificationRouter.routeFromData(
+            type = "REVIEW_RECEIVED"
+        )
+
         assertEquals(Routes.NOTIFICATIONS, route)
+    }
+
+    @Test
+    fun projectClaimedRoutesToOrderDetail() {
+        val route = GarapanNotificationRouter.routeFromData(
+            type = "PROJECT_CLAIMED",
+            pesananId = "pesanan-9"
+        )
+
+        assertEquals(Routes.orderDetailRoute("pesanan-9"), route)
     }
 
     @Test
@@ -108,11 +149,11 @@ class GarapanNotificationRouterTest {
     }
 
     @Test
-    fun unknownTypeRoutesToNotifications() {
+    fun unknownTypeRoutesToOrderHistory() {
         val route = GarapanNotificationRouter.routeFromData(
             type = "SOME_FUTURE_TYPE"
         )
 
-        assertEquals(Routes.NOTIFICATIONS, route)
+        assertEquals(Routes.ORDER_HISTORY, route)
     }
 }

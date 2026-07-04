@@ -1,69 +1,63 @@
 package com.app.garapan.notification
 
 import android.content.Intent
+import com.app.garapan.domain.model.NotificationDestination
+import com.app.garapan.domain.model.NotificationMeta
+import com.app.garapan.domain.model.NotificationType
+import com.app.garapan.domain.model.resolveNotificationDestination
 import com.app.garapan.presentation.navigation.Routes
 
 object GarapanNotificationRouter {
     fun routeFromIntent(intent: Intent?): String? {
-        val type = intent?.getStringExtra(KEY_TYPE)
-        val conversationId = intent?.getStringExtra(KEY_CONVERSATION_ID)
-        val pesananId = intent?.getStringExtra(KEY_PESANAN_ID)
-        val projectId = intent?.getStringExtra(KEY_PROJECT_ID)
-
+        val type = intent?.getStringExtra(KEY_TYPE) ?: return null
         return routeFromData(
             type = type,
-            conversationId = conversationId,
-            pesananId = pesananId,
-            projectId = projectId
+            conversationId = intent.getStringExtra(KEY_CONVERSATION_ID),
+            pesananId = intent.getStringExtra(KEY_PESANAN_ID),
+            projectId = intent.getStringExtra(KEY_PROJECT_ID),
+            jasaId = intent.getStringExtra(KEY_JASA_ID)
         )
     }
+
+    fun notificationIdFromIntent(intent: Intent?): String? =
+        intent?.getStringExtra(KEY_NOTIFICATION_ID)?.takeIf { it.isNotBlank() }
 
     internal fun routeFromData(
         type: String?,
         conversationId: String? = null,
         pesananId: String? = null,
-        projectId: String? = null
+        projectId: String? = null,
+        jasaId: String? = null
     ): String? {
         if (type.isNullOrBlank()) return null
-        return when (type) {
-            TYPE_CHAT_MESSAGE -> {
-                conversationId?.takeIf { it.isNotBlank() }?.let { Routes.chatRoute(it) }
-                    ?: Routes.supportChatRoute()
-            }
-            TYPE_ORDER_PAID,
-            TYPE_ORDER_DELIVERED,
-            TYPE_ORDER_COMPLETED,
-            TYPE_ORDER_CANCELLED,
-            TYPE_PROJECT_CLAIMED,
-            TYPE_PROPOSAL_ACCEPTED,
-            TYPE_DISPUTE_CREATED,
-            TYPE_DISPUTE_RESOLVED,
-            TYPE_REVIEW_RECEIVED -> pesananId?.takeIf { it.isNotBlank() }?.let {
-                Routes.orderDetailRoute(it)
-            } ?: Routes.NOTIFICATIONS
-            TYPE_PROPOSAL_RECEIVED,
-            TYPE_PROPOSAL_REJECTED -> projectId?.takeIf { it.isNotBlank() }?.let {
-                Routes.projectDetailRoute(it)
-            } ?: Routes.NOTIFICATIONS
-            else -> Routes.NOTIFICATIONS
-        }
+        val destination = resolveNotificationDestination(
+            type = NotificationType.fromApiValue(type),
+            meta = NotificationMeta(
+                conversationId = conversationId,
+                pesananId = pesananId,
+                projectId = projectId,
+                jasaId = jasaId
+            )
+        )
+        return destination.toRoute()
     }
 
-    private const val KEY_TYPE = "type"
-    private const val KEY_CONVERSATION_ID = "conversationId"
-    private const val KEY_PESANAN_ID = "pesananId"
-    private const val KEY_PROJECT_ID = "projectId"
+    private fun NotificationDestination.toRoute(): String = when (this) {
+        is NotificationDestination.Chat -> {
+            conversationId?.takeIf { it.isNotBlank() }?.let { Routes.chatRoute(it) }
+                ?: Routes.supportChatRoute()
+        }
+        is NotificationDestination.OrderDetail -> Routes.orderDetailRoute(pesananId)
+        is NotificationDestination.AllReviews -> Routes.allReviewsRoute(jasaId)
+        is NotificationDestination.ProjectDetail -> Routes.projectDetailRoute(projectId)
+        NotificationDestination.OrderHistory -> Routes.ORDER_HISTORY
+        NotificationDestination.NotificationsList -> Routes.NOTIFICATIONS
+    }
 
-    private const val TYPE_CHAT_MESSAGE = "CHAT_MESSAGE"
-    private const val TYPE_ORDER_PAID = "ORDER_PAID"
-    private const val TYPE_ORDER_DELIVERED = "ORDER_DELIVERED"
-    private const val TYPE_ORDER_COMPLETED = "ORDER_COMPLETED"
-    private const val TYPE_ORDER_CANCELLED = "ORDER_CANCELLED"
-    private const val TYPE_PROJECT_CLAIMED = "PROJECT_CLAIMED"
-    private const val TYPE_REVIEW_RECEIVED = "REVIEW_RECEIVED"
-    private const val TYPE_PROPOSAL_RECEIVED = "PROPOSAL_RECEIVED"
-    private const val TYPE_PROPOSAL_ACCEPTED = "PROPOSAL_ACCEPTED"
-    private const val TYPE_PROPOSAL_REJECTED = "PROPOSAL_REJECTED"
-    private const val TYPE_DISPUTE_CREATED = "DISPUTE_CREATED"
-    private const val TYPE_DISPUTE_RESOLVED = "DISPUTE_RESOLVED"
+    const val KEY_TYPE = "type"
+    const val KEY_CONVERSATION_ID = "conversationId"
+    const val KEY_PESANAN_ID = "pesananId"
+    const val KEY_PROJECT_ID = "projectId"
+    const val KEY_JASA_ID = "jasaId"
+    const val KEY_NOTIFICATION_ID = "notificationId"
 }

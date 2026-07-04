@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import com.app.garapan.MainActivity
 import com.app.garapan.R
 import com.app.garapan.presentation.notification.FcmTokenRegistrar
+import com.app.garapan.presentation.notification.NotificationRefreshNotifier
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
@@ -26,6 +27,7 @@ import javax.inject.Inject
 class GarapanFirebaseMessagingService : FirebaseMessagingService() {
 
     @Inject lateinit var tokenRegistrar: FcmTokenRegistrar
+    @Inject lateinit var notificationRefreshNotifier: NotificationRefreshNotifier
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -46,6 +48,7 @@ class GarapanFirebaseMessagingService : FirebaseMessagingService() {
             ?: return
 
         showNotification(title = title, body = body, data = message.data)
+        notificationRefreshNotifier.requestRefresh()
     }
 
     override fun onDestroy() {

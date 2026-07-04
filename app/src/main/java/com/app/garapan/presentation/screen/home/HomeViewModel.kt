@@ -14,6 +14,7 @@ import com.app.garapan.domain.usecase.GetJasaListUseCase
 import com.app.garapan.domain.usecase.GetProjectListUseCase
 import com.app.garapan.domain.usecase.GetTopWorkersUseCase
 import com.app.garapan.domain.usecase.GetUnreadNotificationCountUseCase
+import com.app.garapan.presentation.notification.NotificationRefreshNotifier
 import com.app.garapan.presentation.screen.blog_detail.BlogArticleDefaults
 import com.app.garapan.presentation.util.CurrencyFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -89,7 +90,8 @@ class HomeViewModel @Inject constructor(
     private val getArtikelListUseCase: GetArtikelListUseCase,
     private val getJasaListUseCase: GetJasaListUseCase,
     private val getProjectListUseCase: GetProjectListUseCase,
-    private val getUnreadNotificationCountUseCase: GetUnreadNotificationCountUseCase
+    private val getUnreadNotificationCountUseCase: GetUnreadNotificationCountUseCase,
+    private val notificationRefreshNotifier: NotificationRefreshNotifier
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -101,6 +103,15 @@ class HomeViewModel @Inject constructor(
         loadBlogs()
         loadFeaturedServices()
         loadUnreadNotificationCount()
+        observeNotificationRefreshRequests()
+    }
+
+    private fun observeNotificationRefreshRequests() {
+        viewModelScope.launch {
+            notificationRefreshNotifier.refreshRequests.collect {
+                loadUnreadNotificationCount()
+            }
+        }
     }
 
     fun onNavItemSelected(index: Int) = _uiState.value.let {
