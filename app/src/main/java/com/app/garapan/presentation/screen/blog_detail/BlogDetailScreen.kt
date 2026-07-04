@@ -339,32 +339,19 @@ private fun BlogBlock(block: BlogBodyBlock) {
             Spacer(modifier = Modifier.height(14.dp))
         }
         is BlogBodyBlock.Heading -> {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clip(CircleShape)
-                        .background(BrandNavy),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = block.number.toString(),
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            color = White
-                        )
-                    )
-                }
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(
-                    text = block.text,
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        color = PrimaryText
-                    )
+            Text(
+                text = block.text,
+                style = when (block.level) {
+                    1 -> MaterialTheme.typography.headlineSmall
+                    2 -> MaterialTheme.typography.titleLarge
+                    3 -> MaterialTheme.typography.titleMedium
+                    else -> MaterialTheme.typography.titleSmall
+                }.copy(
+                    fontWeight = FontWeight.ExtraBold,
+                    color = BrandNavy
                 )
-            }
-            Spacer(modifier = Modifier.height(12.dp))
+            )
+            Spacer(modifier = Modifier.height(if (block.level <= 2) 16.dp else 12.dp))
         }
         is BlogBodyBlock.Quote -> {
             Row(
@@ -392,7 +379,43 @@ private fun BlogBlock(block: BlogBodyBlock) {
             }
             Spacer(modifier = Modifier.height(14.dp))
         }
+        is BlogBodyBlock.BulletList -> {
+            BlogList(items = block.items, ordered = false)
+        }
+        is BlogBodyBlock.OrderedList -> {
+            BlogList(items = block.items, ordered = true)
+        }
     }
+}
+
+@Composable
+private fun BlogList(
+    items: List<String>,
+    ordered: Boolean
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        items.forEachIndexed { index, item ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = if (ordered) "${index + 1}." else "•",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = BrandNavy
+                    ),
+                    modifier = Modifier.width(28.dp)
+                )
+                Text(
+                    text = item,
+                    style = MaterialTheme.typography.bodyMedium.copy(color = PrimaryText),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+    Spacer(modifier = Modifier.height(14.dp))
 }
 
 @Composable
