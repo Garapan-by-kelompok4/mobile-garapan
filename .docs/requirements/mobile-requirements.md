@@ -166,7 +166,7 @@ PaymentScreen (accessible from CheckoutScreen)
 |---|---|---|
 | POST | /pesanan | Place an order |
 | GET | /pesanan | Get own orders |
-| GET | /pesanan/:id | Get order detail |
+| GET | /pesanan/:id | Get order detail (includes latest `laporan` when disputed) |
 | PATCH | /pesanan/:id/deliver | Mahasiswa marks delivered |
 | PATCH | /pesanan/:id/complete | Klien accepts delivery |
 
@@ -217,11 +217,15 @@ data class Pesanan(val id: String, val klienId: String, val mahasiswaId: String,
 data class Chat(val id: String, val pesananId: String, val senderId: String,
                 val message: String, val createdAt: String)
 data class Review(val id: String, val pesananId: String, val rating: Int, val comment: String)
+data class Laporan(val id: String, val reporterId: String, val reason: String,
+                   val status: LaporanStatus, val resolutionNote: String?,
+                   val refundAmount: Double?, val createdAt: String, val resolvedAt: String?)
 data class Artikel(val id: String, val title: String, val content: String, val imageUrl: String?)
 data class TopWorker(val mahasiswaId: String, val score: Double, val rank: Int)
 
 enum class Role { MAHASISWA, KLIEN, ADMIN }
 enum class PesananStatus { PENDING, PAID, IN_PROGRESS, DELIVERED, COMPLETED, DISPUTED }
+enum class LaporanStatus { PENDING, RESOLVED, REJECTED }
 enum class JasaStatus { ACTIVE, INACTIVE }
 ```
 
