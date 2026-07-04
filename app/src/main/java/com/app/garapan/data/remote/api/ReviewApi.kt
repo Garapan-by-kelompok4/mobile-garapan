@@ -12,6 +12,9 @@ interface ReviewApi {
     @GET("review/{jasaId}")
     suspend fun getReviews(@Path("jasaId") jasaId: String): JsonElement
 
+    @GET("review/pesanan/{pesananId}")
+    suspend fun getReviewByPesanan(@Path("pesananId") pesananId: String): JsonElement
+
     @POST("review")
     suspend fun submitReview(@Body body: CreateReviewRequest): JsonElement
 
