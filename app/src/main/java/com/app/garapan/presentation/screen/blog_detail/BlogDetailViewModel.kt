@@ -21,8 +21,10 @@ import javax.inject.Inject
 
 sealed class BlogBodyBlock {
     data class Paragraph(val text: String) : BlogBodyBlock()
-    data class Heading(val number: Int, val text: String) : BlogBodyBlock()
+    data class Heading(val level: Int, val text: String) : BlogBodyBlock()
     data class Quote(val text: String) : BlogBodyBlock()
+    data class BulletList(val items: List<String>) : BlogBodyBlock()
+    data class OrderedList(val items: List<String>) : BlogBodyBlock()
 }
 
 data class RecommendationItem(

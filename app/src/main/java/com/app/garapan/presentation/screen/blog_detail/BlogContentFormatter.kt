@@ -2,7 +2,11 @@ package com.app.garapan.presentation.screen.blog_detail
 
 object BlogContentFormatter {
     private val blockRegex = Regex(
-        pattern = "<(h[1-6]|blockquote|p|li)\\b[^>]*>(.*?)</\\1>",
+        pattern = "<(h[1-6]|blockquote|p|ul|ol)\\b[^>]*>(.*?)</\\1>",
+        options = setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
+    )
+    private val listItemRegex = Regex(
+        pattern = "<li\\b[^>]*>(.*?)</li>",
         options = setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
     )
     private val tagRegex = Regex("<[^>]+>")
@@ -16,18 +20,24 @@ object BlogContentFormatter {
         if (content.isBlank()) return emptyList()
         if (!content.contains('<') || !content.contains('>')) return markdownLikeBlocks(content)
 
-        var headingNumber = 1
         val blocks = blockRegex.findAll(content).mapNotNull { match ->
             val tag = match.groupValues[1].lowercase()
-            val text = toPlainText(match.groupValues[2])
+            val innerHtml = match.groupValues[2]
+            val text = toPlainText(innerHtml)
             if (text.isBlank()) return@mapNotNull null
 
             when {
                 tag.startsWith("h") -> BlogBodyBlock.Heading(
-                    number = headingNumber++,
+                    level = tag.removePrefix("h").toIntOrNull()?.coerceIn(1, 6) ?: 2,
                     text = text
                 )
                 tag == "blockquote" -> BlogBodyBlock.Quote(text)
+                tag == "ul" -> listItems(innerHtml)
+                    .takeIf { it.isNotEmpty() }
+                    ?.let(BlogBodyBlock::BulletList)
+                tag == "ol" -> listItems(innerHtml)
+                    .takeIf { it.isNotEmpty() }
+                    ?.let(BlogBodyBlock::OrderedList)
                 else -> BlogBodyBlock.Paragraph(text)
             }
         }.toList()
@@ -62,13 +72,33 @@ object BlogContentFormatter {
                 when {
                     trimmed.isBlank() -> null
                     trimmed.startsWith(">") -> BlogBodyBlock.Quote(trimmed.removePrefix(">").trim())
+                    trimmed.lines().all { it.trim().matches(Regex("[-*]\\s+.+")) } -> {
+                        BlogBodyBlock.BulletList(
+                            trimmed.lines().map { it.trim().replace(Regex("^[-*]\\s+"), "") }
+                        )
+                    }
+                    trimmed.lines().all { it.trim().matches(Regex("\\d+[.)]\\s+.+")) } -> {
+                        BlogBodyBlock.OrderedList(
+                            trimmed.lines().map { it.trim().replace(Regex("^\\d+[.)]\\s+"), "") }
+                        )
+                    }
+                    trimmed.startsWith("# ") -> BlogBodyBlock.Heading(
+                        level = 1,
+                        text = trimmed.removePrefix("# ").trim()
+                    )
                     trimmed.startsWith("## ") -> BlogBodyBlock.Heading(
-                        number = 1,
+                        level = 2,
                         text = trimmed.removePrefix("## ").trim()
                     )
                     else -> BlogBodyBlock.Paragraph(trimmed.replace("\n", " "))
                 }
             }
+
+    private fun listItems(content: String): List<String> =
+        listItemRegex.findAll(content)
+            .map { toPlainText(it.groupValues[1]) }
+            .filter { it.isNotBlank() }
+            .toList()
 
     private fun String.decodeHtmlEntities(): String =
         replace("&nbsp;", " ")

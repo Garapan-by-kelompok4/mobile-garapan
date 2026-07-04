@@ -18,19 +18,22 @@ class BlogContentFormatterTest {
     @Test
     fun `toBlocks maps tiptap headings paragraphs blockquotes and lists`() {
         val html = """
+            <h1>Judul Utama</h1>
             <h2>Judul Bagian</h2>
             <p>Paragraf <strong>penting</strong>.</p>
             <blockquote><p>Kutipan editor</p></blockquote>
             <ul><li>Poin pertama</li><li>Poin kedua</li></ul>
+            <ol><li>Langkah pertama</li><li>Langkah kedua</li></ol>
         """.trimIndent()
 
         assertEquals(
             listOf(
-                BlogBodyBlock.Heading(number = 1, text = "Judul Bagian"),
+                BlogBodyBlock.Heading(level = 1, text = "Judul Utama"),
+                BlogBodyBlock.Heading(level = 2, text = "Judul Bagian"),
                 BlogBodyBlock.Paragraph("Paragraf penting."),
                 BlogBodyBlock.Quote("Kutipan editor"),
-                BlogBodyBlock.Paragraph("Poin pertama"),
-                BlogBodyBlock.Paragraph("Poin kedua")
+                BlogBodyBlock.BulletList(listOf("Poin pertama", "Poin kedua")),
+                BlogBodyBlock.OrderedList(listOf("Langkah pertama", "Langkah kedua"))
             ),
             BlogContentFormatter.toBlocks(html)
         )
