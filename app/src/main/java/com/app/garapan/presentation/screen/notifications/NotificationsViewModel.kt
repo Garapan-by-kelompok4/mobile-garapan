@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.Notification
+import com.app.garapan.domain.model.NotificationDestination
 import com.app.garapan.domain.model.NotificationMeta
 import com.app.garapan.domain.model.NotificationType
+import com.app.garapan.domain.model.resolveNotificationDestination
 import com.app.garapan.domain.usecase.GetNotificationsUseCase
 import com.app.garapan.domain.usecase.MarkAllNotificationsReadUseCase
 import com.app.garapan.domain.usecase.MarkNotificationReadUseCase
@@ -124,42 +126,32 @@ class NotificationsViewModel @Inject constructor(
     }
 
     private fun resolveNavigationEvent(item: NotificationItem): NotificationsEvent {
-        val meta = item.meta
-        val jasaId = meta?.jasaId
-        if (!jasaId.isNullOrBlank() && item.type == NotificationType.REVIEW_RECEIVED) {
-            return NotificationsEvent.NavigateToAllReviews(jasaId)
-        }
-        if (item.type == NotificationType.CHAT_MESSAGE) {
-            val conversationId = meta?.conversationId
-            return if (!conversationId.isNullOrBlank()) {
-                NotificationsEvent.NavigateToChat(Routes.chatRoute(conversationId))
-            } else {
-                NotificationsEvent.NavigateToChat(Routes.supportChatRoute())
+        return when (val destination = resolveNotificationDestination(item.type, item.meta)) {
+            is NotificationDestination.OrderDetail ->
+                NotificationsEvent.NavigateToOrderDetail(destination.pesananId)
+            is NotificationDestination.AllReviews ->
+                NotificationsEvent.NavigateToAllReviews(destination.jasaId)
+            is NotificationDestination.Chat -> {
+                val conversationId = destination.conversationId
+                if (!conversationId.isNullOrBlank()) {
+                    NotificationsEvent.NavigateToChat(Routes.chatRoute(conversationId))
+                } else {
+                    NotificationsEvent.NavigateToChat(Routes.supportChatRoute())
+                }
             }
-        }
-        val projectId = meta?.projectId
-        if (
-            !projectId.isNullOrBlank() &&
-            (
-                item.type == NotificationType.PROPOSAL_RECEIVED ||
-                    item.type == NotificationType.PROPOSAL_REJECTED
+            is NotificationDestination.ProjectDetail ->
+                NotificationsEvent.NavigateToProjectDetail(destination.projectId)
+            NotificationDestination.OrderHistory -> NotificationsEvent.NavigateToOrderHistory
+            NotificationDestination.NotificationsList -> when (item.type) {
+                NotificationType.REVIEW_RECEIVED -> NotificationsEvent.ShowMessage(
+                    "Ulasan tidak dapat dibuka dari notifikasi ini."
                 )
-        ) {
-            return NotificationsEvent.NavigateToProjectDetail(projectId)
-        }
-        val pesananId = meta?.pesananId
-        if (!pesananId.isNullOrBlank()) {
-            return NotificationsEvent.NavigateToOrderDetail(pesananId)
-        }
-        return when (item.type) {
-            NotificationType.REVIEW_RECEIVED -> NotificationsEvent.ShowMessage(
-                "Ulasan tidak dapat dibuka dari notifikasi ini."
-            )
-            NotificationType.PROPOSAL_RECEIVED,
-            NotificationType.PROPOSAL_REJECTED -> NotificationsEvent.ShowMessage(
-                "Proyek tidak dapat dibuka dari notifikasi ini."
-            )
-            else -> NotificationsEvent.NavigateToOrderHistory
+                NotificationType.PROPOSAL_RECEIVED,
+                NotificationType.PROPOSAL_REJECTED -> NotificationsEvent.ShowMessage(
+                    "Proyek tidak dapat dibuka dari notifikasi ini."
+                )
+                else -> NotificationsEvent.NavigateToOrderHistory
+            }
         }
     }
 

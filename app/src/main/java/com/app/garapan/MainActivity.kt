@@ -13,18 +13,26 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
+import com.app.garapan.domain.usecase.MarkNotificationReadUseCase
 import com.app.garapan.notification.GarapanNotificationChannels
 import com.app.garapan.notification.GarapanNotificationRouter
 import com.app.garapan.presentation.navigation.NavGraph
+import com.app.garapan.presentation.notification.NotificationRefreshNotifier
 import com.app.garapan.presentation.screen.auth.SplashViewModel
 import com.app.garapan.ui.theme.GarapanTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val pendingNotificationRoute = mutableStateOf<String?>(null)
     private val splashViewModel: SplashViewModel by viewModels()
+
+    @Inject lateinit var markNotificationReadUseCase: MarkNotificationReadUseCase
+    @Inject lateinit var notificationRefreshNotifier: NotificationRefreshNotifier
 
     private val requestNotificationPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -36,7 +44,7 @@ class MainActivity : ComponentActivity() {
         splashScreen.setKeepOnScreenCondition { splashViewModel.uiState.value.isLoading }
         GarapanNotificationChannels.ensureCreated(this)
         requestPostNotificationPermissionIfNeeded()
-        pendingNotificationRoute.value = GarapanNotificationRouter.routeFromIntent(intent)
+        handleNotificationIntent(intent)
         enableEdgeToEdge()
         setContent {
             GarapanTheme {
@@ -53,6 +61,17 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        handleNotificationIntent(intent)
+    }
+
+    private fun handleNotificationIntent(intent: Intent?) {
+        val notificationId = GarapanNotificationRouter.notificationIdFromIntent(intent)
+        if (!notificationId.isNullOrBlank()) {
+            lifecycleScope.launch {
+                markNotificationReadUseCase(notificationId)
+                notificationRefreshNotifier.requestRefresh()
+            }
+        }
         pendingNotificationRoute.value = GarapanNotificationRouter.routeFromIntent(intent)
     }
 
