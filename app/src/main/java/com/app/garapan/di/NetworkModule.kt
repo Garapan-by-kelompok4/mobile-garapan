@@ -3,6 +3,7 @@ package com.app.garapan.di
 import com.app.garapan.BuildConfig
 import com.app.garapan.data.remote.api.ArtikelApi
 import com.app.garapan.data.remote.api.AuthApi
+import com.app.garapan.data.remote.api.ContentReportApi
 import com.app.garapan.data.remote.api.ChatApi
 import com.app.garapan.data.remote.api.JasaApi
 import com.app.garapan.data.remote.api.KategoriApi
@@ -148,6 +149,11 @@ object NetworkModule {
     @Singleton
     fun provideLaporanApi(retrofit: Retrofit): LaporanApi =
         retrofit.create(LaporanApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideContentReportApi(retrofit: Retrofit): ContentReportApi =
+        retrofit.create(ContentReportApi::class.java)
 
     @Provides
     @Singleton

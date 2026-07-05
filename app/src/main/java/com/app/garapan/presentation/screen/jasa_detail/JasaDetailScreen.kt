@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.CircleCheckBig
+import com.composables.icons.lucide.Flag
 import com.composables.icons.lucide.Zap
 import com.composables.icons.lucide.Star
 import androidx.compose.material3.Button
@@ -95,7 +96,18 @@ fun JasaDetailScreen(
 
     Scaffold(
         topBar = {
-            JasaDetailTopBar(onBack = { navController.navigateUp() })
+            JasaDetailTopBar(
+                onBack = { navController.navigateUp() },
+                showReportButton = !uiState.isOwner && !uiState.isLoading && uiState.errorMessage == null,
+                onReport = {
+                    navController.navigate(
+                        Routes.reportContentRoute(
+                            contentType = "JASA",
+                            contentId = uiState.id
+                        )
+                    )
+                }
+            )
         },
         bottomBar = {
             if (!uiState.isLoading && uiState.errorMessage == null) {
@@ -860,9 +872,24 @@ private fun JasaDetailBottomBar(
 }
 
 @Composable
-private fun JasaDetailTopBar(onBack: () -> Unit) {
+private fun JasaDetailTopBar(
+    onBack: () -> Unit,
+    showReportButton: Boolean = false,
+    onReport: () -> Unit = {}
+) {
     AppTopBar(
         title = "Detail Jasa",
-        onBack = onBack
+        onBack = onBack,
+        trailing = {
+            if (showReportButton) {
+                IconButton(onClick = onReport) {
+                    Icon(
+                        imageVector = Lucide.Flag,
+                        contentDescription = "Laporkan jasa",
+                        tint = SecondaryText
+                    )
+                }
+            }
+        }
     )
 }

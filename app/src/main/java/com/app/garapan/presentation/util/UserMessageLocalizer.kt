@@ -12,6 +12,10 @@ object UserMessageLocalizer {
                 "Kata sandi saat ini salah."
             normalized.equals("You cannot order your own jasa", ignoreCase = true) ->
                 "Anda tidak dapat memesan jasa milik sendiri."
+            normalized.equals("You already have a pending report for this content", ignoreCase = true) ->
+                "Anda sudah memiliki laporan yang sedang ditinjau untuk konten ini."
+            normalized.equals("Jasa not found", ignoreCase = true) ->
+                "Jasa tidak ditemukan."
             normalized.equals("You do not own this order", ignoreCase = true) ->
                 "Anda tidak memiliki akses ke pesanan ini."
             normalized.equals("Request failed. Please try again.", ignoreCase = true) ->
