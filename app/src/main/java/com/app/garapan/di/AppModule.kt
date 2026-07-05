@@ -9,6 +9,7 @@ import com.app.garapan.data.repository.AuthRepositoryImpl
 import com.app.garapan.data.repository.JasaRepositoryImpl
 import com.app.garapan.data.repository.KategoriRepositoryImpl
 import com.app.garapan.data.repository.PembayaranRepositoryImpl
+import com.app.garapan.data.repository.ContentReportRepositoryImpl
 import com.app.garapan.data.repository.LaporanRepositoryImpl
 import com.app.garapan.data.repository.NotificationRepositoryImpl
 import com.app.garapan.data.repository.OrderChatRepositoryImpl
@@ -29,6 +30,7 @@ import com.app.garapan.domain.repository.AuthRepository
 import com.app.garapan.domain.repository.JasaRepository
 import com.app.garapan.domain.repository.KategoriRepository
 import com.app.garapan.domain.repository.PembayaranRepository
+import com.app.garapan.domain.repository.ContentReportRepository
 import com.app.garapan.domain.repository.LaporanRepository
 import com.app.garapan.domain.repository.NotificationRepository
 import com.app.garapan.domain.repository.PesananRepository
@@ -131,6 +133,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindLaporanRepository(impl: LaporanRepositoryImpl): LaporanRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindContentReportRepository(impl: ContentReportRepositoryImpl): ContentReportRepository
 
     @Binds
     @Singleton

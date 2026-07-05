@@ -45,6 +45,7 @@ object Routes {
     const val TOP_WORKERS = "top_workers"
     const val ARTICLE_LIST = "article_list"
     const val DISPUTE = "dispute/{pesananId}"
+    const val REPORT_CONTENT = "report_content/{contentType}/{contentId}"
     const val NOTIFICATIONS = "notifications"
     const val TERMS_AND_CONDITIONS = "terms_and_conditions"
     const val PRIVACY_POLICY = "privacy_policy"
@@ -80,4 +81,6 @@ object Routes {
     fun editPortfolioRoute(portfolioId: String) = "edit_portfolio/$portfolioId"
     fun searchRoute(focus: String = SEARCH_FOCUS_BROWSE) = "search?focus=$focus"
     fun disputeRoute(pesananId: String) = "dispute/$pesananId"
+    fun reportContentRoute(contentType: String, contentId: String) =
+        "report_content/$contentType/$contentId"
 }

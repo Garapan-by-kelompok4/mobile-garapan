@@ -26,6 +26,7 @@ import com.composables.icons.lucide.CircleCheckBig
 import com.composables.icons.lucide.Code
 import com.composables.icons.lucide.Users
 import com.composables.icons.lucide.Clock
+import com.composables.icons.lucide.Flag
 import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.CircleDollarSign
 import androidx.compose.material3.Button
@@ -114,7 +115,16 @@ fun ProjectDetailScreen(
             ProjectDetailTopBar(
                 onBack = { navController.navigateUp() },
                 showEditButton = uiState.showEditButton,
-                onEdit = { navController.navigate(Routes.editProjectRoute(uiState.id)) }
+                onEdit = { navController.navigate(Routes.editProjectRoute(uiState.id)) },
+                showReportButton = !uiState.isKlienOwner && !uiState.isLoading && uiState.errorMessage == null,
+                onReport = {
+                    navController.navigate(
+                        Routes.reportContentRoute(
+                            contentType = "PROJECT",
+                            contentId = uiState.id
+                        )
+                    )
+                }
             )
         },
         containerColor = Surface
@@ -551,12 +561,23 @@ private fun ProposalCard(
 private fun ProjectDetailTopBar(
     onBack: () -> Unit,
     showEditButton: Boolean = false,
-    onEdit: () -> Unit = {}
+    onEdit: () -> Unit = {},
+    showReportButton: Boolean = false,
+    onReport: () -> Unit = {}
 ) {
     AppTopBar(
         title = "Detail Proyek",
         onBack = onBack,
         trailing = {
+            if (showReportButton) {
+                IconButton(onClick = onReport) {
+                    Icon(
+                        imageVector = Lucide.Flag,
+                        contentDescription = "Laporkan proyek",
+                        tint = SecondaryText
+                    )
+                }
+            }
             if (showEditButton) {
                 IconButton(onClick = onEdit) {
                     Icon(
