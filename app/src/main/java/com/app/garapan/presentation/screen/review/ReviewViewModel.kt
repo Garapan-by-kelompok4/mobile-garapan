@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.CreateReviewParams
 import com.app.garapan.domain.model.PesananStatus
+import com.app.garapan.domain.model.Review
 import com.app.garapan.domain.model.UpdateReviewParams
 import com.app.garapan.domain.usecase.GetPesananDetailUseCase
 import com.app.garapan.domain.usecase.GetReviewByPesananUseCase
@@ -41,7 +42,11 @@ data class ReviewUiState(
 )
 
 sealed interface ReviewEvent {
-    data class Submitted(val isEditMode: Boolean) : ReviewEvent
+    data class Submitted(
+        val isUpdate: Boolean,
+        val shouldNavigateBack: Boolean
+    ) : ReviewEvent
+
     data class ShowMessage(val message: String) : ReviewEvent
 }
 
@@ -114,10 +119,33 @@ class ReviewViewModel @Inject constructor(
             }
             when (result) {
                 is Resource.Success -> {
-                    _uiState.update { it.copy(isSubmitting = false) }
-                    _events.emit(ReviewEvent.Submitted(state.isEditMode))
+                    if (state.isEditMode && !state.existingReviewId.isNullOrBlank()) {
+                        _uiState.update { it.copy(isSubmitting = false) }
+                        _events.emit(
+                            ReviewEvent.Submitted(
+                                isUpdate = true,
+                                shouldNavigateBack = true
+                            )
+                        )
+                    } else {
+                        applyExistingReview(result.data)
+                        _uiState.update { it.copy(isSubmitting = false) }
+                        _events.emit(
+                            ReviewEvent.Submitted(
+                                isUpdate = false,
+                                shouldNavigateBack = false
+                            )
+                        )
+                    }
                 }
                 is Resource.Error -> {
+                    if (UserMessageLocalizer.isOrderAlreadyReviewed(result.message)) {
+                        loadExistingReview()
+                        if (_uiState.value.isEditMode) {
+                            _uiState.update { it.copy(isSubmitting = false, errorMessage = null) }
+                            return@launch
+                        }
+                    }
                     _uiState.update {
                         it.copy(
                             isSubmitting = false,
@@ -158,7 +186,7 @@ class ReviewViewModel @Inject constructor(
                     )
                     _uiState.value = baseState
                     if (canReview) {
-                        loadExistingReview(baseState)
+                        loadExistingReview()
                     }
                 }
                 is Resource.Error -> {
@@ -175,23 +203,27 @@ class ReviewViewModel @Inject constructor(
         }
     }
 
-    private suspend fun loadExistingReview(baseState: ReviewUiState) {
-        when (val result = getReviewByPesananUseCase(baseState.pesananId)) {
-            is Resource.Success -> {
-                val existingReview = result.data
-                _uiState.update {
-                    it.copy(
-                        existingReviewId = existingReview.id,
-                        isEditMode = true,
-                        rating = existingReview.rating,
-                        comment = existingReview.comment,
-                        isLoading = false,
-                        errorMessage = null
-                    )
-                }
-            }
+    private suspend fun loadExistingReview() {
+        val pesananId = _uiState.value.pesananId
+        if (pesananId.isBlank()) return
+
+        when (val result = getReviewByPesananUseCase(pesananId)) {
+            is Resource.Success -> applyExistingReview(result.data)
             is Resource.Error -> Unit
             Resource.Loading -> Unit
+        }
+    }
+
+    private fun applyExistingReview(review: Review) {
+        _uiState.update { current ->
+            current.copy(
+                existingReviewId = review.id,
+                isEditMode = true,
+                rating = review.rating,
+                comment = review.comment,
+                isLoading = false,
+                errorMessage = null
+            )
         }
     }
 }
