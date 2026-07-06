@@ -10,15 +10,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -52,6 +57,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -784,31 +791,42 @@ private fun JasaDetailBottomBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .height(IntrinsicSize.Min)
             .background(White)
             .navigationBarsPadding()
             .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .widthIn(min = 0.dp)
+        ) {
             Text(
                 text = if (isOwner) "Harga Layanan" else "Mulai Dari",
-                style = MaterialTheme.typography.labelSmall.copy(color = SecondaryText)
+                style = MaterialTheme.typography.labelSmall.copy(color = SecondaryText),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = price,
+                modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
                     color = PrimaryText
-                )
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(8.dp))
         if (isOwner) {
             Button(
                 onClick = onEditService,
                 modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp),
+                    .weight(1.1f)
+                    .widthIn(min = 0.dp)
+                    .heightIn(min = 48.dp),
                 shape = RoundedCornerShape(50.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = BrandNavy,
@@ -817,55 +835,79 @@ private fun JasaDetailBottomBar(
             ) {
                 Text(
                     text = "Edit Layanan",
-                    style = MaterialTheme.typography.bodyMedium.copy(
+                    style = MaterialTheme.typography.labelLarge.copy(
                         fontWeight = FontWeight.SemiBold
-                    )
+                    ),
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         } else {
-            OutlinedButton(
-                onClick = onHubungi,
-                enabled = !isOpeningChat,
+            Row(
                 modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp),
-                shape = RoundedCornerShape(50.dp),
-                border = BorderStroke(1.dp, BrandNavy)
+                    .weight(1.1f)
+                    .widthIn(min = 0.dp)
+                    .height(IntrinsicSize.Max),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                if (isOpeningChat) {
-                    CircularProgressIndicator(
-                        color = BrandNavy,
-                        strokeWidth = 2.dp,
-                        modifier = Modifier.size(20.dp)
-                    )
-                } else {
-                    Text(
-                        text = "Hubungi",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = BrandNavy
+                OutlinedButton(
+                    onClick = onHubungi,
+                    enabled = !isOpeningChat,
+                    modifier = Modifier
+                        .weight(1f)
+                        .widthIn(min = 0.dp)
+                        .fillMaxHeight()
+                        .heightIn(min = 48.dp),
+                    shape = RoundedCornerShape(50.dp),
+                    border = BorderStroke(1.dp, BrandNavy),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
+                ) {
+                    if (isOpeningChat) {
+                        CircularProgressIndicator(
+                            color = BrandNavy,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(20.dp)
                         )
+                    } else {
+                        Text(
+                            text = "Hubungi",
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                color = BrandNavy
+                            ),
+                            textAlign = TextAlign.Center,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+                Button(
+                    onClick = onChatAndOrder,
+                    modifier = Modifier
+                        .weight(1f)
+                        .widthIn(min = 0.dp)
+                        .fillMaxHeight()
+                        .heightIn(min = 48.dp),
+                    shape = RoundedCornerShape(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = BrandNavy,
+                        contentColor = OnPrimary
+                    ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
+                ) {
+                    Text(
+                        text = "Pesan Sekarang",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Button(
-                onClick = onChatAndOrder,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp),
-                shape = RoundedCornerShape(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = BrandNavy,
-                    contentColor = OnPrimary
-                )
-            ) {
-                Text(
-                    text = "Pesan Sekarang",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold
-                    )
-                )
             }
         }
     }

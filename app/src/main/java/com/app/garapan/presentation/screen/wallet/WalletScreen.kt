@@ -384,7 +384,10 @@ private fun TransactionCard(transaction: WalletTransaction, onClick: () -> Unit)
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
                     StatusChip(transaction.status)
                     if (transaction.type == WalletTransactionType.ESCROW) {
                         EscrowOrderStatusChip(transaction.orderStatus)
@@ -443,15 +446,7 @@ private fun EscrowOrderStatusChip(orderStatus: PesananStatus?) {
         PesananStatus.IN_PROGRESS -> "Dikerjakan" to AccentBlue
         else -> "Escrow" to SecondaryText
     }
-    Text(
-        text = label,
-        modifier = Modifier
-            .clip(RoundedCornerShape(50.dp))
-            .background(color.copy(alpha = 0.12f))
-            .padding(horizontal = 10.dp, vertical = 5.dp),
-        color = color,
-        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold)
-    )
+    WalletStatusChip(label = label, color = color)
 }
 
 @Composable
@@ -465,6 +460,11 @@ private fun StatusChip(status: WalletTransactionStatus) {
         WalletTransactionStatus.CANCELLED -> "Dibatalkan" to SecondaryText
         WalletTransactionStatus.UNKNOWN -> "Status tidak dikenal" to SecondaryText
     }
+    WalletStatusChip(label = label, color = color)
+}
+
+@Composable
+private fun WalletStatusChip(label: String, color: Color) {
     Text(
         text = label,
         modifier = Modifier
@@ -472,7 +472,10 @@ private fun StatusChip(status: WalletTransactionStatus) {
             .background(color.copy(alpha = 0.12f))
             .padding(horizontal = 10.dp, vertical = 5.dp),
         color = color,
-        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold)
+        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+        maxLines = 1,
+        softWrap = false,
+        overflow = TextOverflow.Ellipsis
     )
 }
 
