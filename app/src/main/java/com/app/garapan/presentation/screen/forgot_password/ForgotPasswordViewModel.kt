@@ -20,7 +20,8 @@ data class ForgotPasswordUiState(
     val email: String = "",
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val infoMessage: String? = null
+    val infoMessage: String? = null,
+    val canEnterResetToken: Boolean = false
 )
 
 sealed interface ForgotPasswordEvent {
@@ -36,11 +37,16 @@ class ForgotPasswordViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ForgotPasswordUiState())
     val uiState: StateFlow<ForgotPasswordUiState> = _uiState.asStateFlow()
 
-    private val _events = MutableSharedFlow<ForgotPasswordEvent>()
+    private val _events = MutableSharedFlow<ForgotPasswordEvent>(extraBufferCapacity = 1)
     val events: SharedFlow<ForgotPasswordEvent> = _events.asSharedFlow()
 
     fun onEmailChanged(value: String) = _uiState.update {
-        it.copy(email = value, errorMessage = null)
+        it.copy(
+            email = value,
+            errorMessage = null,
+            infoMessage = null,
+            canEnterResetToken = false
+        )
     }
 
     fun onSubmit() {
@@ -57,16 +63,32 @@ class ForgotPasswordViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            infoMessage = "If that email is registered, a reset token has been sent."
+                            infoMessage = "If that email is registered, a reset token has been sent.",
+                            canEnterResetToken = true
                         )
                     }
-                    _events.emit(ForgotPasswordEvent.Navigate(Routes.resetPasswordRoute(email)))
                 }
                 is Resource.Error -> _uiState.update {
-                    it.copy(isLoading = false, errorMessage = result.message)
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = result.message,
+                        canEnterResetToken = false
+                    )
                 }
                 Resource.Loading -> Unit
             }
+        }
+    }
+
+    fun onEnterResetToken() {
+        val email = _uiState.value.email.trim()
+        if (email.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "Email address is required.") }
+            return
+        }
+
+        viewModelScope.launch {
+            _events.emit(ForgotPasswordEvent.Navigate(Routes.resetPasswordRoute(email)))
         }
     }
 }
