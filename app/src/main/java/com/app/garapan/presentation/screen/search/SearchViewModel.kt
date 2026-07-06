@@ -15,7 +15,6 @@ import com.app.garapan.domain.usecase.GetProjectListUseCase
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.util.CurrencyFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -25,7 +24,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -35,18 +33,16 @@ import javax.inject.Inject
 enum class SearchResultType { JASA, PROYEK }
 
 enum class SortOption(val label: String) {
-    PALING_POPULER("Paling Populer"),
+    TERBARU("Terbaru"),
     RATING_TERTINGGI("Rating Tertinggi"),
     HARGA_TERENDAH("Harga Terendah")
 }
 
-private const val ALL_CATEGORIES = "Semua Kategori"
-
 data class FilterSortState(
     val selectedCategory: String = ALL_CATEGORIES,
-    val minPrice: String = "100000",
-    val maxPrice: String = "5000000",
-    val sortBy: SortOption = SortOption.PALING_POPULER
+    val minPrice: String = "",
+    val maxPrice: String = "",
+    val sortBy: SortOption = SortOption.TERBARU
 )
 
 data class SearchResultItem(
@@ -90,6 +86,7 @@ class SearchViewModel @Inject constructor(
     private var searchJob: Job? = null
     private var unifiedSearchMode = false
     private var filtersApplied = false
+    private var priceFilterTouched = false
 
     private val _uiState = MutableStateFlow(SearchUiState())
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
@@ -193,10 +190,16 @@ class SearchViewModel @Inject constructor(
         _uiState.update { it.copy(filter = it.filter.copy(selectedCategory = category)) }
 
     fun onMinPriceChanged(value: String) =
-        _uiState.update { it.copy(filter = it.filter.copy(minPrice = value.filter { c -> c.isDigit() }.take(9))) }
+        _uiState.update {
+            priceFilterTouched = true
+            it.copy(filter = it.filter.copy(minPrice = value.filter { c -> c.isDigit() }.take(9)))
+        }
 
     fun onMaxPriceChanged(value: String) =
-        _uiState.update { it.copy(filter = it.filter.copy(maxPrice = value.filter { c -> c.isDigit() }.take(9))) }
+        _uiState.update {
+            priceFilterTouched = true
+            it.copy(filter = it.filter.copy(maxPrice = value.filter { c -> c.isDigit() }.take(9)))
+        }
 
     fun onSortSelected(option: SortOption) =
         _uiState.update { it.copy(filter = it.filter.copy(sortBy = option)) }
@@ -254,7 +257,7 @@ class SearchViewModel @Inject constructor(
                 )
             }
             val state = _uiState.value
-            val filters = buildJasaFilters(state)
+            val filters = buildFilters(state).jasa
             when (val result = getJasaListUseCase(filters)) {
                 is Resource.Success -> {
                     _uiState.update {
@@ -293,8 +296,9 @@ class SearchViewModel @Inject constructor(
             val keepStale = silent && hasResults()
             _uiState.update { it.copy(isResultsLoading = !keepStale, resultsErrorMessage = null) }
             val state = _uiState.value
-            val jasaFilters = buildJasaFilters(state)
-            val projectFilters = buildProjectFilters(state)
+            val requestFilters = buildFilters(state)
+            val jasaFilters = requestFilters.jasa
+            val projectFilters = requestFilters.project
 
             val (jasaResult, projectResult) = coroutineScope {
                 val jasaDeferred = async { getJasaListUseCase(jasaFilters) }
@@ -339,8 +343,9 @@ class SearchViewModel @Inject constructor(
             val keepStale = silent && hasResults()
             _uiState.update { it.copy(isResultsLoading = !keepStale, resultsErrorMessage = null) }
             val state = _uiState.value
-            val jasaFilters = buildJasaFilters(state)
-            val projectFilters = buildProjectFilters(state)
+            val requestFilters = buildFilters(state)
+            val jasaFilters = requestFilters.jasa
+            val projectFilters = requestFilters.project
 
             val (jasaResult, projectResult) = coroutineScope {
                 val jasaDeferred = async { getJasaListUseCase(jasaFilters) }
@@ -348,23 +353,8 @@ class SearchViewModel @Inject constructor(
                 Pair(jasaDeferred.await(), projectDeferred.await())
             }
 
-            val (jasaItems, projectItems) = withContext(Dispatchers.Default) {
-                val jasa = (jasaResult as? Resource.Success)?.data.orEmpty().let { items ->
-                    if (SearchQueryMatcher.isLongEnough(state.query)) {
-                        SearchQueryMatcher.filterJasa(items, state.query.trim())
-                    } else {
-                        items
-                    }
-                }
-                val projects = (projectResult as? Resource.Success)?.data.orEmpty().let { items ->
-                    if (SearchQueryMatcher.isLongEnough(state.query)) {
-                        SearchQueryMatcher.filterProjects(items, state.query.trim())
-                    } else {
-                        items
-                    }
-                }
-                Pair(jasa, projects)
-            }
+            val jasaItems = (jasaResult as? Resource.Success)?.data.orEmpty()
+            val projectItems = (projectResult as? Resource.Success)?.data.orEmpty()
             val jasaError = (jasaResult as? Resource.Error)?.message
             val projectError = (projectResult as? Resource.Error)?.message
 
@@ -394,28 +384,13 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-    private fun buildJasaFilters(state: SearchUiState) = JasaListFilters(
-        search = state.query.trim().takeIf { SearchQueryMatcher.isLongEnough(it) },
-        kategoriId = resolveKategoriId(state),
-        minPrice = state.filter.minPrice.toDoubleOrNull().takeIf { filtersApplied },
-        maxPrice = state.filter.maxPrice.toDoubleOrNull().takeIf { filtersApplied },
-        sort = state.filter.sortBy.toApiSort().takeIf { filtersApplied },
-        includeRelatedSkills = resolveKategoriId(state) != null && filtersApplied
-    )
-
-    private fun buildProjectFilters(state: SearchUiState) = ProjectListFilters(
-        search = state.query.trim().takeIf { SearchQueryMatcher.isLongEnough(it) },
-        kategoriId = resolveKategoriId(state).takeIf { filtersApplied },
-        minBudget = state.filter.minPrice.toDoubleOrNull().takeIf { filtersApplied },
-        maxBudget = state.filter.maxPrice.toDoubleOrNull().takeIf { filtersApplied },
-        includeRelatedSkills = resolveKategoriId(state) != null && filtersApplied
-    )
-
-    private fun resolveKategoriId(state: SearchUiState): String? =
-        kategoriItems
-            .firstOrNull { it.name == state.filter.selectedCategory }
-            ?.id
-            ?.takeIf { state.filter.selectedCategory != ALL_CATEGORIES }
+    private fun buildFilters(state: SearchUiState): SearchRequestFilters =
+        SearchFilterFactory.build(
+            state = state,
+            categories = kategoriItems,
+            filtersApplied = filtersApplied,
+            priceFilterTouched = priceFilterTouched
+        )
 
     private fun toJasaSearchResultItem(jasa: Jasa) = SearchResultItem(
         id = jasa.id,
@@ -446,12 +421,6 @@ class SearchViewModel @Inject constructor(
         return runCatching {
             Instant.parse(deadline).atZone(ZoneId.systemDefault()).format(DEADLINE_FORMATTER)
         }.getOrDefault(deadline.take(10))
-    }
-
-    private fun SortOption.toApiSort(): String? = when (this) {
-        SortOption.PALING_POPULER -> "newest"
-        SortOption.RATING_TERTINGGI -> "rating_desc"
-        SortOption.HARGA_TERENDAH -> "price_asc"
     }
 
     private companion object {

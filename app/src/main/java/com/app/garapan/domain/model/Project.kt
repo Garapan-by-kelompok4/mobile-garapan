@@ -33,6 +33,7 @@ data class ProjectListFilters(
     val kategoriId: String? = null,
     val minBudget: Double? = null,
     val maxBudget: Double? = null,
+    val sort: String? = null,
     val page: Int = 1,
     val limit: Int = 20,
     val includeRelatedSkills: Boolean = false

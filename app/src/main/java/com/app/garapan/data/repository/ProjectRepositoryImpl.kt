@@ -29,6 +29,7 @@ class ProjectRepositoryImpl @Inject constructor(
                 kategoriId = filters.kategoriId,
                 minBudget = filters.minBudget,
                 maxBudget = filters.maxBudget,
+                sort = filters.sort,
                 includeRelatedSkills = filters.includeRelatedSkills.takeIf { it },
                 page = filters.page,
                 limit = filters.limit
@@ -43,6 +44,7 @@ class ProjectRepositoryImpl @Inject constructor(
                 kategoriId = filters.kategoriId,
                 minBudget = filters.minBudget,
                 maxBudget = filters.maxBudget,
+                sort = filters.sort,
                 includeRelatedSkills = filters.includeRelatedSkills.takeIf { it },
                 page = filters.page,
                 limit = filters.limit
