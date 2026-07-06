@@ -119,7 +119,13 @@ class PesanViewModel @Inject constructor(
             val last = page.messages.lastOrNull()
             adminChat = adminChat.copy(
                 name = page.agentName?.takeIf { it.isNotBlank() } ?: adminChat.name,
-                preview = last?.message?.takeIf { it.isNotBlank() } ?: adminChat.preview,
+                preview = last?.let { message ->
+                    when {
+                        message.isFile -> "📎 ${message.fileName ?: "Lampiran"}"
+                        message.message.isNotBlank() -> message.message
+                        else -> null
+                    }
+                } ?: adminChat.preview,
                 time = formatRelative(last?.createdAt),
                 unreadCount = page.unreadCount
             )
