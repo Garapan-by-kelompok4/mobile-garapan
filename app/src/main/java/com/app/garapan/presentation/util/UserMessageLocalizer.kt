@@ -22,7 +22,15 @@ object UserMessageLocalizer {
                 "Permintaan gagal. Silakan coba lagi."
             normalized.equals("Something went wrong. Please try again.", ignoreCase = true) ->
                 "Terjadi kesalahan. Silakan coba lagi."
+            normalized.equals("Order has already been reviewed", ignoreCase = true) ->
+                "Pesanan ini sudah memiliki ulasan."
             else -> normalized
         }
+    }
+
+    fun isOrderAlreadyReviewed(apiMessage: String): Boolean {
+        val normalized = apiMessage.trim()
+        return normalized.equals("Order has already been reviewed", ignoreCase = true) ||
+            normalized.contains("already been reviewed", ignoreCase = true)
     }
 }

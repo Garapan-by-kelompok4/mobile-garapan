@@ -57,13 +57,15 @@ fun ReviewScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is ReviewEvent.Submitted -> {
-                    val message = if (event.isEditMode) {
+                    val message = if (event.isUpdate) {
                         "Ulasan berhasil diperbarui."
                     } else {
                         "Ulasan berhasil dikirim."
                     }
                     Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                    navController.navigateUp()
+                    if (event.shouldNavigateBack) {
+                        navController.navigateUp()
+                    }
                 }
                 is ReviewEvent.ShowMessage -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()

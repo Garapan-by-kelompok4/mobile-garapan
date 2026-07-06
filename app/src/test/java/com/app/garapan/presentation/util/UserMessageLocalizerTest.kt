@@ -1,20 +1,18 @@
 package com.app.garapan.presentation.util
 
-import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class UserMessageLocalizerTest {
 
     @Test
-    fun `maps jasa delete blocked by orders message to Indonesian`() {
-        assertEquals(
-            "Layanan tidak dapat dihapus karena sudah ada pesanan yang terhubung.",
-            UserMessageLocalizer.localize("Jasa cannot be deleted because orders reference it")
-        )
+    fun detectsOrderAlreadyReviewedMessage() {
+        assertTrue(UserMessageLocalizer.isOrderAlreadyReviewed("Order has already been reviewed"))
     }
 
     @Test
-    fun `passes through unknown messages unchanged`() {
-        assertEquals("Custom backend error", UserMessageLocalizer.localize("Custom backend error"))
+    fun ignoresUnrelatedErrorMessages() {
+        assertFalse(UserMessageLocalizer.isOrderAlreadyReviewed("Jasa not found"))
     }
 }

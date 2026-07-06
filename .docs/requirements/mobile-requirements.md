@@ -190,7 +190,9 @@ PaymentScreen (accessible from CheckoutScreen)
 | GET | /portofolio/:mahasiswaId | Get portfolio items |
 | POST | /portofolio | Upload portfolio item |
 | GET | /review/:jasaId | Get reviews for a Jasa |
-| POST | /review | Submit review |
+| GET | /review/pesanan/:pesananId | Get review for an order (buyer-only; 404 if none) |
+| POST | /review | Submit review (409 if order already reviewed) |
+| PATCH | /review/:id | Update own review (rating, comment) |
 | GET | /artikel | List articles |
 | GET | /artikel/:id | Article detail |
 | GET | /top-worker | Leaderboard |

@@ -25,4 +25,5 @@ release.properties
 
 # Auto-generated / cache
 **/__pycache__/
+.kotlin/
 .docs/images/
