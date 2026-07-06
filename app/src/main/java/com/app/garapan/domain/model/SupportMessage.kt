@@ -7,6 +7,9 @@ data class SupportMessage(
     val senderId: String?,
     val senderRole: String?,
     val message: String,
+    val isFile: Boolean,
+    val fileName: String?,
+    val fileUrl: String?,
     val createdAt: String?,
     val isFromUser: Boolean
 )

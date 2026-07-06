@@ -10,7 +10,10 @@ import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
 import java.util.UUID
 
+private const val FILE_MESSAGE_TYPE = "FILE"
+
 fun SupportMessageDto.toDomain(): SupportMessage {
+    val isFile = messageType.equals(FILE_MESSAGE_TYPE, ignoreCase = true)
     val role = senderRole?.uppercase()
     val isFromUser = when {
         role in setOf("ADMIN", "SUPPORT") -> false
@@ -28,6 +31,9 @@ fun SupportMessageDto.toDomain(): SupportMessage {
         senderId = senderId,
         senderRole = senderRole,
         message = message ?: content.orEmpty(),
+        isFile = isFile,
+        fileName = fileName,
+        fileUrl = fileUrl,
         createdAt = createdAt ?: updatedAt,
         isFromUser = isFromUser
     )
@@ -126,4 +132,5 @@ private fun JsonObject.findMessageArrayCandidate(): JsonArray? {
 }
 
 private fun JsonObject.looksLikeMessage(): Boolean =
-    has("message") || has("content") || has("senderId") || has("senderRole")
+    has("message") || has("content") || has("senderId") || has("senderRole") ||
+        has("messageType") || has("fileUrl")

@@ -25,6 +25,7 @@ import com.app.garapan.domain.usecase.MarkOrderChatReadUseCase
 import com.app.garapan.domain.usecase.MarkSupportThreadReadUseCase
 import com.app.garapan.domain.usecase.SendOrderAttachmentUseCase
 import com.app.garapan.domain.usecase.SendOrderMessageUseCase
+import com.app.garapan.domain.usecase.SendSupportAttachmentUseCase
 import com.app.garapan.domain.usecase.SendSupportMessageUseCase
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.notification.NotificationRefreshNotifier
@@ -148,6 +149,7 @@ class ChatViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getSupportThreadUseCase: GetSupportThreadUseCase,
     private val sendSupportMessageUseCase: SendSupportMessageUseCase,
+    private val sendSupportAttachmentUseCase: SendSupportAttachmentUseCase,
     private val markSupportThreadReadUseCase: MarkSupportThreadReadUseCase,
     private val getOrderMessagesUseCase: GetOrderMessagesUseCase,
     private val sendOrderMessageUseCase: SendOrderMessageUseCase,
@@ -176,7 +178,8 @@ class ChatViewModel @Inject constructor(
             isAdminSupport = true,
             supportLabel = "Live Support",
             dateSeparator = "Hari ini",
-            isLoading = true
+            isLoading = true,
+            canAttach = true
         )
         isPeerChat -> ChatUiState(
             workerName = peerName.ifBlank { "Percakapan" },
@@ -544,10 +547,19 @@ class ChatViewModel @Inject constructor(
     private fun sendAttachment(attachment: ChatAttachmentUpload) {
         viewModelScope.launch {
             _uiState.update { it.copy(isSending = true, errorMessage = null) }
-            val pesananId = _uiState.value.activeOrder?.pesananId
-            when (val result = sendOrderAttachmentUseCase(conversationId, attachment, pesananId)) {
+            val result = if (isSupportThread) {
+                sendSupportAttachmentUseCase(attachment)
+            } else {
+                val pesananId = _uiState.value.activeOrder?.pesananId
+                sendOrderAttachmentUseCase(conversationId, attachment, pesananId)
+            }
+            when (result) {
                 is Resource.Success -> {
-                    fetchPeerThread(showLoading = false, surfaceError = false)
+                    if (isSupportThread) {
+                        fetchThread(showLoading = false, surfaceError = false)
+                    } else {
+                        fetchPeerThread(showLoading = false, surfaceError = false)
+                    }
                     _uiState.update { it.copy(isSending = false) }
                 }
                 is Resource.Error -> {
@@ -590,21 +602,28 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    private fun SupportMessage.toChatMessage(): ChatMessage =
-        if (isFromUser) {
+    private fun SupportMessage.toChatMessage(): ChatMessage {
+        val text = if (isFile) "📎 " + (fileName ?: "Lampiran") else message
+        val time = formatMessageTime(createdAt)
+        return if (isFromUser) {
             ChatMessage.Sent(
                 id = id,
-                text = message,
-                time = formatMessageTime(createdAt)
+                text = text,
+                time = time,
+                attachmentUrl = fileUrl.takeIf { isFile },
+                attachmentName = fileName.takeIf { isFile }
             )
         } else {
             ChatMessage.Received(
                 id = id,
-                text = message,
-                time = formatMessageTime(createdAt),
-                senderInitials = "LS"
+                text = text,
+                time = time,
+                senderInitials = "LS",
+                attachmentUrl = fileUrl.takeIf { isFile },
+                attachmentName = fileName.takeIf { isFile }
             )
         }
+    }
 
     private fun formatMessageTime(createdAt: String?): String {
         if (createdAt.isNullOrBlank()) {
