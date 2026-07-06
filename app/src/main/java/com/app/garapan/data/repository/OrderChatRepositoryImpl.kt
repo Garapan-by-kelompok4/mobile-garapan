@@ -25,6 +25,9 @@ class OrderChatRepositoryImpl @Inject constructor(
     override suspend fun getConversations(): Resource<List<Conversation>> =
         safeApiCall { chatApi.getConversations().map { it.toDomain() } }
 
+    override suspend fun getConversation(conversationId: String): Resource<Conversation> =
+        safeApiCall { chatApi.getConversation(conversationId).toDomain() }
+
     override suspend fun openConversation(counterpartyId: String): Resource<OpenConversationResult> =
         safeApiCall {
             chatApi.openConversation(OpenConversationRequestDto(counterpartyId)).toDomain()

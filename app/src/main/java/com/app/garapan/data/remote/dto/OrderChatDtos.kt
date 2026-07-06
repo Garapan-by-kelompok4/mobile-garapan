@@ -15,7 +15,8 @@ data class ConversationCounterpartyDto(
     val role: String? = null,
     val displayName: String? = null,
     val companyName: String? = null,
-    val university: String? = null
+    val university: String? = null,
+    val avatarUrl: String? = null
 )
 
 data class ActiveOrderDto(

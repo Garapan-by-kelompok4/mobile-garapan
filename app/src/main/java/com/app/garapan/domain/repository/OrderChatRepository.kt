@@ -9,6 +9,7 @@ import com.app.garapan.domain.model.OrderChatPage
 
 interface OrderChatRepository {
     suspend fun getConversations(): Resource<List<Conversation>>
+    suspend fun getConversation(conversationId: String): Resource<Conversation>
     suspend fun openConversation(counterpartyId: String): Resource<OpenConversationResult>
     suspend fun getMessages(conversationId: String, page: Int, limit: Int): Resource<OrderChatPage>
     suspend fun sendMessage(

@@ -8,6 +8,7 @@ data class Conversation(
     val conversationId: String,
     val counterpartyId: String?,
     val counterpartyName: String,
+    val counterpartyAvatarUrl: String? = null,
     val lastMessage: String?,
     val lastMessageIsFile: Boolean,
     val lastMessageAt: String?,

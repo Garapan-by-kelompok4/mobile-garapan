@@ -22,6 +22,7 @@ fun ConversationDto.toDomain(): Conversation {
         conversationId = conversationId,
         counterpartyId = cp?.id,
         counterpartyName = cp.resolveDisplayName(),
+        counterpartyAvatarUrl = cp?.avatarUrl?.takeIf { it.isNotBlank() },
         lastMessage = lastMessage?.message,
         lastMessageIsFile = lastMessage?.messageType.equals(FILE_MESSAGE_TYPE, ignoreCase = true),
         lastMessageAt = lastMessage?.createdAt,

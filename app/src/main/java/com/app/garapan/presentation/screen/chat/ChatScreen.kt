@@ -180,6 +180,7 @@ fun ChatScreen(
             ChatTopBar(
                 name = uiState.workerName,
                 initials = uiState.workerInitials,
+                avatarUrl = uiState.peerAvatarUrl,
                 isOnline = uiState.isOnline,
                 isAdminSupport = uiState.isAdminSupport,
                 supportLabel = uiState.supportLabel,
@@ -260,7 +261,8 @@ fun ChatScreen(
                         )
                         is ChatMessage.Received -> ReceivedBubble(
                             message = message,
-                            isAdminSupport = uiState.isAdminSupport
+                            isAdminSupport = uiState.isAdminSupport,
+                            peerAvatarUrl = uiState.peerAvatarUrl
                         )
                         is ChatMessage.FileAndOrderConfirmation -> FileAndOrderConfirmationBubble(message = message, onCheckout = onCheckout)
                     }
@@ -469,6 +471,7 @@ private fun ErrorBanner(
 private fun ChatTopBar(
     name: String,
     initials: String,
+    avatarUrl: String?,
     isOnline: Boolean,
     isAdminSupport: Boolean,
     supportLabel: String?,
@@ -510,9 +513,10 @@ private fun ChatTopBar(
                     modifier = Modifier.size(22.dp)
                 )
             } else {
-                Text(
-                    text = initials,
-                    style = MaterialTheme.typography.bodyMedium.copy(
+                PeerAvatarContent(
+                    initials = initials,
+                    avatarUrl = avatarUrl,
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = BrandNavy
                     )
@@ -780,9 +784,31 @@ private fun SentBubble(
 }
 
 @Composable
+private fun PeerAvatarContent(
+    initials: String,
+    avatarUrl: String?,
+    textStyle: androidx.compose.ui.text.TextStyle,
+    modifier: Modifier = Modifier.fillMaxSize()
+) {
+    if (!avatarUrl.isNullOrBlank()) {
+        AsyncImage(
+            model = avatarUrl,
+            contentDescription = "Profile photo",
+            contentScale = ContentScale.Crop,
+            modifier = modifier.clip(CircleShape)
+        )
+    } else {
+        Box(modifier = modifier, contentAlignment = Alignment.Center) {
+            Text(text = initials, style = textStyle)
+        }
+    }
+}
+
+@Composable
 private fun ReceivedBubble(
     message: ChatMessage.Received,
-    isAdminSupport: Boolean
+    isAdminSupport: Boolean,
+    peerAvatarUrl: String?
 ) {
     val context = LocalContext.current
     Row(
@@ -806,9 +832,10 @@ private fun ReceivedBubble(
                     modifier = Modifier.size(18.dp)
                 )
             } else {
-                Text(
-                    text = message.senderInitials,
-                    style = MaterialTheme.typography.labelSmall.copy(
+                PeerAvatarContent(
+                    initials = message.senderInitials,
+                    avatarUrl = peerAvatarUrl,
+                    textStyle = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = BrandNavy,
                         fontSize = 9.sp

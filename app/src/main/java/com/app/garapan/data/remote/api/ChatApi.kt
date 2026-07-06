@@ -22,6 +22,11 @@ interface ChatApi {
     @GET("chat")
     suspend fun getConversations(): List<ConversationDto>
 
+    @GET("chat/{conversationId}")
+    suspend fun getConversation(
+        @Path("conversationId") conversationId: String
+    ): ConversationDto
+
     @POST("chat/conversations")
     suspend fun openConversation(
         @Body request: OpenConversationRequestDto
