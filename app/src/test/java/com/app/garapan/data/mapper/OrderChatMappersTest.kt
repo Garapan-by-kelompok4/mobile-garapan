@@ -91,4 +91,23 @@ class OrderChatMappersTest {
         assertEquals(true, conversation.lastMessageIsFile)
         assertEquals(PesananStatus.DELIVERED, conversation.activeOrder?.status)
     }
+
+    @Test
+    fun conversationWithAvatarUrlMapsToDomain() {
+        val dto = ConversationDto(
+            conversationId = "conv-avatar",
+            counterparty = ConversationCounterpartyDto(
+                id = "worker-avatar",
+                displayName = "Citra",
+                avatarUrl = "https://example.com/citra.jpg"
+            ),
+            lastMessage = null,
+            unreadCount = 0,
+            activeOrder = null
+        )
+
+        val conversation = dto.toDomain()
+
+        assertEquals("https://example.com/citra.jpg", conversation.counterpartyAvatarUrl)
+    }
 }

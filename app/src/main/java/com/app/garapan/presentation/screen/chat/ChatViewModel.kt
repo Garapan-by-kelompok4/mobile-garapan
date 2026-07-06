@@ -18,6 +18,7 @@ import com.app.garapan.domain.model.PesananStatus
 import com.app.garapan.domain.model.SupportMessage
 import com.app.garapan.domain.model.User
 import com.app.garapan.domain.repository.SessionRepository
+import com.app.garapan.domain.usecase.GetConversationUseCase
 import com.app.garapan.domain.usecase.GetOrderMessagesUseCase
 import com.app.garapan.domain.usecase.GetSupportThreadUseCase
 import com.app.garapan.domain.usecase.MarkMatchingNotificationsReadUseCase
@@ -94,6 +95,7 @@ sealed class ChatMessage {
 data class ChatUiState(
     val workerName: String = "",
     val workerInitials: String = "",
+    val peerAvatarUrl: String? = null,
     val currentUserProfile: ChatCurrentUserProfile = ChatCurrentUserProfile(),
     val isOnline: Boolean = true,
     val isAdminSupport: Boolean = false,
@@ -152,12 +154,13 @@ class ChatViewModel @Inject constructor(
     private val sendSupportAttachmentUseCase: SendSupportAttachmentUseCase,
     private val markSupportThreadReadUseCase: MarkSupportThreadReadUseCase,
     private val getOrderMessagesUseCase: GetOrderMessagesUseCase,
+    private val getConversationUseCase: GetConversationUseCase,
     private val sendOrderMessageUseCase: SendOrderMessageUseCase,
     private val sendOrderAttachmentUseCase: SendOrderAttachmentUseCase,
     private val markOrderChatReadUseCase: MarkOrderChatReadUseCase,
     private val markMatchingNotificationsReadUseCase: MarkMatchingNotificationsReadUseCase,
     private val notificationRefreshNotifier: NotificationRefreshNotifier,
-    sessionRepository: SessionRepository,
+    private val sessionRepository: SessionRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -166,9 +169,7 @@ class ChatViewModel @Inject constructor(
     private val navActiveOrder: ActiveOrder? = parseNavActiveOrder(savedStateHandle)
     private val isSupportThread = conversationId == Routes.SUPPORT_WORKER_ID
     private val isPeerChat = !isSupportThread && conversationId.isNotBlank()
-    private val currentUser: User? = sessionRepository.peekCurrentUser()
-    private val currentUserId: String? = currentUser?.id
-    private val currentUserProfile: ChatCurrentUserProfile = ChatCurrentUserPresenter.from(currentUser)
+    private val currentUserId: String? = sessionRepository.peekCurrentUser()?.id
 
     private val initialState: ChatUiState = when {
         isSupportThread -> ChatUiState(
@@ -183,7 +184,7 @@ class ChatViewModel @Inject constructor(
         )
         isPeerChat -> ChatUiState(
             workerName = peerName.ifBlank { "Percakapan" },
-            workerInitials = initialsOf(peerName),
+            workerInitials = ChatPeerProfilePresenter.initialsOf(peerName),
             isOnline = true,
             showStatus = false,
             isLoading = true,
@@ -192,14 +193,18 @@ class ChatViewModel @Inject constructor(
         )
         else -> ChatUiState(
             workerName = peerName.ifBlank { "Percakapan" },
-            workerInitials = initialsOf(peerName),
+            workerInitials = ChatPeerProfilePresenter.initialsOf(peerName),
             isOnline = false,
             showStatus = false,
             errorMessage = "Percakapan tidak ditemukan."
         )
     }
 
-    private val _uiState = MutableStateFlow(initialState.copy(currentUserProfile = currentUserProfile))
+    private val _uiState = MutableStateFlow(
+        initialState.copy(
+            currentUserProfile = ChatCurrentUserPresenter.from(sessionRepository.peekCurrentUser())
+        )
+    )
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 
     // Number of items prepended to the top of the thread on the last load-older.
@@ -225,10 +230,18 @@ class ChatViewModel @Inject constructor(
     // genuinely new incoming message arrives (not on every 4s poll).
     private var lastSeenOrderMessageId: String? = null
     private var hasDismissedRelatedNotifications = false
+    private var hasHydratedPeerProfile = false
 
     private var pollJob: Job? = null
 
     init {
+        viewModelScope.launch {
+            sessionRepository.currentUser.collect { user ->
+                _uiState.update {
+                    it.copy(currentUserProfile = ChatCurrentUserPresenter.from(user))
+                }
+            }
+        }
         when {
             isSupportThread -> loadSupportThread()
             isPeerChat -> loadPeerThread()
@@ -435,10 +448,35 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch { fetchPeerThread(showLoading = true, surfaceError = true) }
     }
 
+    private suspend fun hydratePeerProfileIfNeeded() {
+        if (hasHydratedPeerProfile || !ChatPeerProfilePresenter.needsHydration(peerName)) return
+        when (val result = getConversationUseCase(conversationId)) {
+            is Resource.Success -> {
+                hasHydratedPeerProfile = true
+                applyPeerProfile(ChatPeerProfilePresenter.from(result.data))
+            }
+            is Resource.Error -> Unit
+            Resource.Loading -> Unit
+        }
+    }
+
+    private fun applyPeerProfile(profile: ChatPeerProfile) {
+        _uiState.update {
+            it.copy(
+                workerName = profile.name.ifBlank { it.workerName },
+                workerInitials = profile.initials,
+                peerAvatarUrl = profile.avatarUrl,
+                activeOrder = profile.activeOrder ?: it.activeOrder
+            )
+        }
+        if (orderMessages.isNotEmpty()) rebuildOrderThread()
+    }
+
     private suspend fun fetchPeerThread(showLoading: Boolean, surfaceError: Boolean) {
         if (showLoading) {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
         }
+        hydratePeerProfileIfNeeded()
         when (val result = fetchNewestOrderPage()) {
             is Resource.Success -> {
                 orderMessages = result.data.messages.distinctBy { it.id }
@@ -586,19 +624,12 @@ class ChatViewModel @Inject constructor(
                 id = id,
                 text = text,
                 time = time,
-                senderInitials = _uiState.value.workerInitials.ifBlank { initialsOf(peerName) },
+                senderInitials = _uiState.value.workerInitials.ifBlank {
+                    ChatPeerProfilePresenter.initialsOf(peerName)
+                },
                 attachmentUrl = fileUrl.takeIf { isFile },
                 attachmentName = fileName.takeIf { isFile }
             )
-        }
-    }
-
-    private fun initialsOf(name: String): String {
-        val parts = name.trim().split(" ").filter { it.isNotBlank() }
-        return when {
-            parts.isEmpty() -> "?"
-            parts.size == 1 -> parts[0].take(2).uppercase()
-            else -> (parts[0].take(1) + parts[1].take(1)).uppercase()
         }
     }
 
