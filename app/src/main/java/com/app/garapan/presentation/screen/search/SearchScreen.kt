@@ -28,7 +28,6 @@ import com.composables.icons.lucide.House
 import com.composables.icons.lucide.User
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Search
-import com.composables.icons.lucide.Star
 import com.composables.icons.lucide.SlidersHorizontal
 import com.composables.icons.lucide.MessageCircle
 import androidx.compose.material3.CircularProgressIndicator
@@ -69,6 +68,7 @@ import coil3.compose.AsyncImage
 import com.app.garapan.presentation.components.AppCard
 import com.app.garapan.presentation.components.AppLogoTopBar
 import com.app.garapan.presentation.components.AppTopBar
+import com.app.garapan.presentation.components.RatingStar
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.util.RatingFormatter
@@ -79,7 +79,6 @@ import com.app.garapan.ui.theme.LightGray
 import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
-import com.app.garapan.ui.theme.StarYellow
 import com.app.garapan.ui.theme.Surface
 import com.app.garapan.ui.theme.White
 
@@ -428,12 +427,7 @@ private fun SearchResultCard(
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Lucide.Star,
-                        contentDescription = null,
-                        tint = StarYellow,
-                        modifier = Modifier.size(14.dp)
-                    )
+                    RatingStar(filled = true, size = 14.dp)
                     Spacer(modifier = Modifier.width(2.dp))
                     Text(
                         text = RatingFormatter.format(item.rating),

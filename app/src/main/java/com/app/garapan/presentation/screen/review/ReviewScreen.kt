@@ -14,15 +14,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.ArrowLeft
-import com.composables.icons.lucide.Star
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -42,12 +37,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.app.garapan.presentation.components.AppPrimaryButton
 import com.app.garapan.presentation.components.AppTopBar
+import com.app.garapan.presentation.components.RatingStar
 import com.app.garapan.ui.theme.BrandNavy
 import com.app.garapan.ui.theme.ErrorRed
-import com.app.garapan.ui.theme.LightGray
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
-import com.app.garapan.ui.theme.StarYellow
 import com.app.garapan.ui.theme.Surface
 import com.app.garapan.ui.theme.White
 
@@ -203,12 +197,11 @@ private fun RatingPicker(
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         (1..5).forEach { value ->
-            Icon(
-                imageVector = Lucide.Star,
+            RatingStar(
+                filled = value <= rating,
                 contentDescription = "$value bintang",
-                tint = if (value <= rating) StarYellow else LightGray,
+                size = 36.dp,
                 modifier = Modifier
-                    .size(36.dp)
                     .clickable { onRatingChanged(value) }
                     .padding(4.dp)
             )
