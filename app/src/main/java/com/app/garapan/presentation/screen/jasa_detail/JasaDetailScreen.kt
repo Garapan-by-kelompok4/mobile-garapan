@@ -634,6 +634,8 @@ private fun PortfolioCard(portfolio: JasaPortfolioItem) {
     }
 }
 
+internal val RatingSummaryStars = listOf(5, 4, 3, 2, 1)
+
 @Composable
 private fun RatingSummary(rating: Float, reviewCount: Int, breakdown: Map<Int, Int>) {
     val totalVotes = breakdown.values.sum().takeIf { it > 0 } ?: 1
@@ -676,7 +678,7 @@ private fun RatingSummary(rating: Float, reviewCount: Int, breakdown: Map<Int, I
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                listOf(5, 4, 3).forEach { star ->
+                RatingSummaryStars.forEach { star ->
                     val count = breakdown[star] ?: 0
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
