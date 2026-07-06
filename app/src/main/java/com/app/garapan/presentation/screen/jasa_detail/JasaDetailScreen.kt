@@ -34,7 +34,6 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.CircleCheckBig
 import com.composables.icons.lucide.Flag
 import com.composables.icons.lucide.Zap
-import com.composables.icons.lucide.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -66,6 +65,7 @@ import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.app.garapan.presentation.components.AppCard
 import com.app.garapan.presentation.components.AppTopBar
+import com.app.garapan.presentation.components.RatingStar
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.util.RatingFormatter
 import com.app.garapan.ui.theme.AccentBlue
@@ -216,12 +216,7 @@ fun JasaDetailScreen(
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Lucide.Star,
-                        contentDescription = null,
-                        tint = StarYellow,
-                        modifier = Modifier.size(16.dp)
-                    )
+                    RatingStar(filled = true, size = 16.dp)
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "${RatingFormatter.format(uiState.rating)} (${uiState.reviewCount} Ulasan)",
@@ -338,12 +333,7 @@ fun JasaDetailScreen(
                             )
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Lucide.Star,
-                                contentDescription = null,
-                                tint = StarYellow,
-                                modifier = Modifier.size(14.dp)
-                            )
+                            RatingStar(filled = true, size = 14.dp)
                             Spacer(modifier = Modifier.width(2.dp))
                             Text(
                                 text = RatingFormatter.format(uiState.workerRating),
@@ -672,11 +662,9 @@ private fun RatingSummary(rating: Float, reviewCount: Int, breakdown: Map<Int, I
                 )
                 Row {
                     repeat(5) { i ->
-                        Icon(
-                            imageVector = Lucide.Star,
-                            contentDescription = null,
-                            tint = if (i < rating.toInt()) StarYellow else LightGray,
-                            modifier = Modifier.size(14.dp)
+                        RatingStar(
+                            filled = i < rating.toInt(),
+                            size = 14.dp
                         )
                     }
                 }
@@ -699,12 +687,7 @@ private fun RatingSummary(rating: Float, reviewCount: Int, breakdown: Map<Int, I
                             style = MaterialTheme.typography.labelSmall.copy(color = SecondaryText),
                             modifier = Modifier.width(12.dp)
                         )
-                        Icon(
-                            imageVector = Lucide.Star,
-                            contentDescription = null,
-                            tint = StarYellow,
-                            modifier = Modifier.size(12.dp)
-                        )
+                        RatingStar(filled = true, size = 12.dp)
                         Spacer(modifier = Modifier.width(6.dp))
                         LinearProgressIndicator(
                             progress = { count.toFloat() / totalVotes },
@@ -758,12 +741,7 @@ private fun ReviewCard(review: JasaReviewItem) {
                 }
                 Row {
                     repeat(review.rating) {
-                        Icon(
-                            imageVector = Lucide.Star,
-                            contentDescription = null,
-                            tint = StarYellow,
-                            modifier = Modifier.size(14.dp)
-                        )
+                        RatingStar(filled = true, size = 14.dp)
                     }
                 }
             }

@@ -21,7 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.ArrowLeft
-import com.composables.icons.lucide.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -50,6 +49,7 @@ import coil3.compose.AsyncImage
 import com.app.garapan.domain.model.ProfileSkill
 import com.app.garapan.presentation.components.AppOutlineButton
 import com.app.garapan.presentation.components.AppTopBar
+import com.app.garapan.presentation.components.RatingStar
 import com.app.garapan.presentation.util.RatingFormatter
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BrandNavy
@@ -57,7 +57,6 @@ import com.app.garapan.ui.theme.LinkText
 import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
-import com.app.garapan.ui.theme.StarYellow
 import com.app.garapan.ui.theme.Surface
 import com.app.garapan.ui.theme.White
 
@@ -261,12 +260,7 @@ private fun PublicProfileHeader(profile: com.app.garapan.domain.model.PublicProf
             profile.rating?.let { rating ->
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Lucide.Star,
-                        contentDescription = null,
-                        tint = StarYellow,
-                        modifier = Modifier.size(16.dp)
-                    )
+                    RatingStar(filled = true, size = 16.dp)
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = RatingFormatter.format(rating),

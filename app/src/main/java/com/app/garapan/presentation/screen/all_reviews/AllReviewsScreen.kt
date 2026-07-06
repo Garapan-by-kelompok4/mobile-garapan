@@ -15,11 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -35,12 +32,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.app.garapan.presentation.components.AppCard
 import com.app.garapan.presentation.components.AppTopBar
+import com.app.garapan.presentation.components.RatingStar
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BrandNavy
 import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
-import com.app.garapan.ui.theme.StarYellow
 import com.app.garapan.ui.theme.Surface
 
 @Composable
@@ -145,12 +142,7 @@ private fun AllReviewCard(review: AllReviewItem) {
                 }
                 Row {
                     repeat(review.rating) {
-                        Icon(
-                            imageVector = Lucide.Star,
-                            contentDescription = null,
-                            tint = StarYellow,
-                            modifier = Modifier.size(14.dp)
-                        )
+                        RatingStar(filled = true, size = 14.dp)
                     }
                 }
             }

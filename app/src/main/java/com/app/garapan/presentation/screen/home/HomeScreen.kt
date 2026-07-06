@@ -25,7 +25,6 @@ import androidx.compose.foundation.verticalScroll
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Search
-import com.composables.icons.lucide.Star
 import com.composables.icons.lucide.CircleDollarSign
 import com.composables.icons.lucide.ImageOff
 import androidx.compose.material3.Button
@@ -62,6 +61,7 @@ import androidx.navigation.NavController
 import com.app.garapan.presentation.components.AppCard
 import com.app.garapan.presentation.components.AppLogoTopBar
 import com.app.garapan.presentation.components.NotificationBellButton
+import com.app.garapan.presentation.components.RatingStar
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.util.RatingFormatter
@@ -71,7 +71,6 @@ import com.app.garapan.ui.theme.LightGray
 import com.app.garapan.ui.theme.MutedText
 import com.app.garapan.ui.theme.PrimaryText
 import com.app.garapan.ui.theme.SecondaryText
-import com.app.garapan.ui.theme.StarYellow
 import com.app.garapan.ui.theme.Surface
 import com.app.garapan.ui.theme.White
 
@@ -585,12 +584,7 @@ private fun ServiceCard(service: ServiceItem, onClick: () -> Unit = {}) {
                         ),
                         modifier = Modifier.weight(1f)
                     )
-                    Icon(
-                        imageVector = Lucide.Star,
-                        contentDescription = null,
-                        tint = StarYellow,
-                        modifier = Modifier.size(12.dp)
-                    )
+                    RatingStar(filled = true, size = 12.dp)
                     Spacer(modifier = Modifier.width(2.dp))
                     Text(
                         text = RatingFormatter.format(service.rating),
@@ -650,12 +644,7 @@ fun TopWorkerCard(worker: TopWorkerItem, onClick: () -> Unit = {}) {
             }
             Column(horizontalAlignment = Alignment.End) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Lucide.Star,
-                        contentDescription = null,
-                        tint = StarYellow,
-                        modifier = Modifier.size(14.dp)
-                    )
+                    RatingStar(filled = true, size = 14.dp)
                     Spacer(modifier = Modifier.width(2.dp))
                     Text(
                         text = RatingFormatter.format(worker.rating),
