@@ -39,6 +39,8 @@ private val PUBLIC_AUTH_PATHS = setOf(
     "/auth/login",
     "/auth/verify-email",
     "/auth/resend-verification",
+    "/auth/forgot-password",
+    "/auth/reset-password",
     "/auth/refresh",
     "/auth/logout",
     "/auth/2fa/verify",

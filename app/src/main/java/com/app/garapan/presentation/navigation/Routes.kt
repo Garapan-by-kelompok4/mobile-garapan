@@ -1,6 +1,8 @@
 package com.app.garapan.presentation.navigation
 
 import android.net.Uri
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 object Routes {
     const val SPLASH = "splash"
@@ -52,7 +54,7 @@ object Routes {
 
     fun setupRoute(role: String) = "$SETUP?role=$role"
     fun verifyEmailRoute(email: String) = "verify_email?email=${Uri.encode(email)}"
-    fun resetPasswordRoute(email: String) = "reset_password?email=${Uri.encode(email)}"
+    fun resetPasswordRoute(email: String) = "reset_password?email=${email.encodeQueryValue()}"
     fun twoFactorRoute(preAuthToken: String) = "two_factor?preAuthToken=${Uri.encode(preAuthToken)}"
     fun projectDetailRoute(projectId: String) = "project_detail/$projectId"
     fun editProjectRoute(projectId: String) = "edit_project/$projectId"
@@ -83,4 +85,7 @@ object Routes {
     fun disputeRoute(pesananId: String) = "dispute/$pesananId"
     fun reportContentRoute(contentType: String, contentId: String) =
         "report_content/$contentType/$contentId"
+
+    private fun String.encodeQueryValue(): String =
+        URLEncoder.encode(this, StandardCharsets.UTF_8.toString()).replace("+", "%20")
 }

@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.app.garapan.presentation.components.AppOutlineButton
 import com.app.garapan.presentation.components.AppPrimaryButton
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
@@ -136,6 +137,15 @@ fun ForgotPasswordScreen(
                     enabled = !uiState.isLoading,
                     isLoading = uiState.isLoading
                 )
+
+                if (uiState.canEnterResetToken) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    AppOutlineButton(
+                        text = "Enter reset token",
+                        onClick = viewModel::onEnterResetToken,
+                        enabled = !uiState.isLoading
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(20.dp))
 
