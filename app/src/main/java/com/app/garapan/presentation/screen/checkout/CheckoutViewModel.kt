@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.CreatePaymentTokenParams
 import com.app.garapan.domain.model.CreatePesananParams
+import com.app.garapan.domain.model.Pesanan
 import com.app.garapan.domain.model.PesananStatus
 import com.app.garapan.domain.usecase.CreatePaymentTokenUseCase
 import com.app.garapan.domain.usecase.CreatePesananUseCase
@@ -22,7 +23,13 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Duration
+import java.time.Instant
+import java.util.UUID
 import javax.inject.Inject
+
+private const val IDEMPOTENCY_KEY = "idempotencyKey"
+private const val RESUME_ORDER_AGE_SECONDS = 30L
 
 data class CheckoutUiState(
     val jasaId: String = "",
@@ -53,6 +60,8 @@ class CheckoutViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val jasaId: String = savedStateHandle["jasaId"] ?: ""
+    private val idempotencyKey: String = savedStateHandle.get<String>(IDEMPOTENCY_KEY)
+        ?: UUID.randomUUID().toString().also { savedStateHandle[IDEMPOTENCY_KEY] = it }
 
     private val _uiState = MutableStateFlow(CheckoutUiState(jasaId = jasaId, isLoading = true))
     val uiState: StateFlow<CheckoutUiState> = _uiState.asStateFlow()
@@ -62,6 +71,7 @@ class CheckoutViewModel @Inject constructor(
 
     private var pendingPesananId: String? = null
     private var awaitingPaymentReturn: Boolean = false
+    private var paymentInFlight: Boolean = false
 
     init {
         loadJasa()
@@ -72,7 +82,9 @@ class CheckoutViewModel @Inject constructor(
             _uiState.update { it.copy(errorMessage = "Jasa tidak ditemukan.") }
             return
         }
+        if (paymentInFlight || _uiState.value.isProcessingPayment) return
 
+        paymentInFlight = true
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
@@ -82,13 +94,16 @@ class CheckoutViewModel @Inject constructor(
                 )
             }
 
-            val pesanan = when (val createResult = createPesananUseCase(CreatePesananParams(jasaId))) {
+            val pesanan = when (
+                val createResult = createPesananUseCase(
+                    CreatePesananParams(jasaId = jasaId, idempotencyKey = idempotencyKey)
+                )
+            ) {
                 is Resource.Success -> createResult.data
                 is Resource.Error -> {
+                    clearPaymentInFlight()
                     _uiState.update {
                         it.copy(
-                            isProcessingPayment = false,
-                            statusMessage = null,
                             errorMessage = UserMessageLocalizer.localize(createResult.message)
                         )
                     }
@@ -98,16 +113,18 @@ class CheckoutViewModel @Inject constructor(
             }
 
             pendingPesananId = pesanan.id
-            _uiState.update { it.copy(statusMessage = "Menyiapkan pembayaran...") }
+            val statusMessage = if (isResumingExistingOrder(pesanan)) {
+                "Melanjutkan pembayaran pesanan yang ada..."
+            } else {
+                "Menyiapkan pembayaran..."
+            }
+            _uiState.update { it.copy(statusMessage = statusMessage) }
 
             when (val tokenResult = createPaymentTokenUseCase(CreatePaymentTokenParams(pesananId = pesanan.id))) {
                 is Resource.Success -> {
                     awaitingPaymentReturn = true
                     _uiState.update {
-                        it.copy(
-                            isProcessingPayment = false,
-                            statusMessage = "Menyelesaikan pembayaran di halaman Midtrans..."
-                        )
+                        it.copy(statusMessage = "Menyelesaikan pembayaran di halaman Midtrans...")
                     }
                     _events.emit(
                         CheckoutEvent.LaunchSnapPayment(
@@ -117,9 +134,9 @@ class CheckoutViewModel @Inject constructor(
                     )
                 }
                 is Resource.Error -> {
+                    clearPaymentInFlight()
                     _uiState.update {
                         it.copy(
-                            isProcessingPayment = false,
                             statusMessage = null,
                             errorMessage = UserMessageLocalizer.localize(tokenResult.message)
                         )
@@ -127,6 +144,18 @@ class CheckoutViewModel @Inject constructor(
                 }
                 Resource.Loading -> Unit
             }
+        }
+    }
+
+    fun onPaymentLaunchFailed() {
+        if (!awaitingPaymentReturn) return
+        awaitingPaymentReturn = false
+        clearPaymentInFlight()
+        _uiState.update {
+            it.copy(
+                statusMessage = null,
+                errorMessage = "Tidak dapat membuka pembayaran."
+            )
         }
     }
 
@@ -144,9 +173,8 @@ class CheckoutViewModel @Inject constructor(
             }
             when (val refresh = waitForPesananPaymentUseCase(pesananId)) {
                 is Resource.Success -> {
-                    _uiState.update {
-                        it.copy(isProcessingPayment = false, statusMessage = null)
-                    }
+                    clearPaymentInFlight()
+                    _uiState.update { it.copy(statusMessage = null) }
                     if (refresh.data.status == PesananStatus.PENDING) {
                         _events.emit(
                             CheckoutEvent.ShowMessage(
@@ -159,9 +187,8 @@ class CheckoutViewModel @Inject constructor(
                     _events.emit(CheckoutEvent.NavigateToOrderDetail(pesananId))
                 }
                 is Resource.Error -> {
-                    _uiState.update {
-                        it.copy(isProcessingPayment = false, statusMessage = null)
-                    }
+                    clearPaymentInFlight()
+                    _uiState.update { it.copy(statusMessage = null) }
                     _events.emit(
                         CheckoutEvent.ShowMessage(
                             "Gagal memuat status. Buka detail pesanan dan ketuk Perbarui Status."
@@ -175,6 +202,17 @@ class CheckoutViewModel @Inject constructor(
     }
 
     fun retry() = loadJasa()
+
+    private fun clearPaymentInFlight() {
+        paymentInFlight = false
+        _uiState.update { it.copy(isProcessingPayment = false) }
+    }
+
+    private fun isResumingExistingOrder(pesanan: Pesanan): Boolean {
+        if (pesanan.status != PesananStatus.PENDING) return false
+        val createdAt = runCatching { Instant.parse(pesanan.createdAt) }.getOrNull() ?: return false
+        return Duration.between(createdAt, Instant.now()).seconds > RESUME_ORDER_AGE_SECONDS
+    }
 
     private fun loadJasa() {
         if (jasaId.isBlank()) {

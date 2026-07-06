@@ -16,7 +16,12 @@ class PesananRepositoryImpl @Inject constructor(
 ) : PesananRepository {
 
     override suspend fun createPesanan(params: CreatePesananParams): Resource<Pesanan> =
-        safeApiCall { pesananApi.createPesanan(params.toRequest()).toDomain() }
+        safeApiCall {
+            pesananApi.createPesanan(
+                idempotencyKey = params.idempotencyKey,
+                body = params.toRequest()
+            ).toDomain()
+        }
 
     override suspend fun getMyPesananList(page: Int, limit: Int): Resource<List<Pesanan>> =
         safeApiCall {
