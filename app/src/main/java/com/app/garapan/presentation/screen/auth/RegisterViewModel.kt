@@ -11,6 +11,7 @@ import com.app.garapan.domain.usecase.ResendVerificationUseCase
 import com.app.garapan.domain.validation.PasswordValidator
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.presentation.navigation.authDestination
+import com.app.garapan.presentation.notification.FcmTokenRegistrar
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,7 +48,8 @@ class RegisterViewModel @Inject constructor(
     private val registerUseCase: RegisterUseCase,
     private val googleSignInUseCase: GoogleSignInUseCase,
     private val loadSessionUseCase: LoadSessionUseCase,
-    private val resendVerificationUseCase: ResendVerificationUseCase
+    private val resendVerificationUseCase: ResendVerificationUseCase,
+    private val fcmTokenRegistrar: FcmTokenRegistrar
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RegisterUiState())
@@ -67,7 +69,10 @@ class RegisterViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null, infoMessage = null) }
             when (val result = googleSignInUseCase(idToken, role)) {
-                is Resource.Success -> routeAfterAuthenticatedGoogleSignIn()
+                is Resource.Success -> {
+                    fcmTokenRegistrar.registerCurrentToken()
+                    routeAfterAuthenticatedGoogleSignIn()
+                }
                 is Resource.Error -> _uiState.update {
                     it.copy(isLoading = false, errorMessage = result.message)
                 }

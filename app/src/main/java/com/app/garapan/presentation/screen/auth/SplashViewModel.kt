@@ -50,7 +50,7 @@ class SplashViewModel @Inject constructor(
                 _events.emit(SplashEvent.Navigate(Routes.LOGIN))
                 return@launch
             }
-            fcmTokenRegistrar.registerCurrentToken(viewModelScope)
+            fcmTokenRegistrar.registerCurrentToken()
             _events.emit(SplashEvent.Navigate(Routes.MAIN))
         }
     }

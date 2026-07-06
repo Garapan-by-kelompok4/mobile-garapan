@@ -16,9 +16,10 @@ import javax.inject.Singleton
 @Singleton
 class FcmTokenRegistrar @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val registerFcmTokenUseCase: RegisterFcmTokenUseCase
+    private val registerFcmTokenUseCase: RegisterFcmTokenUseCase,
+    private val appScope: CoroutineScope
 ) {
-    fun registerCurrentToken(scope: CoroutineScope) {
+    fun registerCurrentToken() {
         if (FirebaseApp.getApps(context).isEmpty()) {
             Log.w(TAG, "FirebaseApp is not initialized; skipping FCM token registration")
             return
@@ -34,7 +35,7 @@ class FcmTokenRegistrar @Inject constructor(
                     }
                     val token = completed.result.orEmpty()
                     Log.i(TAG, "Received FCM token (${token.length} chars); registering with backend")
-                    scope.launch { registerToken(token) }
+                    appScope.launch { registerToken(token) }
                 }
             }
             .onFailure { error ->

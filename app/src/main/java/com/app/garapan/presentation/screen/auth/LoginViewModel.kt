@@ -80,7 +80,7 @@ class LoginViewModel @Inject constructor(
             }
             when (val result = googleSignInUseCase(idToken, role)) {
                 is Resource.Success -> {
-                    fcmTokenRegistrar.registerCurrentToken(viewModelScope)
+                    fcmTokenRegistrar.registerCurrentToken()
                     routeAfterAuthenticatedLogin()
                 }
                 is Resource.Error -> _uiState.update {
@@ -163,7 +163,7 @@ class LoginViewModel @Inject constructor(
     private suspend fun handleLoginSuccess(result: LoginResult) {
         when (result) {
             is LoginResult.Authenticated -> {
-                fcmTokenRegistrar.registerCurrentToken(viewModelScope)
+                fcmTokenRegistrar.registerCurrentToken()
                 routeAfterAuthenticatedLogin()
             }
             is LoginResult.RequiresTwoFactor -> {
