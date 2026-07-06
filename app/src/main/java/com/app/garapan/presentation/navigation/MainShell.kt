@@ -95,6 +95,10 @@ fun MainShell(
         }
     }
 
+    LaunchedEffect(currentUser?.id) {
+        viewModel.registerFcmTokenIfAuthenticated()
+    }
+
     // The splash no longer waits for the profile, so users who quit mid-setup
     // land here first; send them back to finish once the session resolves.
     LaunchedEffect(currentUser) {

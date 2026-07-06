@@ -7,6 +7,7 @@ import com.app.garapan.domain.usecase.EnsureSessionResult
 import com.app.garapan.domain.usecase.EnsureSessionUseCase
 import com.app.garapan.domain.usecase.LoadSessionUseCase
 import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
+import com.app.garapan.presentation.notification.FcmTokenRegistrar
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,7 +35,8 @@ data class MainShellUiState(
 class MainShellViewModel @Inject constructor(
     observeCurrentUserUseCase: ObserveCurrentUserUseCase,
     private val ensureSessionUseCase: EnsureSessionUseCase,
-    private val loadSessionUseCase: LoadSessionUseCase
+    private val loadSessionUseCase: LoadSessionUseCase,
+    private val fcmTokenRegistrar: FcmTokenRegistrar
 ) : ViewModel() {
     val currentUser: StateFlow<User?> = observeCurrentUserUseCase()
         .stateIn(
@@ -58,8 +60,11 @@ class MainShellViewModel @Inject constructor(
 
                 _uiState.update { it.copy(sessionUnavailable = false) }
                 when (ensureSessionUseCase()) {
-                    EnsureSessionResult.Ready -> Unit
-                    EnsureSessionResult.ReadyCached -> refreshSessionSilently()
+                    EnsureSessionResult.Ready -> registerFcmToken()
+                    EnsureSessionResult.ReadyCached -> {
+                        registerFcmToken()
+                        refreshSessionSilently()
+                    }
                     EnsureSessionResult.RequiresLogin ->
                         _events.emit(MainShellEvent.NavigateToLogin)
                     EnsureSessionResult.Unavailable ->
@@ -79,5 +84,15 @@ class MainShellViewModel @Inject constructor(
      */
     private fun refreshSessionSilently() {
         viewModelScope.launch { loadSessionUseCase() }
+    }
+
+    private fun registerFcmToken() {
+        fcmTokenRegistrar.registerCurrentToken()
+    }
+
+    fun registerFcmTokenIfAuthenticated() {
+        if (currentUser.value != null) {
+            registerFcmToken()
+        }
     }
 }

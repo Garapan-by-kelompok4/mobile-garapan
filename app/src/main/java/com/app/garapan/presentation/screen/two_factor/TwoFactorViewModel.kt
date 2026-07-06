@@ -7,6 +7,7 @@ import com.app.garapan.domain.usecase.LoadSessionUseCase
 import com.app.garapan.domain.usecase.ResendOtpUseCase
 import com.app.garapan.domain.usecase.VerifyOtpUseCase
 import com.app.garapan.presentation.navigation.authDestination
+import com.app.garapan.presentation.notification.FcmTokenRegistrar
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +37,8 @@ sealed interface TwoFactorEvent {
 class TwoFactorViewModel @Inject constructor(
     private val verifyOtpUseCase: VerifyOtpUseCase,
     private val resendOtpUseCase: ResendOtpUseCase,
-    private val loadSessionUseCase: LoadSessionUseCase
+    private val loadSessionUseCase: LoadSessionUseCase,
+    private val fcmTokenRegistrar: FcmTokenRegistrar
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TwoFactorUiState())
@@ -109,6 +111,7 @@ class TwoFactorViewModel @Inject constructor(
     private suspend fun routeAfterVerification() {
         when (val result = loadSessionUseCase()) {
             is Resource.Success -> {
+                fcmTokenRegistrar.registerCurrentToken()
                 _uiState.update { it.copy(isLoading = false) }
                 _events.emit(TwoFactorEvent.Navigate(result.data.authDestination()))
             }
