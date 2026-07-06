@@ -28,6 +28,7 @@ interface ProjectApi {
         @Query("kategoriId") kategoriId: String? = null,
         @Query("minBudget") minBudget: Double? = null,
         @Query("maxBudget") maxBudget: Double? = null,
+        @Query("sort") sort: String? = null,
         @Query("includeRelatedSkills") includeRelatedSkills: Boolean? = null,
         @Query("page") page: Int = 1,
         @Query("limit") limit: Int = 20
@@ -40,6 +41,7 @@ interface ProjectApi {
         @Query("kategoriId") kategoriId: String? = null,
         @Query("minBudget") minBudget: Double? = null,
         @Query("maxBudget") maxBudget: Double? = null,
+        @Query("sort") sort: String? = null,
         @Query("includeRelatedSkills") includeRelatedSkills: Boolean? = null,
         @Query("page") page: Int = 1,
         @Query("limit") limit: Int = 20
