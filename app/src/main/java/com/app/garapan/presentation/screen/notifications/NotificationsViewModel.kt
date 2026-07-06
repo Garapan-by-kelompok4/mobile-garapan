@@ -12,6 +12,7 @@ import com.app.garapan.domain.usecase.GetNotificationsUseCase
 import com.app.garapan.domain.usecase.MarkAllNotificationsReadUseCase
 import com.app.garapan.domain.usecase.MarkNotificationReadUseCase
 import com.app.garapan.presentation.navigation.Routes
+import com.app.garapan.presentation.notification.NotificationRefreshNotifier
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -60,7 +61,8 @@ sealed interface NotificationsEvent {
 class NotificationsViewModel @Inject constructor(
     private val getNotificationsUseCase: GetNotificationsUseCase,
     private val markNotificationReadUseCase: MarkNotificationReadUseCase,
-    private val markAllNotificationsReadUseCase: MarkAllNotificationsReadUseCase
+    private val markAllNotificationsReadUseCase: MarkAllNotificationsReadUseCase,
+    private val notificationRefreshNotifier: NotificationRefreshNotifier
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(NotificationsUiState())
@@ -91,6 +93,7 @@ class NotificationsViewModel @Inject constructor(
                             }
                         )
                     }
+                    notificationRefreshNotifier.requestRefresh()
                 }
                 is Resource.Error -> {
                     _uiState.update { it.copy(isMarkingAllRead = false) }
@@ -116,6 +119,7 @@ class NotificationsViewModel @Inject constructor(
                                 }
                             )
                         }
+                        notificationRefreshNotifier.requestRefresh()
                     }
                     is Resource.Error -> Unit
                     Resource.Loading -> Unit

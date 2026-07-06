@@ -19,9 +19,11 @@ import com.app.garapan.domain.usecase.CreatePaymentTokenUseCase
 import com.app.garapan.domain.usecase.DeliverPesananUseCase
 import com.app.garapan.domain.usecase.GetPesananDetailUseCase
 import com.app.garapan.domain.usecase.GetReviewByPesananUseCase
+import com.app.garapan.domain.usecase.MarkMatchingNotificationsReadUseCase
 import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
 import com.app.garapan.domain.usecase.WaitForPesananPaymentUseCase
 import com.app.garapan.presentation.navigation.Routes
+import com.app.garapan.presentation.notification.NotificationRefreshNotifier
 import com.app.garapan.presentation.util.CurrencyFormatter
 import com.app.garapan.presentation.util.PesananDisplayMapper
 import com.app.garapan.presentation.util.UserMessageLocalizer
@@ -90,6 +92,8 @@ class OrderDetailViewModel @Inject constructor(
     private val createPaymentTokenUseCase: CreatePaymentTokenUseCase,
     private val waitForPesananPaymentUseCase: WaitForPesananPaymentUseCase,
     private val getReviewByPesananUseCase: GetReviewByPesananUseCase,
+    private val markMatchingNotificationsReadUseCase: MarkMatchingNotificationsReadUseCase,
+    private val notificationRefreshNotifier: NotificationRefreshNotifier,
     observeCurrentUserUseCase: ObserveCurrentUserUseCase
 ) : ViewModel() {
 
@@ -97,6 +101,7 @@ class OrderDetailViewModel @Inject constructor(
     private var currentRole: Role? = null
     private var currentUserId: String? = null
     private var currentPesanan: Pesanan? = null
+    private var hasDismissedRelatedNotifications = false
     private var awaitingPaymentReturn: Boolean = false
 
     private val _uiState = MutableStateFlow(OrderDetailUiState(isLoading = true))
@@ -279,6 +284,7 @@ class OrderDetailViewModel @Inject constructor(
                 is Resource.Success -> {
                     applyPesanan(result.data)
                     loadExistingReview(result.data.id, result.data.status)
+                    dismissRelatedOrderNotificationsOnce()
                 }
                 is Resource.Error -> {
                     _uiState.update {
@@ -290,6 +296,17 @@ class OrderDetailViewModel @Inject constructor(
                 }
                 Resource.Loading -> Unit
             }
+        }
+    }
+
+    private fun dismissRelatedOrderNotificationsOnce() {
+        if (hasDismissedRelatedNotifications || pesananId.isBlank()) return
+        hasDismissedRelatedNotifications = true
+        viewModelScope.launch {
+            markMatchingNotificationsReadUseCase { notification ->
+                notification.meta?.pesananId == pesananId
+            }
+            notificationRefreshNotifier.requestRefresh()
         }
     }
 

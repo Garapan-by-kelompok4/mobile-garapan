@@ -10,6 +10,8 @@ import com.app.garapan.data.util.PortfolioImageReader
 import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.ActiveOrder
 import com.app.garapan.domain.model.ChatAttachmentUpload
+import com.app.garapan.domain.model.Notification
+import com.app.garapan.domain.model.NotificationType
 import com.app.garapan.domain.model.OrderChatMessage
 import com.app.garapan.domain.model.OrderChatPage
 import com.app.garapan.domain.model.PesananStatus
@@ -18,12 +20,14 @@ import com.app.garapan.domain.model.User
 import com.app.garapan.domain.repository.SessionRepository
 import com.app.garapan.domain.usecase.GetOrderMessagesUseCase
 import com.app.garapan.domain.usecase.GetSupportThreadUseCase
+import com.app.garapan.domain.usecase.MarkMatchingNotificationsReadUseCase
 import com.app.garapan.domain.usecase.MarkOrderChatReadUseCase
 import com.app.garapan.domain.usecase.MarkSupportThreadReadUseCase
 import com.app.garapan.domain.usecase.SendOrderAttachmentUseCase
 import com.app.garapan.domain.usecase.SendOrderMessageUseCase
 import com.app.garapan.domain.usecase.SendSupportMessageUseCase
 import com.app.garapan.presentation.navigation.Routes
+import com.app.garapan.presentation.notification.NotificationRefreshNotifier
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -149,6 +153,8 @@ class ChatViewModel @Inject constructor(
     private val sendOrderMessageUseCase: SendOrderMessageUseCase,
     private val sendOrderAttachmentUseCase: SendOrderAttachmentUseCase,
     private val markOrderChatReadUseCase: MarkOrderChatReadUseCase,
+    private val markMatchingNotificationsReadUseCase: MarkMatchingNotificationsReadUseCase,
+    private val notificationRefreshNotifier: NotificationRefreshNotifier,
     sessionRepository: SessionRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
@@ -215,6 +221,7 @@ class ChatViewModel @Inject constructor(
     // Last message id we've reconciled, so we only send a read receipt when a
     // genuinely new incoming message arrives (not on every 4s poll).
     private var lastSeenOrderMessageId: String? = null
+    private var hasDismissedRelatedNotifications = false
 
     private var pollJob: Job? = null
 
@@ -327,6 +334,7 @@ class ChatViewModel @Inject constructor(
                 // The user is looking at the thread, so clear any unread admin
                 // messages server-side; the inbox badge reflects this next refresh.
                 if (page.unreadCount > 0) markThreadRead()
+                dismissRelatedChatNotificationsOnce()
             }
             is Resource.Error -> {
                 _uiState.update {
@@ -375,6 +383,29 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch { markSupportThreadReadUseCase() }
     }
 
+    /**
+     * Opening a chat from the inbox should clear matching push-notification rows
+     * and refresh the home bell badge without forcing the user through the list.
+     */
+    private fun dismissRelatedChatNotificationsOnce() {
+        if (hasDismissedRelatedNotifications) return
+        hasDismissedRelatedNotifications = true
+        viewModelScope.launch {
+            markMatchingNotificationsReadUseCase(::matchesCurrentChatNotification)
+            notificationRefreshNotifier.requestRefresh()
+        }
+    }
+
+    private fun matchesCurrentChatNotification(notification: Notification): Boolean {
+        if (notification.type != NotificationType.CHAT_MESSAGE) return false
+        val metaConversationId = notification.meta?.conversationId
+        return if (isSupportThread) {
+            metaConversationId.isNullOrBlank() || metaConversationId == conversationId
+        } else {
+            metaConversationId == conversationId
+        }
+    }
+
     private fun sendSupportMessage(text: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isSending = true, errorMessage = null) }
@@ -411,6 +442,7 @@ class ChatViewModel @Inject constructor(
                 _uiState.update { it.copy(isLoading = false, errorMessage = null) }
                 rebuildOrderThread()
                 reconcileOrderRead()
+                dismissRelatedChatNotificationsOnce()
             }
             is Resource.Error -> {
                 _uiState.update {
