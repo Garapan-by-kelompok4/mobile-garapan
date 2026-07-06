@@ -79,6 +79,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -409,7 +410,10 @@ private fun OrderContextBanner(
             modifier = Modifier
                 .clip(RoundedCornerShape(50.dp))
                 .background(AccentBlue.copy(alpha = 0.12f))
-                .padding(horizontal = 10.dp, vertical = 4.dp)
+                .padding(horizontal = 10.dp, vertical = 4.dp),
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis
         )
         Icon(
             imageVector = Lucide.ArrowRight,

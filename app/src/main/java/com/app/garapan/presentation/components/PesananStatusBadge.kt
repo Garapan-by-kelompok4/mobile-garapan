@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BrandNavy
@@ -30,7 +31,10 @@ fun PesananStatusBadge(
         modifier = modifier
             .clip(RoundedCornerShape(50.dp))
             .background(bg)
-            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        maxLines = 1,
+        softWrap = false,
+        overflow = TextOverflow.Ellipsis
     )
 }
 
