@@ -5,6 +5,7 @@ import com.app.garapan.data.remote.dto.PesananDto
 import com.app.garapan.data.remote.dto.PesananListResponseDto
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -12,7 +13,10 @@ import retrofit2.http.Query
 
 interface PesananApi {
     @POST("pesanan")
-    suspend fun createPesanan(@Body body: CreatePesananRequest): PesananDto
+    suspend fun createPesanan(
+        @Header("Idempotency-Key") idempotencyKey: String?,
+        @Body body: CreatePesananRequest
+    ): PesananDto
 
     @GET("pesanan")
     suspend fun getMyPesananList(

@@ -88,6 +88,7 @@ fun CheckoutScreen(
             when (event) {
                 is CheckoutEvent.LaunchSnapPayment -> {
                     if (activity == null) {
+                        viewModel.onPaymentLaunchFailed()
                         Toast.makeText(context, "Tidak dapat membuka pembayaran.", Toast.LENGTH_SHORT).show()
                         return@collect
                     }
