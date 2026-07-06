@@ -135,6 +135,7 @@ class SetupAccountViewModel @Inject constructor(
             val params = if (role == "student") {
                 val state = _student.value
                 UpdateProfileParams(
+                    displayName = state.fullName.trim().takeIf { it.isNotBlank() },
                     university = state.university.takeIf { it.isNotBlank() },
                     skills = state.selectedExpertise.toList(),
                     bio = buildStudentBio(state).takeIf { it.isNotBlank() }
@@ -142,6 +143,7 @@ class SetupAccountViewModel @Inject constructor(
             } else {
                 val state = _client.value
                 UpdateProfileParams(
+                    displayName = state.fullName.trim().takeIf { it.isNotBlank() },
                     companyName = state.companyProjectName.takeIf { it.isNotBlank() },
                     bio = buildClientBio(state).takeIf { it.isNotBlank() }
                 )
