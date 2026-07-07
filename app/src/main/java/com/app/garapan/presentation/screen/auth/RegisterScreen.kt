@@ -130,8 +130,7 @@ fun RegisterScreen(
                     label = "Email Address",
                     value = uiState.email,
                     onValueChange = viewModel::onEmailChanged,
-                    placeholder = if (uiState.selectedTab == LoginTab.STUDENT)
-                        "your.name@university.edu" else "your.name@gmail.com",
+                    placeholder = "your@email.com",
                     keyboardType = KeyboardType.Email
                 )
 

@@ -879,7 +879,7 @@ private fun JasaDetailBottomBar(
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
                 ) {
                     Text(
-                        text = "Pesan Sekarang",
+                        text = "Pesan",
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.SemiBold
                         ),
