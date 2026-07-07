@@ -1,6 +1,6 @@
 # Contributing to GARAPAN Mobile
 
-This project is built by a small team using AI agents. Read this before contributing.
+This project is built by a small team. Read this before contributing.
 
 ---
 
@@ -25,7 +25,12 @@ This file is **not committed to the repo** (it's in `.gitignore`). You must get 
 
 > Until you do this, the app still builds and runs — Firebase Messaging compiles, but push token registration is skipped because Firebase cannot initialize without the config file.
 
+### Shared debug keystore
+
+`debug-shared.keystore` is committed on purpose so all devs share the same debug signing key (needed for Google Sign-In / Firebase). Do not use it for release builds. Release keys stay out of git.
+
 ### Required reading before writing any code:
+
 - `.docs/requirements/mobile-requirements.md`
 - `.docs/2026-04-27-garapan-design.md`
 
@@ -33,11 +38,11 @@ This file is **not committed to the repo** (it's in `.gitignore`). You must get 
 
 ## Branch Strategy
 
-| Branch | Purpose |
-|---|---|
-| `main` | Protected — production ready, PR only |
-| `feat/*` | New feature (e.g. `feat/login-screen`) |
-| `fix/*` | Bug fix (e.g. `fix/token-refresh`) |
+| Branch    | Purpose                                |
+| --------- | -------------------------------------- |
+| `main`    | Protected — production ready, PR only  |
+| `feat/*`  | New feature (e.g. `feat/login-screen`) |
+| `fix/*`   | Bug fix (e.g. `fix/token-refresh`)     |
 | `chore/*` | Maintenance (e.g. `chore/update-deps`) |
 
 ```bash
@@ -73,13 +78,14 @@ Format: `type(scope): short description`
 ## Pull Requests
 
 1. Make sure the build passes before opening a PR:
-   ```bash
-   ./gradlew assembleDebug
-   ```
+
+```bash
+ ./gradlew assembleDebug
+```
+
 2. PR title must follow commit message format
 3. Describe what changed and why in the PR body
 4. At least **1 team member** must approve before merging
-5. Delete the branch after merging
 
 ---
 
@@ -88,9 +94,10 @@ Format: `type(scope): short description`
 This project uses MVVM + Clean Architecture. See `CLAUDE.md` for the full rules.
 
 Short version:
-- **`data/`** — API calls, Room DB, repository implementations
-- **`domain/`** — pure Kotlin models, repository interfaces, use cases. No Android imports.
-- **`presentation/`** — Compose screens + ViewModels. No business logic.
+
+- `data/` — API calls, Room DB, repository implementations
+- `domain/` — pure Kotlin models, repository interfaces, use cases. No Android imports.
+- `presentation/` — Compose screens + ViewModels. No business logic.
 
 ---
 

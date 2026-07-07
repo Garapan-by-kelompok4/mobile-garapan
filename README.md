@@ -2,55 +2,30 @@
 
 Android app for the GARAPAN IT Freelancer Marketplace — connecting Indonesian university students (Mahasiswa) as freelancers with clients (Klien).
 
-> **Status: Frontend-only (UI prototype).** All screens display dummy data. API integration, authentication, real-time chat, and payment are not yet wired up.
-
 ---
 
 ## Tech Stack
 
-| Layer | Tech | Status |
-|---|---|---|
-| Language | Kotlin | ✅ Active |
-| UI | Jetpack Compose | ✅ Active |
-| Architecture | MVVM + Clean Architecture | ✅ Active |
-| DI | Hilt | ✅ Active |
-| Navigation | Jetpack Navigation Compose | ✅ Active |
-| HTTP | Retrofit + OkHttp + Coroutines | 🔜 Planned |
-| Local DB | Room | 🔜 Planned |
-| Image | Coil 3.x | 🔜 Planned |
-| Token Storage | DataStore | 🔜 Planned |
-| Chat | Socket.io | 🔜 Planned |
-| Push Notifications | Firebase FCM | 🔜 Planned |
-| Payments | Midtrans SDK | 🔜 Planned |
-
----
-
-## Screens Implemented
-
-| Screen | Description |
+| Layer | Tech |
 |---|---|
-| Splash | Entry point |
-| Login / Register | Auth forms (UI only) |
-| Setup Account | Role selection (Mahasiswa / Klien) |
-| Home | Project list, services, top workers, blog |
-| Search | Search bar and filters |
-| Project Detail | Project info, apply button |
-| Jasa Detail | Service info, chat & order button |
-| Chat | Chat room with file attachment and order confirmation card |
-| Checkout | Order summary and payment method selection |
-| Blog Detail | Full article with body blocks and recommendations |
-| Pesan | Conversation list including admin support |
-| Post Project | Project posting form |
-| Profile | User profile with services management |
-| Edit Profile | Profile editing form |
-| Order History | Past orders list |
-| Security | Password and security settings |
+| Language | Kotlin |
+| UI | Jetpack Compose (Material 3) |
+| Architecture | MVVM + Clean Architecture |
+| DI | Hilt |
+| HTTP | Retrofit + OkHttp + Gson + Coroutines |
+| Navigation | Jetpack Navigation Compose |
+| Auth | Credential Manager + Google Sign-In |
+| Token Storage | DataStore |
+| Image | Coil 3.x |
+| Push Notifications | Firebase FCM |
+| Payments | Midtrans Snap (Custom Tabs) |
 
 ---
 
 ## Getting Started
 
 ### Prerequisites
+
 - Android Studio Hedgehog or later
 - JDK 11
 - Android device or emulator (API 26+)
@@ -64,28 +39,19 @@ cd mobile-garapan
 
 Open the project root in Android Studio and let Gradle sync finish.
 
-### Run
+For Firebase and environment configuration, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Build and install directly from Android Studio, or via terminal:
+### Run
 
 ```bash
 ./gradlew assembleDebug
 ```
 
-> No backend connection is required to run the app — all data is hardcoded dummy data.
+### Test
 
-### Firebase Setup (not required yet)
-
-`google-services.json` is not committed to this repo. Firebase token registration is skipped until the file exists. To enable real push notifications:
-
-1. Ask the team lead to add you to the Firebase project
-2. Go to [Firebase Console](https://console.firebase.google.com) → Project Settings → Your apps → Android app
-3. Download `google-services.json` and place it in the `app/` folder
-4. Sync/rebuild the project. The Google Services plugin is applied automatically when `app/google-services.json` exists.
-
-### Backend URL
-
-`BuildConfig.BASE_URL` is set to `http://10.0.2.2:3000/` (emulator localhost). Not active until API integration begins. For a physical device, update the URL in `app/build.gradle.kts` to your machine's local IP.
+```bash
+./gradlew test
+```
 
 ---
 
@@ -94,26 +60,46 @@ Build and install directly from Android Studio, or via terminal:
 ```
 app/src/main/java/com/app/garapan/
 ├── data/
-│   ├── remote/api/       ← Retrofit API interfaces
-│   ├── remote/dto/       ← Request / response DTOs
-│   ├── local/db/         ← Room database
-│   ├── local/dao/        ← Room DAOs
-│   ├── local/entity/     ← Room entities
-│   └── repository/       ← Repository implementations
+│   ├── auth/             ← Google Sign-In client
+│   ├── remote/
+│   │   ├── api/          ← Retrofit API interfaces
+│   │   ├── dto/          ← Request / response DTOs
+│   │   ├── error/        ← API error mapping
+│   │   └── interceptor/  ← Auth headers & token refresh
+│   ├── local/            ← DataStore token storage (+ Room planned below)
+│   │   ├── db/           ← Room database (planned)
+│   │   ├── dao/          ← Room DAOs (planned)
+│   │   └── entity/       ← Room entities (planned)
+│   ├── mapper/           ← DTO ↔ domain mappers
+│   ├── repository/       ← Repository implementations
+│   └── util/             ← File/image readers for uploads
 ├── domain/
+│   ├── common/           ← Shared types (e.g. Resource)
 │   ├── model/            ← Pure Kotlin data classes
 │   ├── repository/       ← Repository interfaces
-│   └── usecase/          ← One UseCase per action
+│   ├── usecase/          ← One UseCase per action
+│   └── validation/       ← Input validation rules
 ├── presentation/
+│   ├── components/       ← Reusable Compose UI
+│   ├── navigation/       ← NavGraph, Routes, NavHost
+│   ├── notification/     ← FCM token registration
+│   ├── payment/          ← Midtrans Snap launcher
 │   ├── screen/           ← One folder per screen
-│   └── navigation/       ← NavGraph, Routes, NavHost
-└── di/                   ← Hilt modules
+│   └── util/             ← UI helpers & formatters
+├── notification/         ← FCM service & notification routing
+├── ui/theme/             ← Colors, typography, theme
+├── di/                   ← Hilt modules
+├── GarapanApplication.kt
+└── MainActivity.kt
 ```
 
 ---
 
-## Contributing
+## Documentation
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for branch strategy, commit format, and PR rules.
-
-See [CLAUDE.md](CLAUDE.md) for AI agent instructions and architecture rules.
+| File | Contents |
+|---|---|
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, branch strategy, commit format, PR rules |
+| [CLAUDE.md](CLAUDE.md) | Architecture rules and AI agent instructions |
+| [`.docs/requirements/mobile-requirements.md`](.docs/requirements/mobile-requirements.md) | Screens, API endpoints, data models |
+| [`.docs/2026-04-27-garapan-design.md`](.docs/2026-04-27-garapan-design.md) | System design and architecture decisions |

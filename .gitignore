@@ -7,7 +7,7 @@
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
-.DS_Store
+**/.DS_Store
 /build
 /captures
 .externalNativeBuild
@@ -16,12 +16,25 @@ local.properties
 .claude
 
 # Secrets — never commit these
+.env
+.env.*
 google-services.json
 keystore.jks
 *.keystore
 *.jks
 !debug-shared.keystore
 release.properties
+signing.properties
+keystore.properties
+
+# IDE — local-only
+.cursor/
+.vscode/
+*.hprof
+
+# Build artifacts
+*.apk
+*.aab
 
 # Auto-generated / cache
 **/__pycache__/
