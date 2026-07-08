@@ -7,10 +7,15 @@ import androidx.lifecycle.viewModelScope
 import com.app.garapan.data.util.PortfolioImageReader
 import com.app.garapan.data.util.PortfolioImageReadResult
 import com.app.garapan.domain.common.Resource
+import com.app.garapan.domain.model.ProfileFormOptions
 import com.app.garapan.domain.model.ProfileStatus
 import com.app.garapan.domain.model.Role
 import com.app.garapan.domain.model.UpdateProfileParams
 import com.app.garapan.domain.model.User
+import com.app.garapan.domain.model.buildClientBio
+import com.app.garapan.domain.model.buildMahasiswaBio
+import com.app.garapan.domain.model.parseClientBio
+import com.app.garapan.domain.model.parseMahasiswaBio
 import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
 import com.app.garapan.domain.usecase.UpdateProfileUseCase
 import com.app.garapan.domain.usecase.UploadAvatarUseCase
@@ -35,6 +40,13 @@ data class EditProfileUiState(
     val status: ProfileStatus? = null,
     val isStatusDropdownExpanded: Boolean = false,
     val organization: String = "",
+    val university: String = "",
+    val major: String = "",
+    val yearsOfExperience: String = "",
+    val isYearsDropdownExpanded: Boolean = false,
+    val industry: String = "",
+    val isIndustryDropdownExpanded: Boolean = false,
+    val selectedServices: Set<String> = emptySet(),
     val linkedinUrl: String = "",
     val role: Role? = null,
     val avatarUrl: String? = null,
@@ -43,6 +55,7 @@ data class EditProfileUiState(
     val isUploadingAvatar: Boolean = false
 ) {
     val isKlien: Boolean get() = role == Role.KLIEN
+    val isMahasiswa: Boolean get() = role == Role.MAHASISWA
     val initials: String
         get() = fullName.trim().split(" ")
             .filter { it.isNotBlank() }
@@ -51,7 +64,9 @@ data class EditProfileUiState(
             .ifBlank { "?" }
 }
 
-val profileStatusOptions = ProfileStatus.entries
+val profileStatusOptions = ProfileFormOptions.statusOptions
+val yearsOfExperienceOptions = ProfileFormOptions.yearsOfExperience
+val industryOptions = ProfileFormOptions.industries
 
 sealed interface EditProfileEvent {
     data class ShowMessage(val message: String) : EditProfileEvent
@@ -83,11 +98,18 @@ class EditProfileViewModel @Inject constructor(
                 _uiState.update { state ->
                     if (!prefilled) {
                         prefilled = true
+                        val mahasiswaBio = parseMahasiswaBio(user.mahasiswa?.bio.orEmpty())
+                        val clientBio = parseClientBio(user.klien?.bio.orEmpty())
                         state.copy(
                             fullName = user.resolveName(),
                             phoneNumber = user.phoneNumber.orEmpty(),
                             status = user.status,
                             organization = user.klien?.companyName.orEmpty(),
+                            university = user.mahasiswa?.university.orEmpty(),
+                            major = mahasiswaBio.major,
+                            yearsOfExperience = mahasiswaBio.yearsOfExperience,
+                            industry = clientBio.first,
+                            selectedServices = clientBio.second,
                             linkedinUrl = user.socialAccounts.linkedinUrl.orEmpty(),
                             role = user.role,
                             avatarUrl = user.avatarUrl,
@@ -115,6 +137,27 @@ class EditProfileViewModel @Inject constructor(
         _uiState.update { it.copy(isStatusDropdownExpanded = false) }
 
     fun onOrganizationChanged(value: String) = _uiState.update { it.copy(organization = value) }
+    fun onUniversityChanged(value: String) = _uiState.update { it.copy(university = value) }
+    fun onMajorChanged(value: String) = _uiState.update { it.copy(major = value) }
+
+    fun onYearsSelected(value: String) =
+        _uiState.update { it.copy(yearsOfExperience = value, isYearsDropdownExpanded = false) }
+
+    fun onYearsDropdownToggle() =
+        _uiState.update { it.copy(isYearsDropdownExpanded = !it.isYearsDropdownExpanded) }
+
+    fun onYearsDropdownDismiss() =
+        _uiState.update { it.copy(isYearsDropdownExpanded = false) }
+
+    fun onIndustrySelected(value: String) =
+        _uiState.update { it.copy(industry = value, isIndustryDropdownExpanded = false) }
+
+    fun onIndustryDropdownToggle() =
+        _uiState.update { it.copy(isIndustryDropdownExpanded = !it.isIndustryDropdownExpanded) }
+
+    fun onIndustryDropdownDismiss() =
+        _uiState.update { it.copy(isIndustryDropdownExpanded = false) }
+
     fun onLinkedinUrlChanged(value: String) = _uiState.update { it.copy(linkedinUrl = value) }
 
     fun onAvatarSelected(uri: Uri, readContext: Context = context) {
@@ -161,14 +204,31 @@ class EditProfileViewModel @Inject constructor(
         val state = _uiState.value
         if (state.isSaving || state.isLoading) return
 
-        val params = UpdateProfileParams(
-            displayName = state.fullName.trim().ifBlank { null },
-            phoneNumber = state.phoneNumber.trim().ifBlank { null },
-            status = state.status,
-            linkedinUrl = state.linkedinUrl.trim().ifBlank { null },
-            // companyName is Klien-only on the backend; never send it for a Mahasiswa.
-            companyName = state.organization.trim().takeIf { state.isKlien && it.isNotBlank() }
-        )
+        val params = when {
+            state.isMahasiswa -> UpdateProfileParams(
+                displayName = state.fullName.trim().ifBlank { null },
+                phoneNumber = state.phoneNumber.trim().ifBlank { null },
+                university = state.university.trim().ifBlank { null },
+                bio = buildMahasiswaBio(
+                    state.major,
+                    state.yearsOfExperience.ifBlank { yearsOfExperienceOptions.first() }
+                ).ifBlank { null },
+                linkedinUrl = state.linkedinUrl.trim().ifBlank { null }
+            )
+            state.isKlien -> UpdateProfileParams(
+                displayName = state.fullName.trim().ifBlank { null },
+                phoneNumber = state.phoneNumber.trim().ifBlank { null },
+                status = state.status ?: ProfileStatus.INDIVIDUAL,
+                companyName = state.organization.trim().ifBlank { null },
+                bio = buildClientBio(state.industry, state.selectedServices).ifBlank { null },
+                linkedinUrl = state.linkedinUrl.trim().ifBlank { null }
+            )
+            else -> UpdateProfileParams(
+                displayName = state.fullName.trim().ifBlank { null },
+                phoneNumber = state.phoneNumber.trim().ifBlank { null },
+                linkedinUrl = state.linkedinUrl.trim().ifBlank { null }
+            )
+        }
 
         _uiState.update { it.copy(isSaving = true) }
         viewModelScope.launch {

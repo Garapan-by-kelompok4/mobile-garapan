@@ -3,7 +3,11 @@ package com.app.garapan.presentation.screen.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.garapan.domain.common.Resource
+import com.app.garapan.domain.model.ProfileFormOptions
+import com.app.garapan.domain.model.ProfileStatus
 import com.app.garapan.domain.model.UpdateProfileParams
+import com.app.garapan.domain.model.buildClientBio
+import com.app.garapan.domain.model.buildMahasiswaBio
 import com.app.garapan.domain.usecase.GetSkillListUseCase
 import com.app.garapan.domain.usecase.UpdateProfileUseCase
 import com.app.garapan.presentation.navigation.Routes
@@ -29,7 +33,7 @@ data class StudentSetupState(
 
 data class ClientSetupState(
     val fullName: String = "",
-    val status: String = "",
+    val status: ProfileStatus? = null,
     val isStatusDropdownExpanded: Boolean = false,
     val industry: String = "",
     val isIndustryDropdownExpanded: Boolean = false,
@@ -49,9 +53,9 @@ sealed interface SetupAccountEvent {
     data class Navigate(val route: String) : SetupAccountEvent
 }
 
-val statusOptions = listOf("Individual", "Company", "Startup", "Government")
-val industryOptions = listOf("Technology", "Finance", "Education", "Healthcare", "Retail", "Other")
-val yearsOfExperienceOptions = listOf("0-1 years", "1-3 years", "3-5 years", "5+ years")
+val yearsOfExperienceOptions = ProfileFormOptions.yearsOfExperience
+val industryOptions = ProfileFormOptions.industries
+val setupStatusOptions = ProfileFormOptions.statusOptions
 
 @HiltViewModel
 class SetupAccountViewModel @Inject constructor(
@@ -119,7 +123,8 @@ class SetupAccountViewModel @Inject constructor(
 
     // Client
     fun onClientFullNameChanged(v: String) = _client.update { it.copy(fullName = v) }
-    fun onStatusSelected(v: String) = _client.update { it.copy(status = v, isStatusDropdownExpanded = false) }
+    fun onStatusSelected(v: ProfileStatus) =
+        _client.update { it.copy(status = v, isStatusDropdownExpanded = false) }
     fun onStatusDropdownToggle() = _client.update { it.copy(isStatusDropdownExpanded = !it.isStatusDropdownExpanded) }
     fun onIndustrySelected(v: String) = _client.update { it.copy(industry = v, isIndustryDropdownExpanded = false) }
     fun onIndustryDropdownToggle() = _client.update { it.copy(isIndustryDropdownExpanded = !it.isIndustryDropdownExpanded) }
@@ -134,18 +139,20 @@ class SetupAccountViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             val params = if (role == "student") {
                 val state = _student.value
+                val years = state.yearsOfExperience.ifBlank { yearsOfExperienceOptions.first() }
                 UpdateProfileParams(
                     displayName = state.fullName.trim().takeIf { it.isNotBlank() },
                     university = state.university.takeIf { it.isNotBlank() },
-                    skills = state.selectedExpertise.toList(),
-                    bio = buildStudentBio(state).takeIf { it.isNotBlank() }
+                    skills = state.selectedExpertise.toList().takeIf { it.isNotEmpty() },
+                    bio = buildMahasiswaBio(state.major, years).takeIf { it.isNotBlank() }
                 )
             } else {
                 val state = _client.value
                 UpdateProfileParams(
                     displayName = state.fullName.trim().takeIf { it.isNotBlank() },
                     companyName = state.companyProjectName.takeIf { it.isNotBlank() },
-                    bio = buildClientBio(state).takeIf { it.isNotBlank() }
+                    status = state.status ?: ProfileStatus.INDIVIDUAL,
+                    bio = buildClientBio(state.industry, state.selectedServices).takeIf { it.isNotBlank() }
                 )
             }
 
@@ -163,13 +170,4 @@ class SetupAccountViewModel @Inject constructor(
         }
     }
 
-    private fun buildStudentBio(state: StudentSetupState): String =
-        listOf(state.fullName, state.major, state.yearsOfExperience)
-            .filter { it.isNotBlank() }
-            .joinToString(separator = " | ")
-
-    private fun buildClientBio(state: ClientSetupState): String =
-        listOf(state.fullName, state.status, state.industry)
-            .filter { it.isNotBlank() }
-            .joinToString(separator = " | ")
 }

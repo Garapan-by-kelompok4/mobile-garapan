@@ -116,6 +116,19 @@ esac
 
 CLASSPATH="\\\"\\\""
 
+# Cursor/VS Code may set JAVA_HOME to a Red Hat extension JRE without jlink.
+# Android Gradle Plugin needs a full JDK for compile steps.
+if [ -n "$JAVA_HOME" ] && [ ! -x "$JAVA_HOME/bin/jlink" ]; then
+    for candidate in \
+        "/Applications/Android Studio.app/Contents/jbr/Contents/Home" \
+        "/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home"
+    do
+        if [ -x "$candidate/bin/jlink" ]; then
+            JAVA_HOME=$candidate
+            break
+        fi
+    done
+fi
 
 # Determine the Java command to use to start the JVM.
 if [ -n "$JAVA_HOME" ] ; then
