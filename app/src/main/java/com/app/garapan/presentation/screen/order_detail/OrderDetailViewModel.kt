@@ -333,7 +333,11 @@ class OrderDetailViewModel @Inject constructor(
             ActiveOrder(
                 pesananId = pesanan.id,
                 status = pesanan.status,
-                title = PesananDisplayMapper.orderTitle(pesanan.jasaTitle, pesanan.projectId)
+                title = PesananDisplayMapper.orderTitle(
+                    pesanan.jasaTitle,
+                    pesanan.projectId,
+                    pesanan.projectTitle
+                )
             )
         }
         viewModelScope.launch {
@@ -357,7 +361,11 @@ class OrderDetailViewModel @Inject constructor(
             it.copy(
                 id = pesanan.id,
                 jasaId = pesanan.jasaId,
-                title = PesananDisplayMapper.orderTitle(pesanan.jasaTitle, pesanan.projectId),
+                title = PesananDisplayMapper.orderTitle(
+                    pesanan.jasaTitle,
+                    pesanan.projectId,
+                    pesanan.projectTitle
+                ),
                 counterpartyName = if (isBuyer) pesanan.workerName else pesanan.clientLabel,
                 counterpartyLabel = if (isBuyer) "Freelancer" else "Klien",
                 amount = CurrencyFormatter.formatRupiah(pesanan.totalPrice),

@@ -177,7 +177,11 @@ class ReviewViewModel @Inject constructor(
                     val baseState = ReviewUiState(
                         pesananId = pesanan.id,
                         jasaId = pesanan.jasaId.orEmpty(),
-                        jasaTitle = PesananDisplayMapper.orderTitle(pesanan.jasaTitle, pesanan.projectId),
+                        jasaTitle = PesananDisplayMapper.orderTitle(
+                            pesanan.jasaTitle,
+                            pesanan.projectId,
+                            pesanan.projectTitle
+                        ),
                         workerName = pesanan.workerName,
                         orderDate = PesananDisplayMapper.formatOrderDate(pesanan.createdAt),
                         isLoading = false,

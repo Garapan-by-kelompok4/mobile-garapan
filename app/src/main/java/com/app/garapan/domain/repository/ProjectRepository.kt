@@ -6,6 +6,7 @@ import com.app.garapan.domain.model.Pesanan
 import com.app.garapan.domain.model.Project
 import com.app.garapan.domain.model.ProjectListFilters
 import com.app.garapan.domain.model.ProjectProposal
+import com.app.garapan.domain.model.TakenProject
 import com.app.garapan.domain.model.UpdateProjectParams
 
 interface ProjectRepository {
@@ -19,6 +20,7 @@ interface ProjectRepository {
     suspend fun withdrawProposal(projectId: String): Resource<Unit>
     suspend fun getProjectProposals(projectId: String): Resource<List<ProjectProposal>>
     suspend fun getMyProposals(page: Int = 1, limit: Int = 20): Resource<List<ProjectProposal>>
+    suspend fun getMyTakenProjects(page: Int = 1, limit: Int = 20): Resource<List<TakenProject>>
     suspend fun acceptProposal(projectId: String, proposalId: String): Resource<Pesanan>
     suspend fun rejectProposal(projectId: String, proposalId: String): Resource<Unit>
 }

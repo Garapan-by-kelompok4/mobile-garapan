@@ -7,6 +7,7 @@ import com.app.garapan.data.remote.dto.ProjectListResponseDto
 import com.app.garapan.data.remote.dto.ProjectProposalDto
 import com.app.garapan.data.remote.dto.ProjectProposalListResponseDto
 import com.app.garapan.data.remote.dto.SubmitProposalRequestDto
+import com.app.garapan.data.remote.dto.TakenProjectListResponseDto
 import com.app.garapan.data.remote.dto.UpdateProjectRequest
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -83,6 +84,12 @@ interface ProjectApi {
         @Query("page") page: Int = 1,
         @Query("limit") limit: Int = 20
     ): ProjectProposalListResponseDto
+
+    @GET("project/mine/taken")
+    suspend fun getMyTakenProjects(
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 20
+    ): TakenProjectListResponseDto
 
     @PATCH("project/{id}/proposals/{proposalId}/accept")
     suspend fun acceptProposal(

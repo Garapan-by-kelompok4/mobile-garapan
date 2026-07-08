@@ -219,7 +219,7 @@ class OrderHistoryViewModel @Inject constructor(
         val amountPrefix = if (isProvider) "+" else "-"
         return OrderHistoryItem(
             id = id,
-            title = PesananDisplayMapper.orderTitle(jasaTitle, projectId),
+            title = PesananDisplayMapper.orderTitle(jasaTitle, projectId, projectTitle),
             amount = "$amountPrefix${CurrencyFormatter.formatRupiah(totalPrice)}",
             counterpartyName = if (isBuyer) workerName else clientLabel,
             time = PesananDisplayMapper.formatOrderDate(createdAt),

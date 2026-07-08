@@ -12,6 +12,7 @@ data class Pesanan(
     val createdAt: String,
     val updatedAt: String,
     val jasaTitle: String,
+    val projectTitle: String,
     val workerName: String,
     val clientLabel: String,
     val workerUserId: String?,

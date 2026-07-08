@@ -50,6 +50,7 @@ import androidx.navigation.NavController
 import com.app.garapan.presentation.components.AppCard
 import com.app.garapan.presentation.components.AppLogoTopBar
 import com.app.garapan.presentation.components.AppTopBar
+import com.app.garapan.presentation.components.PesananStatusBadge
 import com.app.garapan.presentation.navigation.NavResults
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
@@ -149,7 +150,14 @@ fun MyProjectsScreen(
                                 project = project,
                                 canDelete = uiState.canDelete,
                                 isDeleting = uiState.isDeleting,
-                                onClick = { navController.navigate(Routes.projectDetailRoute(project.id)) },
+                                onClick = {
+                                    val orderId = project.orderId
+                                    if (!orderId.isNullOrBlank()) {
+                                        navController.navigate(Routes.orderDetailRoute(orderId))
+                                    } else {
+                                        navController.navigate(Routes.projectDetailRoute(project.id))
+                                    }
+                                },
                                 onEdit = { navController.navigate(Routes.editProjectRoute(project.id)) },
                                 onDelete = { viewModel.onDeleteProject(project.id) }
                             )
@@ -237,17 +245,7 @@ private fun MyProjectCard(
                 )
             }
             Spacer(modifier = Modifier.height(10.dp))
-            Text(
-                text = project.status,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50.dp))
-                    .background(AccentBlue.copy(alpha = 0.12f))
-                    .padding(horizontal = 10.dp, vertical = 4.dp),
-                style = MaterialTheme.typography.labelSmall.copy(
-                    color = AccentBlue,
-                    fontWeight = FontWeight.SemiBold
-                )
-            )
+            PesananStatusBadge(status = project.status)
         }
     }
 }

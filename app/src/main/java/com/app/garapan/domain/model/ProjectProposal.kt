@@ -29,3 +29,18 @@ enum class ProposalStatus {
             entries.firstOrNull { it.name == value.uppercase() } ?: PENDING
     }
 }
+
+fun ProjectProposal.toTakenProject(): Project {
+    val agreedBudget = proposedPrice.takeIf { it > 0.0 } ?: projectBudget
+    return Project(
+        id = projectId,
+        klienId = "",
+        kategoriId = "",
+        title = projectTitle.ifBlank { "Proyek" },
+        description = "",
+        budget = agreedBudget,
+        deadline = projectDeadline,
+        status = projectStatus,
+        imageUrl = projectImageUrl
+    )
+}
