@@ -7,6 +7,7 @@ import com.app.garapan.domain.model.MahasiswaProfile
 import com.app.garapan.domain.model.PortofolioImage
 import com.app.garapan.domain.model.Role
 import com.app.garapan.domain.model.Skill
+import com.app.garapan.domain.model.ProfileStatus
 import com.app.garapan.domain.model.UpdateProfileParams
 import com.app.garapan.domain.model.User
 import com.app.garapan.domain.repository.AuthRepository
@@ -55,6 +56,38 @@ class SetupAccountViewModelTest {
         advanceUntilIdle()
 
         assertEquals("Haykal Rafi", authRepository.capturedParams?.displayName)
+    }
+
+    @Test
+    fun `client setup sends status and company name`() = runTest {
+        val authRepository = CapturingAuthRepository()
+        val viewModel = createViewModel(authRepository)
+
+        viewModel.onClientFullNameChanged("Sari Dewi")
+        viewModel.onStatusSelected(ProfileStatus.COMPANY)
+        viewModel.onCompanyProjectNameChanged("Delta Project")
+        viewModel.onIndustrySelected("Technology")
+        viewModel.onComplete("client")
+        advanceUntilIdle()
+
+        assertEquals("Sari Dewi", authRepository.capturedParams?.displayName)
+        assertEquals(ProfileStatus.COMPANY, authRepository.capturedParams?.status)
+        assertEquals("Delta Project", authRepository.capturedParams?.companyName)
+        assertEquals("Technology", authRepository.capturedParams?.bio)
+    }
+
+    @Test
+    fun `student setup stores major and experience in bio without full name`() = runTest {
+        val authRepository = CapturingAuthRepository()
+        val viewModel = createViewModel(authRepository)
+
+        viewModel.onStudentFullNameChanged("Haykal Rafi")
+        viewModel.onMajorChanged("Information Systems")
+        viewModel.onYearsSelected("1-3 years")
+        viewModel.onComplete("student")
+        advanceUntilIdle()
+
+        assertEquals("Information Systems | 1-3 years", authRepository.capturedParams?.bio)
     }
 
     private fun createViewModel(

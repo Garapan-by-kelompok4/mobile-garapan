@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.app.garapan.domain.model.ProfileStatus
 import com.app.garapan.presentation.navigation.Routes
 import com.app.garapan.ui.theme.AccentBlue
 import com.app.garapan.ui.theme.BrandNavy
@@ -291,7 +292,7 @@ private fun ClientSetupForm(
     skillOptionsError: String?,
     onRetrySkillOptions: () -> Unit,
     onFullNameChanged: (String) -> Unit,
-    onStatusSelected: (String) -> Unit,
+    onStatusSelected: (ProfileStatus) -> Unit,
     onStatusDropdownToggle: () -> Unit,
     onIndustrySelected: (String) -> Unit,
     onIndustryDropdownToggle: () -> Unit,
@@ -318,11 +319,13 @@ private fun ClientSetupForm(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 SetupDropdown(
-                    value = state.status.ifEmpty { "Individual" },
+                    value = state.status?.label ?: ProfileStatus.INDIVIDUAL.label,
                     expanded = state.isStatusDropdownExpanded,
-                    options = statusOptions,
+                    options = setupStatusOptions.map { it.label },
                     onToggle = onStatusDropdownToggle,
-                    onSelect = onStatusSelected
+                    onSelect = { label ->
+                        setupStatusOptions.firstOrNull { it.label == label }?.let(onStatusSelected)
+                    }
                 )
             }
             Spacer(modifier = Modifier.width(12.dp))

@@ -144,21 +144,57 @@ fun EditProfileScreen(
                             onValueChange = viewModel::onPhoneNumberChanged,
                             keyboardType = KeyboardType.Phone
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        EditProfileStatusField(
-                            status = uiState.status,
-                            expanded = uiState.isStatusDropdownExpanded,
-                            onToggle = viewModel::onStatusDropdownToggle,
-                            onDismiss = viewModel::onStatusDropdownDismiss,
-                            onSelect = viewModel::onStatusSelected
-                        )
+                        if (uiState.isMahasiswa) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            EditProfileField(
+                                label = "Universitas",
+                                value = uiState.university,
+                                placeholder = "e.g. UPN Veteran Jakarta",
+                                onValueChange = viewModel::onUniversityChanged
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            EditProfileField(
+                                label = "Jurusan / Program Studi",
+                                value = uiState.major,
+                                placeholder = "e.g. Sistem Informasi",
+                                onValueChange = viewModel::onMajorChanged
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            EditProfileDropdownField(
+                                label = "Pengalaman",
+                                value = uiState.yearsOfExperience.ifBlank { yearsOfExperienceOptions.first() },
+                                expanded = uiState.isYearsDropdownExpanded,
+                                options = yearsOfExperienceOptions,
+                                onToggle = viewModel::onYearsDropdownToggle,
+                                onDismiss = viewModel::onYearsDropdownDismiss,
+                                onSelect = viewModel::onYearsSelected
+                            )
+                        }
                         if (uiState.isKlien) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            EditProfileStatusField(
+                                status = uiState.status,
+                                expanded = uiState.isStatusDropdownExpanded,
+                                onToggle = viewModel::onStatusDropdownToggle,
+                                onDismiss = viewModel::onStatusDropdownDismiss,
+                                onSelect = viewModel::onStatusSelected
+                            )
                             Spacer(modifier = Modifier.height(16.dp))
                             EditProfileField(
                                 label = "Perusahaan / Organisasi / Proyek",
                                 value = uiState.organization,
                                 placeholder = "Nama PT / Nama Org / Nama Proyek",
                                 onValueChange = viewModel::onOrganizationChanged
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            EditProfileDropdownField(
+                                label = "Industri",
+                                value = uiState.industry.ifBlank { "Pilih industri" },
+                                expanded = uiState.isIndustryDropdownExpanded,
+                                options = industryOptions,
+                                onToggle = viewModel::onIndustryDropdownToggle,
+                                onDismiss = viewModel::onIndustryDropdownDismiss,
+                                onSelect = viewModel::onIndustrySelected
                             )
                         }
                         Spacer(modifier = Modifier.height(16.dp))
@@ -306,6 +342,62 @@ private fun EditProfileField(
             shape = RoundedCornerShape(8.dp),
             textStyle = MaterialTheme.typography.bodyMedium
         )
+    }
+}
+
+@Composable
+private fun EditProfileDropdownField(
+    label: String,
+    value: String,
+    expanded: Boolean,
+    options: List<String>,
+    onToggle: () -> Unit,
+    onDismiss: () -> Unit,
+    onSelect: (String) -> Unit
+) {
+    Column {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium.copy(
+                fontWeight = FontWeight.Medium,
+                color = PrimaryText
+            )
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Box {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Surface)
+                    .clickable(onClick = onToggle)
+                    .padding(horizontal = 16.dp, vertical = 18.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = value,
+                    color = PrimaryText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    imageVector = Lucide.ChevronDown,
+                    contentDescription = null,
+                    tint = MutedText
+                )
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = onDismiss
+            ) {
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option) },
+                        onClick = { onSelect(option) }
+                    )
+                }
+            }
+        }
     }
 }
 
