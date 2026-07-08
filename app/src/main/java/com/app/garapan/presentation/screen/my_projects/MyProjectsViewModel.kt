@@ -6,8 +6,11 @@ import com.app.garapan.domain.common.Resource
 import com.app.garapan.domain.model.Project
 import com.app.garapan.domain.model.ProjectStatus
 import com.app.garapan.domain.model.Role
+import com.app.garapan.domain.model.TakenProject
+import com.app.garapan.presentation.util.PesananDisplayMapper
 import com.app.garapan.domain.usecase.DeleteProjectUseCase
 import com.app.garapan.domain.usecase.GetMyProjectsUseCase
+import com.app.garapan.domain.usecase.GetMyTakenProjectsUseCase
 import com.app.garapan.domain.usecase.ObserveCurrentUserUseCase
 import com.app.garapan.presentation.util.CurrencyFormatter
 import com.app.garapan.presentation.util.UserMessageLocalizer
@@ -33,6 +36,7 @@ data class MyProjectItem(
     val category: String,
     val deadline: String,
     val status: String,
+    val orderId: String? = null,
     val assigneeName: String = "",
     val isEditable: Boolean = false
 )
@@ -54,8 +58,9 @@ sealed interface MyProjectsEvent {
 @HiltViewModel
 class MyProjectsViewModel @Inject constructor(
     private val getMyProjectsUseCase: GetMyProjectsUseCase,
+    private val getMyTakenProjectsUseCase: GetMyTakenProjectsUseCase,
     private val deleteProjectUseCase: DeleteProjectUseCase,
-    observeCurrentUserUseCase: ObserveCurrentUserUseCase
+    private val observeCurrentUserUseCase: ObserveCurrentUserUseCase
 ) : ViewModel() {
 
     private var currentRole: Role? = null
@@ -69,6 +74,7 @@ class MyProjectsViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             observeCurrentUserUseCase().collect { user ->
+                val previousRole = currentRole
                 currentRole = user?.role
                 _uiState.update {
                     it.copy(
@@ -79,9 +85,11 @@ class MyProjectsViewModel @Inject constructor(
                         canDelete = user?.role == Role.KLIEN || user?.role == Role.ADMIN
                     )
                 }
+                if (previousRole != currentRole) {
+                    loadProjects()
+                }
             }
         }
-        loadProjects()
     }
 
     fun loadProjects(refresh: Boolean = false) {
@@ -97,33 +105,52 @@ class MyProjectsViewModel @Inject constructor(
                 )
             }
 
-            when (val result = getMyProjectsUseCase()) {
-                is Resource.Success -> {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            isRefreshing = false,
-                            projects = result.data.map(::toMyProjectItem),
-                            loadErrorMessage = null
-                        )
+            if (currentRole == Role.MAHASISWA) {
+                when (val result = getMyTakenProjectsUseCase()) {
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isRefreshing = false,
+                                projects = result.data.map(::toMyProjectItem),
+                                loadErrorMessage = null
+                            )
+                        }
                     }
+                    is Resource.Error -> handleLoadError(result.message, refresh)
+                    Resource.Loading -> Unit
                 }
-                is Resource.Error -> {
-                    val message = UserMessageLocalizer.localize(result.message)
-                    _uiState.update { state ->
-                        state.copy(
-                            isLoading = false,
-                            isRefreshing = false,
-                            projects = if (refresh) state.projects else emptyList(),
-                            loadErrorMessage = if (refresh) null else message
-                        )
+            } else {
+                when (val result = getMyProjectsUseCase()) {
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isRefreshing = false,
+                                projects = result.data.map(::toMyProjectItem),
+                                loadErrorMessage = null
+                            )
+                        }
                     }
-                    if (refresh) {
-                        _events.emit(MyProjectsEvent.ShowMessage(message))
-                    }
+                    is Resource.Error -> handleLoadError(result.message, refresh)
+                    Resource.Loading -> Unit
                 }
-                Resource.Loading -> Unit
             }
+        }
+    }
+
+    private suspend fun handleLoadError(message: String, refresh: Boolean) {
+        val localized = UserMessageLocalizer.localize(message)
+        _uiState.update { state ->
+            state.copy(
+                isLoading = false,
+                isRefreshing = false,
+                projects = if (refresh) state.projects else emptyList(),
+                loadErrorMessage = if (refresh) null else localized
+            )
+        }
+        if (refresh) {
+            _events.emit(MyProjectsEvent.ShowMessage(localized))
         }
     }
 
@@ -152,6 +179,19 @@ class MyProjectsViewModel @Inject constructor(
                 Resource.Loading -> Unit
             }
         }
+    }
+
+    private fun toMyProjectItem(takenProject: TakenProject): MyProjectItem {
+        val project = takenProject.project
+        return MyProjectItem(
+            id = project.id,
+            title = project.title,
+            budget = CurrencyFormatter.formatRupiahRange(project.minBudget, project.maxBudget, project.budget),
+            category = project.kategoriName.ifBlank { "Proyek" },
+            deadline = formatDeadline(project.deadline),
+            status = takenProject.orderStatus?.let(PesananDisplayMapper::statusLabel) ?: "DITERIMA",
+            orderId = takenProject.orderId
+        )
     }
 
     private fun toMyProjectItem(project: Project) = MyProjectItem(

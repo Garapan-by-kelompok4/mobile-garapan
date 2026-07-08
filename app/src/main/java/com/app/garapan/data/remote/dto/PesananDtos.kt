@@ -12,6 +12,7 @@ data class PesananDto(
     val createdAt: String,
     val updatedAt: String,
     val jasa: PesananJasaDto? = null,
+    val project: PesananProjectDto? = null,
     val klien: PesananKlienDto? = null,
     val mahasiswa: PesananMahasiswaDto? = null,
     val pembayaran: PesananPembayaranDto? = null,
@@ -21,6 +22,13 @@ data class PesananDto(
 data class PesananJasaDto(
     val id: String,
     val title: String
+)
+
+data class PesananProjectDto(
+    val id: String,
+    val title: String,
+    val deadline: String? = null,
+    val imageUrl: String? = null
 )
 
 data class PesananKlienDto(

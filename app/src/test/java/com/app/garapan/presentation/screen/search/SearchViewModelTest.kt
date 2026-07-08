@@ -110,6 +110,7 @@ class SearchViewModelTest {
         override suspend fun withdrawProposal(projectId: String): Resource<Unit> = unused()
         override suspend fun getProjectProposals(projectId: String): Resource<List<ProjectProposal>> = unused()
         override suspend fun getMyProposals(page: Int, limit: Int): Resource<List<ProjectProposal>> = unused()
+        override suspend fun getMyTakenProjects(page: Int, limit: Int): Resource<List<com.app.garapan.domain.model.TakenProject>> = unused()
         override suspend fun acceptProposal(projectId: String, proposalId: String): Resource<Pesanan> = unused()
         override suspend fun rejectProposal(projectId: String, proposalId: String): Resource<Unit> = unused()
     }

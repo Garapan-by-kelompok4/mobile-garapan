@@ -12,6 +12,7 @@ import com.app.garapan.domain.model.Pesanan
 import com.app.garapan.domain.model.Project
 import com.app.garapan.domain.model.ProjectListFilters
 import com.app.garapan.domain.model.ProjectProposal
+import com.app.garapan.domain.model.TakenProject
 import com.app.garapan.domain.model.UpdateProjectParams
 import com.app.garapan.domain.repository.ProjectRepository
 import kotlinx.coroutines.CancellationException
@@ -97,6 +98,11 @@ class ProjectRepositoryImpl @Inject constructor(
     override suspend fun getMyProposals(page: Int, limit: Int): Resource<List<ProjectProposal>> =
         safeApiCall {
             projectApi.getMyProposals(page, limit).data.map { it.toDomain() }
+        }
+
+    override suspend fun getMyTakenProjects(page: Int, limit: Int): Resource<List<TakenProject>> =
+        safeApiCall {
+            projectApi.getMyTakenProjects(page, limit).data.map { it.toDomain() }
         }
 
     override suspend fun acceptProposal(projectId: String, proposalId: String): Resource<Pesanan> =

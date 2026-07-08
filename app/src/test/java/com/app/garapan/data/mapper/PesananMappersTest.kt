@@ -25,6 +25,24 @@ class PesananMappersTest {
     )
 
     @Test
+    fun `maps nested project title for project based pesanan`() {
+        val dto = baseDto().copy(
+            projectId = "project-1",
+            jasa = null,
+            project = com.app.garapan.data.remote.dto.PesananProjectDto(
+                id = "project-1",
+                title = "landing page",
+                deadline = "2026-07-22T00:00:00.000Z",
+                imageUrl = "https://example.com/project.png"
+            )
+        )
+
+        val pesanan = dto.toDomain()
+
+        assertEquals("landing page", pesanan.projectTitle)
+    }
+
+    @Test
     fun prefersMahasiswaFullNameOverUserEmail() {
         val dto = baseDto(
             mahasiswa = PesananMahasiswaDto(

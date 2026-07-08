@@ -37,12 +37,11 @@ object PesananDisplayMapper {
         }.getOrDefault(isoDate)
     }
 
-    fun orderTitle(jasaTitle: String, projectId: String?): String {
-        val title = jasaTitle.ifBlank { "Pesanan" }
+    fun orderTitle(jasaTitle: String, projectId: String?, projectTitle: String = ""): String {
         return if (projectId.isNullOrBlank()) {
-            "Pembayaran Jasa: $title"
+            "Pembayaran Jasa: ${jasaTitle.ifBlank { "Pesanan" }}"
         } else {
-            "Pembayaran Proyek: $title"
+            "Pembayaran Proyek: ${projectTitle.ifBlank { jasaTitle }.ifBlank { "Pesanan" }}"
         }
     }
 }

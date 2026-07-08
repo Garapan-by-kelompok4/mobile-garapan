@@ -43,6 +43,9 @@ private fun statusBadgeColors(status: String): Pair<Color, Color> = when (status
     "DIPROSES" -> Color(0xFFE8EDFF) to AccentBlue
     "DIKIRIM" -> Color(0xFFE6F7F1) to Color(0xFF047857)
     "SELESAI" -> Color(0xFFE3E8F8) to BrandNavy
+    "DITERIMA", "DIBAYAR" -> Color(0xFFE6E6EE) to SecondaryText
     "DISPUTE", "DIBATALKAN" -> Color(0xFFFFE1E1) to Color(0xFFE31B23)
+    "Terbuka" -> Color(0xFFE8EDFF) to AccentBlue
+    "Ditutup" -> Color(0xFFE6E6EE) to SecondaryText
     else -> Color(0xFFE6E6EE) to SecondaryText
 }
