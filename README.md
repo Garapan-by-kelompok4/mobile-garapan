@@ -2,23 +2,29 @@
 
 Android app for the GARAPAN IT Freelancer Marketplace — connecting Indonesian university students (Mahasiswa) as freelancers with clients (Klien).
 
+### Download
+
+APK and related files are available on Google Drive:
+
+**[Download from Google Drive](https://drive.google.com/drive/folders/1Q2IHhKweH_PniVr7FFck-15lqt12Ms2A?usp=drive_link)**
+
 ---
 
 ## Tech Stack
 
-| Layer | Tech |
-|---|---|
-| Language | Kotlin |
-| UI | Jetpack Compose (Material 3) |
-| Architecture | MVVM + Clean Architecture |
-| DI | Hilt |
-| HTTP | Retrofit + OkHttp + Gson + Coroutines |
-| Navigation | Jetpack Navigation Compose |
-| Auth | Credential Manager + Google Sign-In |
-| Token Storage | DataStore |
-| Image | Coil 3.x |
-| Push Notifications | Firebase FCM |
-| Payments | Midtrans Snap (Custom Tabs) |
+| Layer              | Tech                                  |
+| ------------------ | ------------------------------------- |
+| Language           | Kotlin                                |
+| UI                 | Jetpack Compose (Material 3)          |
+| Architecture       | MVVM + Clean Architecture             |
+| DI                 | Hilt                                  |
+| HTTP               | Retrofit + OkHttp + Gson + Coroutines |
+| Navigation         | Jetpack Navigation Compose            |
+| Auth               | Credential Manager + Google Sign-In   |
+| Token Storage      | DataStore                             |
+| Image              | Coil 3.x                              |
+| Push Notifications | Firebase FCM                          |
+| Payments           | Midtrans Snap (Custom Tabs)           |
 
 ---
 
